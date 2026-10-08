@@ -49,20 +49,11 @@ Attack fields: `attack` (to-hit dice), `damage`, `range` (squares). Ability fiel
 
 The included art is generated placeholder art (`npm run placeholders`). Replace the SVG/PNG files, or point definitions at new files. Running the generator never overwrites existing files unless you pass `--force`.
 
-## Deploy on the Mac Mini
+## Deploy
 
-1. `npm install --omit=dev`, then create `.env` from `.env.example`. Use a strong `DM_PASSWORD`, a random `SESSION_SECRET`, `SECURE_COOKIES=true`, and keep `HOST=127.0.0.1`.
-2. Keep the app running with launchd:
-   ```sh
-   cp deploy/com.elliscode.dne.plist ~/Library/LaunchAgents/
-   launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.elliscode.dne.plist
-   # restart after pulling changes:
-   launchctl kickstart -k gui/$(id -u)/com.elliscode.dne
-   # logs: ~/Library/Logs/dne.log
-   ```
-   The plist points at the nvm Node binary. Update the path if Node is upgraded (`which node`).
-3. Add the block in `deploy/Caddyfile` to your Caddyfile and reload Caddy (`brew services restart caddy`). Caddy handles HTTPS and the WebSocket upgrade.
-4. Make sure DNS for `oneshot.elliscode.com` points at the house and ports 80/443 are forwarded to the Mini.
+1. `npm install --omit=dev`, then create `.env` from `.env.example`. Use a strong `DM_PASSWORD`, a random `SESSION_SECRET`, and `SECURE_COOKIES=true`. Keep `HOST=127.0.0.1` when Caddy runs on the same machine.
+2. Start the server: `npm start` (stop it with Ctrl-C; state is saved continuously, so stopping and restarting is safe mid-game).
+3. Add the site block from `deploy/Caddyfile` to your Caddy config. It proxies `oneshot.elliscode.com` to `127.0.0.1:3000`; adjust the upstream if `HOST`/`PORT` differ. Caddy handles HTTPS and the WebSocket upgrade.
 
 **Backups:** everything lives in `data/d-and-e.sqlite` (plus the `-wal`/`-shm` files while the server runs). To back up safely while it's running, use `sqlite3 data/d-and-e.sqlite ".backup backup.sqlite"`.
 

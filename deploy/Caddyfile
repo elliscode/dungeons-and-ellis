@@ -1,5 +1,8 @@
-# Add to your Caddyfile (e.g. /opt/homebrew/etc/Caddyfile), then `brew services restart caddy`.
-# Caddy handles HTTPS certificates and WebSocket upgrades automatically.
+# D&E (Dungeons & Ellis) — site block for this app only.
+# Assumes the app runs on the same machine as Caddy, listening on 127.0.0.1:3000
+# (HOST/PORT in .env). Change the upstream if it runs elsewhere or on another port.
+# Caddy obtains the HTTPS certificate and proxies WebSocket (Socket.IO) upgrades automatically.
+
 oneshot.elliscode.com {
 	encode gzip
 	reverse_proxy 127.0.0.1:3000
