@@ -13,8 +13,8 @@ const store = {
   del(k) { try { localStorage.removeItem(k); } catch { /* ignore */ } },
 };
 
-const content = await fetch('/api/content/public').then((r) => r.json());
-const heroById = new Map(content.characters.map((c) => [c.id, c]));
+let content = await fetch('/api/content/public').then((r) => r.json());
+let heroById = new Map(content.characters.map((c) => [c.id, c]));
 
 let seat = store.get(SEAT_KEY);
 let state = null;
@@ -40,6 +40,12 @@ socket.on('seatInvalid', () => {
   toast('Your seat was reset by the DM. Please join again.');
 });
 socket.on('fatal', (msg) => { fatal = msg; render(); });
+// The DM edited heroes/acts or art: refetch so the hero picker and Act menu stay current.
+socket.on('contentChanged', async () => {
+  content = await fetch('/api/content/public').then((r) => r.json());
+  heroById = new Map(content.characters.map((c) => [c.id, c]));
+  render();
+});
 socket.on('connect_error', () => toast('Connection problem — retrying…', 'error'));
 
 const send = (cmd) => sendCmd(socket, cmd);

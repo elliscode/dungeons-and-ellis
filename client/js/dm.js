@@ -6,8 +6,8 @@ import { SidePanel } from './panel.js';
 const gameId = location.pathname.split('/').pop();
 const me = await api('GET', '/api/me');
 if (!me.dm) location.href = `/login?next=${encodeURIComponent(location.pathname)}`;
-const content = await api('GET', '/api/content');
-const heroById = new Map(content.characters.map((c) => [c.id, c]));
+let content = await api('GET', '/api/content');
+let heroById = new Map(content.characters.map((c) => [c.id, c]));
 
 let state = null;
 let selectedId = null;
@@ -27,6 +27,14 @@ socket.on('history', (hist) => panel.setHistory(hist));
 socket.on('chat', (rows) => panel.addChat(rows));
 socket.on('activity', (rows) => panel.addActivity(rows));
 socket.on('fx', (list) => { for (const f of list) board.showFx(f.entityId, f.text, f.color, f.kind); });
+// Definitions or art changed (Data/Assets pages): refresh the banks and hero names.
+socket.on('contentChanged', async () => {
+  content = await api('GET', '/api/content');
+  heroById = new Map(content.characters.map((c) => [c.id, c]));
+  memoKeys.banks = memoKeys.players = null;
+  loadTemplates();
+  if (state) render();
+});
 socket.on('fatal', (msg) => { toast(msg, 'error'); setTimeout(() => { location.href = '/'; }, 1500); });
 socket.on('connect_error', (err) => {
   if (err.message === 'unauthorized') location.href = `/login?next=${encodeURIComponent(location.pathname)}`;

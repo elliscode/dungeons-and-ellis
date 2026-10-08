@@ -56,6 +56,18 @@ export class TemplateStore {
     return r ? { id: r.id, name: r.name, data: JSON.parse(r.data), updatedAt: r.updated_at } : null;
   }
 
+  // Counts how many templates reference each /static/... image (background or objects).
+  imageRefs() {
+    const counts = new Map();
+    const add = (path) => path && counts.set(path, (counts.get(path) ?? 0) + 1);
+    for (const r of this.db.prepare('SELECT data FROM scene_templates').all()) {
+      const d = JSON.parse(r.data);
+      add(d.background);
+      for (const o of d.objects ?? []) add(o.image);
+    }
+    return counts;
+  }
+
   create(input) {
     const { name, data } = normalizeTemplate(input);
     const id = newId('tpl');

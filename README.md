@@ -36,7 +36,12 @@ npm test                  # unit + socket integration tests
 
 ## Content
 
-Definitions live in `data/` and load at startup. Edit them, then restart the server.
+Manage content from the DM home page; no restart is needed:
+
+- **🖼 Assets** (`/assets`): upload (drag and drop, several at once), replace, or delete art in `static/backgrounds`, `static/tokens`, and `static/images`. Files are checked to be real PNG, JPG, GIF, WebP, or SVG images (max 15 MB). Names get cleaned up, so `Swamp Map.png` becomes `swamp-map.png`. Each card shows how many scenes or definitions use that file.
+- **📜 Data** (`/data`): edit, create, upload, download, or delete the definition JSON files. A save is checked against the rules below; if anything is invalid, nothing is written and you get a list of exact errors.
+
+Changes go live immediately. Open DM and player pages refresh their banks, hero picker, and Act menu by themselves; the scene editor has a **↻ Refresh assets & data** button. Edits made directly on disk are picked up too; a bad edit is logged and the last good content stays loaded. Tokens already in a game keep the stats they were created with; new spawns and hero picks use the new definitions. Everything is written into the repo's `data/` and `static/` folders, so changes show up in `git status` and you can commit them.
 
 | Path | What |
 | --- | --- |

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>D&E — Data</title>
+  <link rel="icon" href="/static/images/chest.svg">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <a href="/" class="btn small">← Home</a>
+      <span class="title">Data</span>
+      <span class="muted" id="current-file"></span>
+      <span class="muted" id="dirty"></span>
+      <span class="grow"></span>
+      <a class="btn small" href="/assets">🖼 Assets</a>
+    </header>
+    <div class="main editor">
+      <aside class="sidebar" id="files"></aside>
+      <section class="data-main" id="main"></section>
+    </div>
+  </div>
+  <script type="module" src="/js/data.js"></script>
+</body>
+</html>

@@ -235,3 +235,30 @@ label.inline { flex-direction: row; align-items: center; gap: 6px; }
 .tool-grid button { flex-direction: column; padding: 4px; font-size: 10px; }
 .tool-grid img { width: 40px; height: 40px; object-fit: contain; }
 .tool-grid button.active { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold); }
+
+/* ---------- assets & data pages ---------- */
+.page.wide { max-width: 1300px; }
+code { background: var(--bg3); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+.tabs .count { color: var(--muted); font-size: 12px; }
+.dropzone { display: block; border: 2px dashed var(--line); border-radius: var(--radius); padding: 26px; text-align: center; cursor: pointer; color: var(--muted); font-size: 14px; margin-bottom: 10px; }
+.dropzone:hover, .dropzone.over { border-color: var(--gold); color: var(--text); background: #d4af370d; }
+.upload-status { display: grid; gap: 4px; margin-bottom: 12px; font-size: 13px; }
+.upload-status .ok { color: var(--good); }
+.upload-status .err { color: var(--bad); }
+.asset-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+.asset-card { background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; display: flex; flex-direction: column; }
+.asset-card .preview { height: 130px; display: grid; place-items: center; background: repeating-conic-gradient(#25202b 0 25%, #1c1822 0 50%) 0 0 / 16px 16px; }
+.asset-card .preview img { max-width: 100%; max-height: 130px; object-fit: contain; }
+.asset-card .meta { padding: 8px 10px; display: grid; gap: 6px; }
+.asset-card .fname { font-size: 13px; word-break: break-all; }
+.data-main { display: flex; flex-direction: column; min-height: 0; padding: 12px; gap: 10px; }
+.json-editor { flex: 1; min-height: 300px; width: 100%; resize: none; font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; tab-size: 2; white-space: pre; }
+.file-item { display: flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 6px; cursor: pointer; border: 1px solid transparent; }
+.file-item:hover { background: var(--bg3); }
+.file-item.active { border-color: var(--gold); background: #3a3020; }
+.file-item .name { flex: 1; font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+.messages { display: grid; gap: 3px; max-height: 160px; overflow: auto; font-size: 13px; }
+.messages .err { color: #ff8080; }
+.messages .warn { color: var(--warn); }
+.messages .ok { color: var(--good); }
+details.example pre { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px; overflow: auto; font-size: 12px; max-height: 260px; }

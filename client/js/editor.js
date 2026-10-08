@@ -2,7 +2,7 @@ import { $, fill, h, api, toast, popupMenu } from './common.js';
 import { Board } from './board.js';
 
 const id = location.pathname.split('/').pop();
-const [tpl, assets, content] = await Promise.all([
+let [tpl, assets, content] = await Promise.all([
   api('GET', `/api/scenes/${id}`), api('GET', '/api/assets'), api('GET', '/api/content'),
 ]);
 
@@ -11,7 +11,7 @@ data.objects ??= [];
 data.entities ??= [];
 let tool = { type: 'select' };
 let dirty = false;
-const defs = new Map([...content.monsters.map((d) => [`monster:${d.id}`, d]), ...content.npcs.map((d) => [`npc:${d.id}`, d])]);
+let defs = new Map([...content.monsters.map((d) => [`monster:${d.id}`, d]), ...content.npcs.map((d) => [`npc:${d.id}`, d])]);
 const uid = (p) => `${p}_${Math.random().toString(16).slice(2, 10)}`;
 
 $('#scene-name').value = tpl.name;
@@ -149,6 +149,7 @@ function renderTools() {
       onchange: (e) => { data.background = e.target.value || null; markDirty(); render(); },
     }, h('option', { value: '' }, '— none —'), ...assets.backgrounds.map((b) => h('option', { value: b, selected: b === data.background }, b.split('/').pop())));
     root.append(
+      h('button.small', { onclick: refreshPalettes, title: 'Pick up newly uploaded art and edited definitions' }, '↻ Refresh assets & data'),
       h('div.section-title', {}, 'Background'),
       bgSelect,
       h('div.row', { style: { marginTop: '6px' } },
@@ -197,6 +198,15 @@ function renderTools() {
       onClick: () => setTool({ type: 'entity', kind, defId: d.id }),
     })));
   }
+}
+
+async function refreshPalettes() {
+  [assets, content] = await Promise.all([api('GET', '/api/assets'), api('GET', '/api/content')]);
+  defs = new Map([...content.monsters.map((d) => [`monster:${d.id}`, d]), ...content.npcs.map((d) => [`npc:${d.id}`, d])]);
+  fill($('#tools'));
+  toolsBuilt = false;
+  render();
+  toast('Assets and data refreshed');
 }
 
 function fitGrid() {
