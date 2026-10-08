@@ -1,0 +1,32 @@
+[
+  { "id": "goblin", "name": "Goblin", "image": "/static/tokens/goblin.svg", "maxHp": 9, "defense": 13, "movement": 6,
+    "attacks": [
+      { "id": "scimitar", "name": "Scimitar", "attack": "1d20+4", "damage": "1d6+2", "range": 1 },
+      { "id": "shortbow", "name": "Shortbow", "attack": "1d20+4", "damage": "1d6+2", "range": 10 }
+    ] },
+  { "id": "orc", "name": "Orc", "image": "/static/tokens/orc.svg", "maxHp": 16, "defense": 13, "movement": 6,
+    "attacks": [
+      { "id": "greataxe", "name": "Greataxe", "attack": "1d20+5", "damage": "1d12+3", "range": 1 },
+      { "id": "javelin", "name": "Javelin", "attack": "1d20+5", "damage": "1d6+3", "range": 6 }
+    ] },
+  { "id": "skeleton", "name": "Skeleton", "image": "/static/tokens/skeleton.svg", "maxHp": 13, "defense": 13, "movement": 6,
+    "attacks": [
+      { "id": "shortsword", "name": "Shortsword", "attack": "1d20+4", "damage": "1d6+2", "range": 1 },
+      { "id": "shortbow", "name": "Shortbow", "attack": "1d20+4", "damage": "1d6+2", "range": 10 }
+    ] },
+  { "id": "rat", "name": "Giant Rat", "image": "/static/tokens/rat.svg", "maxHp": 7, "defense": 12, "movement": 6,
+    "attacks": [
+      { "id": "bite", "name": "Bite", "attack": "1d20+4", "damage": "1d4+2", "range": 1 }
+    ] },
+  { "id": "ogre", "name": "Ogre", "image": "/static/images/ogre.svg", "size": { "w": 2, "h": 2 }, "maxHp": 59, "defense": 11, "movement": 5,
+    "attacks": [
+      { "id": "greatclub", "name": "Greatclub", "attack": "1d20+6", "damage": "2d8+4", "range": 1 },
+      { "id": "rock", "name": "Hurl Rock", "attack": "1d20+6", "damage": "2d6+4", "range": 8 }
+    ] },
+  { "id": "dragon", "name": "Young Red Dragon", "image": "/static/images/dragon.svg", "size": { "w": 3, "h": 3 }, "maxHp": 120, "defense": 18, "movement": 8,
+    "attacks": [
+      { "id": "bite", "name": "Bite", "attack": "1d20+10", "damage": "2d10+6", "range": 2 },
+      { "id": "claw", "name": "Claw", "attack": "1d20+10", "damage": "2d6+6", "range": 1 },
+      { "id": "fire-breath", "name": "Fire Breath", "attack": "1d20+8", "damage": "6d6", "range": 6 }
+    ] }
+]

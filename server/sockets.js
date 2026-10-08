@@ -1,0 +1,114 @@
+import { safeEqual } from './auth.js';
+import { projectForDm, projectForPlayer, activityForRole } from './games/project.js';
+
+const reply = (ack, result) => { if (typeof ack === 'function') ack(result); };
+
+export function attachSockets(io, { service, auth }) {
+  const play = io.of('/play');
+  const dm = io.of('/dm');
+
+  function socketsFor(gameId) {
+    const out = [];
+    for (const ns of [play, dm]) for (const s of ns.sockets.values()) if (s.data.gameId === gameId) out.push(s);
+    return out;
+  }
+
+  function stateFor(socket) {
+    const game = service.get(socket.data.gameId);
+    if (!game) return null;
+    const presence = service.presenceOf(game.id);
+    if (socket.data.role === 'dm') {
+      return { ...projectForDm(game.state, presence), undo: service.undoInfo(game.id), serverNow: Date.now() };
+    }
+    return { ...projectForPlayer(game.state, socket.data.playerId, presence), serverNow: Date.now() };
+  }
+
+  service.on('change', (gameId, payload) => {
+    for (const s of socketsFor(gameId)) {
+      if (payload.deleted) {
+        s.emit('fatal', 'This game has been deleted');
+        s.disconnect(true);
+        continue;
+      }
+      // A removed seat can no longer act; send the browser back to the join screen.
+      if (s.data.role === 'player' && s.data.playerId && !service.get(gameId).state.players[s.data.playerId]) {
+        service.disconnect(gameId, s.data.playerId, s.id);
+        s.data.playerId = null;
+        s.emit('seatInvalid');
+      }
+      s.emit('state', stateFor(s));
+      if (payload.activity?.length) {
+        const role = s.data.role === 'dm' ? 'dm' : 'player';
+        const rows = payload.activity.map((r) => activityForRole(r, role)).filter((r) => r.text);
+        if (rows.length) s.emit('activity', rows);
+      }
+      if (payload.chat?.length) s.emit('chat', payload.chat);
+      if (payload.fx?.length) s.emit('fx', payload.fx);
+    }
+  });
+
+  dm.use((socket, next) => {
+    if (!auth.isDmCookieHeader(socket.handshake.headers.cookie)) return next(new Error('unauthorized'));
+    next();
+  });
+
+  dm.on('connection', (socket) => {
+    const game = service.get(socket.handshake.auth?.gameId);
+    if (!game) {
+      socket.emit('fatal', 'Game not found');
+      return socket.disconnect(true);
+    }
+    socket.data = { role: 'dm', gameId: game.id };
+    const actor = { role: 'dm' };
+    socket.emit('state', stateFor(socket));
+    socket.emit('history', service.history(game.id, 'dm'));
+    socket.on('cmd', (cmd, ack) => reply(ack, service.dispatch(game.id, actor, cmd)));
+    socket.on('chat', (text, ack) => reply(ack, service.chat(game.id, actor, text)));
+  });
+
+  play.on('connection', (socket) => {
+    const { joinToken, playerId, seatSecret } = socket.handshake.auth ?? {};
+    const game = service.getByToken(joinToken);
+    if (!game) {
+      socket.emit('fatal', 'This game link is not valid');
+      return socket.disconnect(true);
+    }
+    socket.data = { role: 'player', gameId: game.id, playerId: null };
+
+    const bind = (id) => {
+      socket.data.playerId = id;
+      service.connect(game.id, id, socket.id);
+    };
+
+    if (playerId) {
+      const p = game.state.players[playerId];
+      if (p && safeEqual(p.seatSecret, seatSecret)) bind(playerId);
+      else socket.emit('seatInvalid');
+    }
+    socket.emit('state', stateFor(socket));
+    socket.emit('history', service.history(game.id, 'player'));
+
+    socket.on('join', (data, ack) => {
+      if (socket.data.playerId) return reply(ack, { ok: false, error: 'Already joined' });
+      const r = service.dispatch(game.id, { role: 'join' }, { type: 'player.create', name: data?.name });
+      if (!r.ok) return reply(ack, r);
+      bind(r.result.playerId);
+      socket.emit('state', stateFor(socket));
+      reply(ack, { ok: true, playerId: r.result.playerId, seatSecret: r.result.seatSecret });
+    });
+
+    const actor = () => ({ role: 'player', playerId: socket.data.playerId });
+    socket.on('cmd', (cmd, ack) => {
+      if (!socket.data.playerId) return reply(ack, { ok: false, error: 'Join the game first' });
+      if (cmd?.type === 'player.create') return reply(ack, { ok: false, error: 'Not allowed' });
+      reply(ack, service.dispatch(game.id, actor(), cmd));
+    });
+    socket.on('chat', (text, ack) => {
+      if (!socket.data.playerId) return reply(ack, { ok: false, error: 'Join the game first' });
+      reply(ack, service.chat(game.id, actor(), text));
+    });
+    socket.on('disconnect', () => {
+      if (socket.data.playerId) service.disconnect(game.id, socket.data.playerId, socket.id);
+    });
+  });
+}

@@ -1,0 +1,38 @@
+[
+  {
+    "id": "paladin", "name": "Paladin", "role": "tank", "image": "/static/tokens/paladin.svg",
+    "maxHp": 42, "movement": 5, "defense": 18,
+    "attacks": [
+      { "id": "holy-hammer", "name": "Holy Hammer", "attack": "1d20+5", "damage": "1d10+3", "range": 1 },
+      { "id": "javelin", "name": "Javelin", "attack": "1d20+4", "damage": "1d6+3", "range": 6 }
+    ],
+    "abilities": [
+      { "id": "lay-on-hands", "name": "Lay on Hands", "heal": "2d6+2", "range": 1, "description": "Heal an adjacent ally (or yourself)." }
+    ],
+    "inventory": ["rope", "healing-potion", "holy-symbol"]
+  },
+  {
+    "id": "stone-warden", "name": "Stone Warden", "role": "tank", "image": "/static/tokens/stone-warden.svg",
+    "maxHp": 48, "movement": 4, "defense": 17,
+    "attacks": [
+      { "id": "warhammer", "name": "Warhammer", "attack": "1d20+5", "damage": "1d8+4", "range": 1 },
+      { "id": "shield-bash", "name": "Shield Bash", "attack": "1d20+5", "damage": "1d4+4", "range": 1 }
+    ],
+    "abilities": [
+      { "id": "taunt", "name": "Taunt", "roll": "1d20+3", "description": "Draw an enemy's attention. The DM decides who takes the bait." }
+    ],
+    "inventory": ["torch", "healing-potion", "iron-spikes"]
+  },
+  {
+    "id": "iron-knight", "name": "Iron Knight", "role": "tank", "image": "/static/tokens/iron-knight.svg",
+    "maxHp": 40, "movement": 5, "defense": 17,
+    "attacks": [
+      { "id": "longsword", "name": "Longsword", "attack": "1d20+6", "damage": "1d10+4", "range": 1 },
+      { "id": "crossbow", "name": "Crossbow", "attack": "1d20+4", "damage": "1d8+2", "range": 10 }
+    ],
+    "abilities": [
+      { "id": "second-wind", "name": "Second Wind", "heal": "1d10+3", "range": 0, "description": "Catch your breath and heal yourself." }
+    ],
+    "inventory": ["rope", "rations", "healing-potion"]
+  }
+]

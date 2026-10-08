@@ -1,0 +1,21 @@
+{
+  "name": "d-and-e",
+  "version": "0.1.0",
+  "private": true,
+  "description": "D&E: Dungeons & Ellis — a lightweight DM-run virtual tabletop for one-shots",
+  "type": "module",
+  "engines": { "node": ">=22.13" },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server/index.js",
+    "dev": "node --watch --env-file-if-exists=.env server/index.js",
+    "test": "node --test \"test/**/*.test.js\"",
+    "placeholders": "node scripts/gen-placeholders.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "socket.io-client": "^4.8.1"
+  }
+}

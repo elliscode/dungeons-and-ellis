@@ -1,0 +1,15 @@
+[
+  { "id": "town-guard", "name": "Town Guard", "image": "/static/tokens/town-guard.svg", "maxHp": 11, "defense": 16, "movement": 6,
+    "attacks": [ { "id": "spear", "name": "Spear", "attack": "1d20+3", "damage": "1d6+1", "range": 1 } ] },
+  { "id": "merchant", "name": "Merchant", "image": "/static/tokens/merchant.svg", "maxHp": 6, "defense": 10, "movement": 5,
+    "attacks": [], "inventory": ["coin-purse", "ledger"] },
+  { "id": "innkeeper", "name": "Innkeeper", "image": "/static/tokens/innkeeper.svg", "maxHp": 8, "defense": 10, "movement": 5,
+    "attacks": [ { "id": "frying-pan", "name": "Frying Pan", "attack": "1d20+2", "damage": "1d4", "range": 1 } ],
+    "inventory": ["room-key", "ale"] },
+  { "id": "walky-the-wize", "name": "Walky the Wize", "image": "/static/tokens/walky-the-wize.svg", "maxHp": 25, "defense": 12, "movement": 5,
+    "attacks": [ { "id": "staff-zap", "name": "Staff Zap", "attack": "1d20+5", "damage": "1d8+2", "range": 6 } ],
+    "abilities": [ { "id": "wize-words", "name": "Wize Words", "roll": "1d20+6" } ],
+    "inventory": ["walking-stick", "suspicious-map"] },
+  { "id": "mysterious-wizard", "name": "Mysterious Wizard", "image": "/static/tokens/mysterious-wizard.svg", "maxHp": 40, "defense": 15, "movement": 6,
+    "attacks": [ { "id": "arcane-blast", "name": "Arcane Blast", "attack": "1d20+7", "damage": "2d8+3", "range": 10 } ] }
+]

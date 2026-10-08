@@ -1,0 +1,41 @@
+[
+  {
+    "id": "cleric", "name": "Cleric", "role": "heal", "image": "/static/tokens/cleric.svg",
+    "maxHp": 34, "movement": 5, "defense": 16,
+    "attacks": [
+      { "id": "mace", "name": "Mace", "attack": "1d20+4", "damage": "1d6+3", "range": 1 },
+      { "id": "sacred-flame", "name": "Sacred Flame", "attack": "1d20+5", "damage": "1d8+2", "range": 6 }
+    ],
+    "abilities": [
+      { "id": "healing-word", "name": "Healing Word", "heal": "1d8+3", "range": 6, "description": "Heal an ally within 6 squares." },
+      { "id": "cure-wounds", "name": "Cure Wounds", "heal": "2d8+3", "range": 1, "description": "A strong heal on an adjacent ally." }
+    ],
+    "inventory": ["holy-water", "healing-potion", "bandages"]
+  },
+  {
+    "id": "druid", "name": "Druid", "role": "heal", "image": "/static/tokens/druid.svg",
+    "maxHp": 32, "movement": 6, "defense": 14,
+    "attacks": [
+      { "id": "thorn-whip", "name": "Thorn Whip", "attack": "1d20+5", "damage": "1d6+3", "range": 3 },
+      { "id": "quarterstaff", "name": "Quarterstaff", "attack": "1d20+3", "damage": "1d6+2", "range": 1 }
+    ],
+    "abilities": [
+      { "id": "goodberry", "name": "Goodberry", "heal": "1d6+4", "range": 1, "description": "Feed an adjacent ally a magic berry." },
+      { "id": "speak-with-animals", "name": "Speak with Animals", "roll": "1d20+4" }
+    ],
+    "inventory": ["herbs", "healing-potion", "rope"]
+  },
+  {
+    "id": "bard", "name": "Bard", "role": "heal", "image": "/static/tokens/bard.svg",
+    "maxHp": 30, "movement": 6, "defense": 14,
+    "attacks": [
+      { "id": "rapier", "name": "Rapier", "attack": "1d20+5", "damage": "1d8+3", "range": 1 },
+      { "id": "vicious-mockery", "name": "Vicious Mockery", "attack": "1d20+5", "damage": "1d6+2", "range": 8 }
+    ],
+    "abilities": [
+      { "id": "song-of-rest", "name": "Song of Rest", "heal": "1d8+2", "range": 4, "description": "Heal an ally within 4 squares." },
+      { "id": "inspire", "name": "Inspire", "roll": "1d6", "description": "Give an ally an inspiration die." }
+    ],
+    "inventory": ["lute", "healing-potion", "disguise-kit"]
+  }
+]

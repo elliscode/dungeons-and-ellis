@@ -1,0 +1,96 @@
+import { randomBytes } from 'node:crypto';
+
+// Ten accessible, mutually distinct player colors (tuned for a dark UI).
+export const PLAYER_COLORS = [
+  '#e6194b', // red
+  '#3cb44b', // green
+  '#4363d8', // blue
+  '#f58231', // orange
+  '#911eb4', // purple
+  '#42d4f4', // cyan
+  '#f032e6', // magenta
+  '#bfef45', // lime
+  '#fabed4', // pink
+  '#ffe119', // yellow
+];
+export const DM_COLOR = '#d4af37';
+
+export class GameError extends Error {}
+export const fail = (msg) => { throw new GameError(msg); };
+
+export const newId = (prefix) => `${prefix}_${randomBytes(4).toString('hex')}`;
+
+export function createGameState({ id, name, joinToken }) {
+  return {
+    id,
+    name,
+    joinToken,
+    players: {},
+    scenes: {},
+    sceneOrder: [],
+    activeSceneId: null,
+    entities: {},
+    zCounter: 0,
+    combat: { active: false, phase: null, round: 0, timerSeconds: 0, phaseEndsAt: null },
+    turn: {},
+  };
+}
+
+// Entities that are on the board of a given scene instance.
+export function entitiesInScene(state, sceneId) {
+  return Object.values(state.entities).filter((e) => e.scope === 'game' || e.sceneId === sceneId);
+}
+
+export function isFriendly(entity) {
+  return entity.kind === 'pc' || (entity.kind === 'npc' && !entity.hostile);
+}
+
+// Chebyshev distance between two rectangular footprints (0 = overlapping/adjacent cells share space).
+export function footprintDistance(a, sa, b, sb) {
+  const dx = Math.max(0, b.x - (a.x + sa.w - 1), a.x - (b.x + sb.w - 1));
+  const dy = Math.max(0, b.y - (a.y + sa.h - 1), a.y - (b.y + sb.h - 1));
+  return Math.max(dx, dy);
+}
+
+export function prettyItemName(id) {
+  return String(id).replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+export function makeItem(name) {
+  return { id: newId('i'), name: String(name).trim().slice(0, 60) };
+}
+
+// Builds a live entity instance from a bank/character definition. The definition is
+// deep-copied so instance changes never touch the reusable definition.
+export function entityFromDef(def, kind, extra = {}) {
+  const maxHp = Math.max(1, Number(def.maxHp) || 10);
+  return {
+    id: newId('e'),
+    kind,
+    defId: def.id,
+    name: def.name,
+    role: def.role ?? null,
+    image: def.image ?? null,
+    size: { w: def.size?.w ?? 1, h: def.size?.h ?? 1 },
+    maxHp,
+    hp: maxHp,
+    defense: Number(def.defense) || 10,
+    movement: Number(def.movement) || 6,
+    attacks: structuredClone(def.attacks ?? []),
+    abilities: structuredClone(def.abilities ?? []),
+    inventory: (def.inventory ?? []).map((i) => makeItem(typeof i === 'string' ? prettyItemName(i) : i.name)),
+    status: 'active',
+    hostile: kind === 'monster' ? def.hostile !== false : kind === 'npc' ? !!def.hostile : false,
+    scope: 'scene',
+    sceneId: null,
+    positions: {},
+    z: 0,
+    ownerPlayerId: null,
+    ...extra,
+  };
+}
+
+export function turnFor(state, entityId) {
+  state.turn[entityId] ??= { actions: 0, bonus: 0, moved: 0, abilitiesUsed: [] };
+  return state.turn[entityId];
+}
