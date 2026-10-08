@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>D&E — Scene Editor</title>
+  <link rel="icon" href="/static/images/chest.svg">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <a href="/" class="btn small">← Home</a>
+      <span class="scene-edit-banner">✎ SCENE EDIT MODE</span>
+      <input id="scene-name" placeholder="Scene name" maxlength="60">
+      <span class="muted" id="dirty"></span>
+      <span class="grow"></span>
+      <button class="primary" id="save">Save template</button>
+    </header>
+    <div class="main editor">
+      <aside class="sidebar" id="tools"></aside>
+      <div id="board"></div>
+    </div>
+  </div>
+  <script type="module" src="/js/editor.js"></script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Keeps D&E running on the Mac Mini. Install:
+     cp deploy/com.elliscode.dne.plist ~/Library/LaunchAgents/
+     (node is the nvm install; update the path if you upgrade: `which node`)
+     launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.elliscode.dne.plist -->
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.elliscode.dne</string>
+  <key>WorkingDirectory</key><string>/Users/basementmacmini/git/dungeons-and-ellis</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/basementmacmini/.nvm/versions/node/v24.21.0/bin/node</string>
+    <string>--env-file-if-exists=.env</string>
+    <string>server/index.js</string>
+  </array>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>StandardOutPath</key><string>/Users/basementmacmini/Library/Logs/dne.log</string>
+  <key>StandardErrorPath</key><string>/Users/basementmacmini/Library/Logs/dne.log</string>
+</dict>
+</plist>

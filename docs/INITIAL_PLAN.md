@@ -1,0 +1,96 @@
+# D&E (Dungeons & Ellis) — Implementation Plan
+
+## Context
+The repo is empty except `docs/INITIAL_DESIGN.md`, a full spec for a private, DM-run, browser-based VTT for one gaming group, hosted on the basement Mac Mini behind Caddy at `oneshot.elliscode.com`. The spec asks for a practical plan, then an incremental build that is playable at each milestone, with tests on the critical state transitions and docs for running and deploying.
+
+Environment on the machine: Node v24.21, npm 11, Caddy installed at `/opt/homebrew/bin/caddy`, sqlite3 3.54.
+
+## Key technical decisions
+- **Server:** Node 24, Express, Socket.IO. ES modules. No build step.
+- **DB:** Node's built-in `node:sqlite` (`DatabaseSync`), so there's no native module to compile. If it turns out to be awkward, switch to `better-sqlite3`; both have the same synchronous style.
+- **Client:** vanilla HTML/CSS/JS ES modules served statically. The board is DOM-based: absolutely positioned token elements over a background `<img>`, with a CSS/SVG grid overlay. The donut is SVG. No framework.
+- **State model (the core simplification):**
+  - `scene_templates` table: one row per template, `data` JSON (background, grid {cols, rows, offsetX, offsetY, cellSize}, objects, initial entity placements, spawn).
+  - `games` table: `id`, `name`, `join_token`, `state` JSON (players, scene instances, entities, combat, z-counter), `version`, timestamps.
+  - `chat_messages` and `activity_events` are append-only tables keyed by game. Activity rows hold `public_text` plus optional `dm_text`.
+  - `undo_snapshots` table: the last ~20 pre-action state snapshots per game.
+  - The server keeps one in-memory `Game` object per loaded game. **Every mutation goes through one command dispatcher** (`applyCommand(game, actor, cmd)`): validate, mutate, append activity, persist (one transaction for state + activity + undo), then broadcast. Games are loaded lazily from the DB, which handles restart recovery for free.
+  - Adding a template to a game **deep-copies** it into a scene instance: new instance ID, with entity instances created from the template's placements. Templates are never referenced live, so editing a template can't change a running game, and vice versa.
+- **Entities:** one `entities` map in game state. Each entity has `{id, kind: pc|npc|monster|object, defId, scope: 'game'|'scene', sceneInstanceId?, positions: {[sceneInstanceId]: {x,y}}, hp, maxHp, defense, status: active|down|dead, inventory, z, ownerPlayerId?}`. Scene-scoped entities render only in their own instance. Game-scoped entities and PCs render in the active scene. Storing positions per scene instance means revisiting a scene restores old spots, and a missing position falls back to spawn placement (spiral outward from the spawn square). Changing scope only flips `scope`/`sceneInstanceId`, so nothing gets duplicated or lost.
+- **Visibility filtering:** on the server, `projectState(game, viewer)`. Players get `hp`/`maxHp` stripped from non-friendly entities (monsters, and NPCs flagged hostile), and they get public activity text only. The DM gets everything. The server broadcasts the full projected snapshot per socket on every change, which is cheap at this scale, plus transient `fx` events for damage numbers (`-8`, `MISS`, `CRIT`, with the attacker's color).
+- **Auth:**
+  - DM: a password from the `DM_PASSWORD` env var. Login sets a signed, HttpOnly cookie (HMAC with `SESSION_SECRET`). DM HTTP routes and the `/dm` socket namespace check that cookie.
+  - Players: `/g/:joinToken`. They get a `playerId` (`p_xxxxxxxx`) plus a server-issued `seatSecret`, both kept in localStorage under a key scoped to that game. Reconnecting requires both values to match. A DM reset rotates the seat secret, which invalidates the old browser.
+- **Content:** JSON files in `data/characters/`, `data/monsters/`, `data/npcs/`, `data/acts.json`, loaded at startup. Starter roster: 3 heroes per role (Tank / DPS / Heal), about 6 monsters, and about 5 NPCs including Walky the Wize. Placeholder token art is simple generated SVGs (colored circle + initial) under `static/tokens/`, plus 2–3 placeholder backgrounds. Real art drops in by replacing the files.
+- **Dice:** a parser for `NdX(+|-)M` that supports d4 through d20 and uses `crypto.randomInt`. A natural 20 on an attack is a CRIT (double the damage dice). A natural 1 is an auto-miss.
+- **Timer:** combat state stores `{active, phase, timerSeconds, phaseEndsAt}`. One server `setTimeout` per game fires `advancePhase`. On load, if `phaseEndsAt` is already past, the server advances once and re-arms the timer. Clients only display `phaseEndsAt - now`.
+
+## Project layout
+```
+package.json, README.md, .env.example, Caddyfile.example, launchd plist example
+server/
+  index.js            Express app, static, routes, socket setup
+  auth.js             DM login/cookie, seat secret helpers
+  db.js               node:sqlite schema + queries
+  content.js          loads data/*.json definitions
+  dice.js
+  games/store.js      in-memory cache + load/persist
+  games/commands.js   dispatcher + all command handlers (split by area if it grows)
+  games/project.js    per-viewer state projection
+  games/combat.js     phases, timer, attack resolution, down/death
+  games/placement.js  spawn + placement policy
+  sockets.js          /play and /dm namespaces → commands
+client/
+  index.html (DM home: Scenes | Games), login.html, play.html, dm-game.html, scene-editor.html
+  js/board.js (grid, tokens, z-order, stack inspector), js/donut.js, js/panel.js (chat + activity),
+  js/player.js, js/dm.js, js/editor.js, js/api.js
+  css/
+data/characters|monsters|npcs/*.json, data/acts.json
+static/backgrounds|tokens|images/
+test/*.test.js        node:test
+```
+
+## Milestones (each one ends in a runnable state)
+1. **Skeleton:** npm project, Express + Socket.IO, SQLite schema, DM login, DM home with Scenes/Games, create/delete game (with confirmation), copy join link.
+2. **Player join:** name prompt (localStorage), playerId/seatSecret, role → hero select with server-enforced locking, the 10-color bank (an accessible palette, unique per game, changeable), reconnection grace period (`RECONNECT_GRACE_MS`; a character is never auto-released, the grace period only drives "disconnected" display), DM Reset/Release, and the "Waiting for DM to set active scene" screen.
+3. **Scenes:** scene editor with a "SCENE EDIT MODE" banner. Pick a background from `static/backgrounds` (via a listing endpoint), set grid cols/rows/cell size/offset, place and remove objects/obstacles, place NPC/monster definitions, set the spawn (bottom-left by default), save.
+4. **Games and scene instances:** add a template to a game (deep copy), remove an instance, set the active scene. Players auto-enter and spawn. Game-scoped entities get placed. Revisiting a scene restores scene-scoped positions. The map layout is read-only in game mode.
+5. **Board:** render grid and tokens. Large images scale to their footprint (`size: {w,h}` in cells). Move with server validation (players limited to `movement` squares by Chebyshev distance per phase in combat, free movement outside combat; the DM can move anything). Global z-order via an incrementing counter on move. The local player's own token always renders on top. DM stack inspector (hover or click a square with more than one token to get a popover list for selecting).
+6. **Banks and scope:** NPC/monster bank drawer in the DM view. Spawn with a chosen scope. Promote or demote existing entities. Remove entities.
+7. **Donut and actions:** SVG donut (N Attack, E Move, S Inventory, W Act) with an HP bar above it. Act (optional dice roll, posted to activity). Inventory (use removes the item; the DM can add items).
+8. **Combat:** start/end combat, PLAYER/DM phases, one action per player phase (attack, act, or item), movement tracked separately, timer presets (Off/30/60/90/120/custom), server-authoritative expiry. Attack flow: pick an attack, click a target on the board, server validates ownership/phase/action/range/target, rolls against defense, applies damage, emits fx and activity. The DM can also attack with entities during the DM phase.
+9. **HP states:** 0 HP → DOWN, where the only action available is a d20 roll. Taking damage ≥ maxHp while down → DEAD. Healing above 0 revives from DOWN. DM kill/revive/set HP/damage/heal. Monsters at 0 HP go straight to dead, and the DM can override.
+10. **Chat and activity panel:** a right-side panel with two areas, player colors, separate internal message types, history loaded on connect.
+11. **Undo:** the DM's "Undo Last Action" covers move, damage/heal/set HP, attack, spawn/remove, and scope change. Each covered action restores the pre-command snapshot, excluding chat. Undo is limited to the last 20 actions.
+12. **Deploy:** README run instructions, `.env.example`, a Caddyfile snippet (`oneshot.elliscode.com { reverse_proxy localhost:3000 }`, which already handles WebSocket upgrades), and a launchd plist to keep `node server/index.js` running on the Mac Mini.
+
+## Tests (`node --test`)
+- `dice.test.js`: parsing, bounds, invalid expressions.
+- `commands.test.js`, run against an in-memory DB:
+  - character locking, so two players can't claim the same hero
+  - reconnecting with the correct secret works, the wrong or old secret after a reset fails
+  - name changes keep the identity
+  - color uniqueness
+  - template deep copy, so mutating an instance doesn't change the template
+  - two instances of the same template stay independent
+  - scene switching: PCs and game-scoped entities follow, scene-scoped ones stay with their positions
+  - promote/demote keeps state and creates no duplicates
+  - combat: no attacks outside combat, one action per phase, range check, down → dead threshold, heal from down
+  - timer expiry advances the phase, including on reload with a past `phaseEndsAt`
+  - undo
+- `project.test.js`: the player projection contains no enemy HP, and public activity text contains no HP numbers.
+- `socket.test.js`: an integration test with two `socket.io-client` players plus the DM. Covers join, select, move broadcast, and restart recovery (rebuild the server against the same DB file and confirm state).
+
+## Verification
+1. `npm test`: all suites pass.
+2. `DM_PASSWORD=x npm start`, then open `http://localhost:3000`. Log in as DM, build a scene, create a game, and add two scenes.
+3. Open the join link in 2–3 browser profiles or incognito windows. Join, pick heroes, wait, set the active scene, then move, stack tokens, and inspect the stack as DM.
+4. Spawn monsters (scene scope) and Walky (game scope). Switch scenes and confirm Walky follows and the rats stay. Switch back and confirm the rats are in their old positions.
+5. Run combat with a 30s timer: attacks, MISS/CRIT fx, a player going down, then dying, then a DM revive. Confirm a player's view never shows monster HP (check the socket payload in DevTools).
+6. Refresh the browsers and restart the server mid-combat, then confirm everything resumes, including the timer.
+7. Configure Caddy, hit `https://oneshot.elliscode.com`, and confirm WebSockets connect.
+
+## Assumptions (change if wrong)
+- I'll write placeholder art (SVG tokens and backgrounds) and a starter hero/monster roster, and you swap in real content later.
+- DM auth is a single shared password in `.env`, with no DM accounts.
+- I'll build the milestones in order, committing after each one on a feature branch.

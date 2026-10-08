@@ -164,6 +164,12 @@ function releaseCharacter(ctx, p) {
   p.entityId = null;
 }
 
+// "Goblin", "Goblin 2", ... so the DM can tell instances of the same definition apart.
+function numberedName(ctx, def, kind) {
+  const same = Object.values(ctx.state.entities).filter((o) => o.defId === def.id && o.kind === kind).length;
+  return same ? `${def.name} ${same + 1}` : def.name;
+}
+
 function getPlayer(ctx, id) {
   const p = ctx.state.players[id];
   if (!p) fail('Unknown player');
@@ -214,8 +220,7 @@ def('scene.add', { who: 'dm', clearsUndo: true }, (ctx) => {
     const d = ctx.content.def(placement.kind, placement.defId);
     if (!d) continue;
     const e = entityFromDef(d, placement.kind, {
-      scope: 'scene', sceneId: id, z: ++ctx.state.zCounter,
-      ...(placement.name ? { name: placement.name } : {}),
+      scope: 'scene', sceneId: id, z: ++ctx.state.zCounter, name: placement.name || numberedName(ctx, d, placement.kind),
     });
     if (inBounds(scene, placement.x, placement.y, e.size)) e.positions[id] = { x: placement.x, y: placement.y };
     ctx.state.entities[e.id] = e;
@@ -276,9 +281,7 @@ def('entity.spawn', { who: 'dm', undoable: 'spawn' }, (ctx) => {
   if (scene && ctx.cmd.x !== undefined && inBounds(scene, ctx.cmd.x, ctx.cmd.y, e.size)) {
     e.positions[sceneId] = { x: ctx.cmd.x, y: ctx.cmd.y };
   }
-  // Number duplicates so the DM can tell "Goblin 2" from "Goblin".
-  const same = Object.values(ctx.state.entities).filter((o) => o.defId === d.id && o.kind === kind).length;
-  if (same) e.name = `${d.name} ${same + 1}`;
+  e.name = numberedName(ctx, d, kind);
   ctx.state.entities[e.id] = e;
   if (scene) ensurePlaced(ctx.state, sceneId);
   ctx.log('spawn', `${e.name} appears`, { dmText: `DM spawned ${e.name} (${scope} scope)` });

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dungeons & Ellis</title>
+  <link rel="icon" href="/static/images/chest.svg">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <div class="page">
+    <div class="row"><h1 class="grow">Dungeons &amp; Ellis</h1><button id="logout" class="small">Log out</button></div>
+    <div class="tabs">
+      <button data-tab="games" class="active">🎲 Games</button>
+      <button data-tab="scenes">🗺️ Scenes</button>
+    </div>
+    <section id="tab-games">
+      <form class="row" id="new-game" style="margin-bottom:14px">
+        <input id="new-game-name" class="grow" placeholder="New one-shot name, e.g. The Goblin Caves" maxlength="60">
+        <button class="primary" type="submit">Create game</button>
+      </form>
+      <div class="list" id="games"></div>
+    </section>
+    <section id="tab-scenes" class="hidden">
+      <div class="row" style="margin-bottom:14px">
+        <p class="muted grow">Scenes are reusable map templates. Adding one to a game makes an independent live copy.</p>
+        <button class="primary" id="new-scene">New scene</button>
+      </div>
+      <div class="list" id="scenes"></div>
+    </section>
+  </div>
+  <script type="module" src="/js/home.js"></script>
+</body>
+</html>

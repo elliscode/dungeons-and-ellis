@@ -24,6 +24,8 @@ export function attachSockets(io, { service, auth }) {
   }
 
   service.on('change', (gameId, payload) => {
+    const game = service.get(gameId);
+    if (!game && !payload.deleted) return;
     for (const s of socketsFor(gameId)) {
       if (payload.deleted) {
         s.emit('fatal', 'This game has been deleted');
@@ -31,10 +33,12 @@ export function attachSockets(io, { service, auth }) {
         continue;
       }
       // A removed seat can no longer act; send the browser back to the join screen.
-      if (s.data.role === 'player' && s.data.playerId && !service.get(gameId).state.players[s.data.playerId]) {
-        service.disconnect(gameId, s.data.playerId, s.id);
-        s.data.playerId = null;
+      if (s.data.role === 'player' && s.data.playerId && !game.state.players[s.data.playerId]) {
+        const gone = s.data.playerId;
+        s.data.playerId = null; // clear first: disconnect() below emits another change synchronously
         s.emit('seatInvalid');
+        service.disconnect(gameId, gone, s.id);
+        continue;
       }
       s.emit('state', stateFor(s));
       if (payload.activity?.length) {

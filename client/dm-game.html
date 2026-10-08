@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>D&E — DM</title>
+  <link rel="icon" href="/static/images/chest.svg">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <a href="/" class="btn small">← Home</a>
+      <span class="title" id="game-name">Game</span>
+      <button class="small" id="copy-link">🔗 Copy player link</button>
+      <div id="combat-bar" class="combat-bar idle"></div>
+      <span class="grow"></span>
+      <div class="row" id="combat-controls"></div>
+      <button id="undo" title="Undo last action">↶ Undo</button>
+    </header>
+    <div class="main dm">
+      <aside class="sidebar">
+        <div class="side-tabs">
+          <button data-tab="scenes" class="active">Scenes</button>
+          <button data-tab="players">Players</button>
+          <button data-tab="banks">Banks</button>
+        </div>
+        <div id="tab-scenes"></div>
+        <div id="tab-players" class="hidden"></div>
+        <div id="tab-banks" class="hidden"></div>
+      </aside>
+      <div id="board"></div>
+      <aside class="right">
+        <div class="inspector hidden" id="inspector"></div>
+        <div id="panel" style="display:flex;flex:1;min-height:0"></div>
+      </aside>
+    </div>
+  </div>
+  <script type="module" src="/js/dm.js"></script>
+</body>
+</html>

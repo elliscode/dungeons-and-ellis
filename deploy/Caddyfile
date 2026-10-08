@@ -1,0 +1,6 @@
+# Add to your Caddyfile (e.g. /opt/homebrew/etc/Caddyfile), then `brew services restart caddy`.
+# Caddy handles HTTPS certificates and WebSocket upgrades automatically.
+oneshot.elliscode.com {
+	encode gzip
+	reverse_proxy 127.0.0.1:3000
+}
