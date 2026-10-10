@@ -11,6 +11,8 @@ import { TemplateStore } from './templates.js';
 import { GameService } from './games/service.js';
 import { GameError } from './games/state.js';
 import { attachSockets } from './sockets.js';
+import { previewMeta, renderPlayPage } from './preview.js';
+import { readFileSync } from 'node:fs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -24,6 +26,7 @@ export function createServer({
   graceMs = 60_000,
   secureCookies = false,
   watchContent = false,
+  publicUrl = null,
 } = {}) {
   const db = openDb(dbFile);
   const content = loadContent(contentDir, { staticDir, watchFiles: watchContent });
@@ -131,7 +134,14 @@ export function createServer({
   app.get('/login', page('login.html'));
   app.get('/scenes/:id', page('scene-editor.html'));
   app.get('/games/:id', page('dm-game.html'));
-  app.get('/g/:token', page('play.html'));
+  // Player page, with per-game link-preview metadata rendered into the HTML for crawlers.
+  app.get('/g/:token', (req, res) => {
+    const base = (publicUrl || `${req.protocol}://${req.get('host')}`).replace(/\/+$/, '');
+    const game = service.getByToken(req.params.token);
+    const html = renderPlayPage(readFileSync(join(clientDir, 'play.html'), 'utf8'), previewMeta({ game, base, staticDir }));
+    res.set('Cache-Control', 'no-cache');
+    res.type('html').send(html);
+  });
   app.get('/assets', page('assets.html'));
   app.get('/data', page('data.html'));
   // No caching so replaced uploads show up immediately (ETags still avoid re-downloads). The CSP
@@ -184,8 +194,9 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     graceMs: Number(process.env.RECONNECT_GRACE_MS) || 60_000,
     secureCookies: process.env.SECURE_COOKIES === 'true',
     watchContent: true,
+    publicUrl: process.env.PUBLIC_URL || null,
   });
-  server.httpServer.listen(port, host, () => console.log(`D&E listening on http://${host}:${port}`));
+  server.httpServer.listen(port, host, () => console.log(`One & Done listening on http://${host}:${port}`));
   const shutdown = () => server.close().then(() => process.exit(0));
   process.on('SIGINT', shutdown);
   process.on('SIGTERM', shutdown);

@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { createServer } from '../server/index.js';
 import { sanitizeAssetName } from '../server/assets.js';
+import { FIXTURE_DATA } from './helpers.js';
 
 const PNG = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(32)]);
 
@@ -16,7 +17,7 @@ test('sanitizes names', () => {
 
 test('asset upload, replace, list, delete over HTTP', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'dne-assets-'));
-  const server = createServer({ dbFile: ':memory:', password: 'pw', staticDir: join(dir, 'static') });
+  const server = createServer({ dbFile: ':memory:', password: 'pw', staticDir: join(dir, 'static'), contentDir: FIXTURE_DATA });
   await new Promise((r) => server.httpServer.listen(0, '127.0.0.1', r));
   const base = `http://127.0.0.1:${server.httpServer.address().port}`;
   try {

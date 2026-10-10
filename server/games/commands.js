@@ -2,11 +2,11 @@ import { rollDice, isValidDice } from '../dice.js';
 import { randomToken } from '../auth.js';
 import {
   PLAYER_COLORS, fail, newId, entityFromDef, entitiesInScene, isFriendly, footprintDistance,
-  makeItem, turnFor,
+  makeItem, turnFor, actionAllowance,
 } from './state.js';
 import { inBounds, ensurePlaced } from './placement.js';
 import {
-  startCombat, advancePhase, endCombat, applyDamage, applyHeal, setHp, revive, kill, resolveAttack,
+  startCombat, advancePhase, endCombat, applyDamage, applyHeal, setHp, revive, kill, resolveAttack, reduceIncoming,
 } from './combat.js';
 
 // Handler options:
@@ -84,29 +84,47 @@ function requirePlayerWindow(ctx) {
   if (c.active && c.phase !== 'player') fail('Wait for the PLAYER PHASE');
 }
 
-// Consumes one action in combat (players only). Returns nothing outside combat.
-function spendAction(ctx, e) {
-  if (ctx.actor.role !== 'player' || !ctx.state.combat.active) return;
-  const t = turnFor(ctx.state, e.id);
-  if (t.actions >= 1 + t.bonus) fail('You have already used your action this phase');
-  t.actions += 1;
+// Enemies (monsters and hostile NPCs) act only during the DM PHASE.
+function requireActionWindow(ctx, e) {
+  requirePlayerWindow(ctx);
+  const c = ctx.state.combat;
+  if (ctx.actor.role === 'dm' && c.active && !isFriendly(e) && c.phase !== 'dm') fail('Enemies act during the DM PHASE');
+}
+
+// Who pays from the per-phase action budget in combat: players always, and the DM when acting
+// through an enemy. Friendly NPCs and the DM's own tools (damage, HP, kill...) are unlimited.
+function budgeted(ctx, e) {
+  if (!ctx.state.combat.active) return false;
+  if (ctx.actor.role === 'player') return true;
+  return ctx.actor.role === 'dm' && !isFriendly(e);
 }
 
 function checkAction(ctx, e) {
-  if (ctx.actor.role !== 'player' || !ctx.state.combat.active) return;
+  if (!budgeted(ctx, e)) return;
   const t = turnFor(ctx.state, e.id);
-  if (t.actions >= 1 + t.bonus) fail('You have already used your action this phase');
+  if (t.actions < actionAllowance(e, t)) return;
+  if (ctx.actor.role === 'player') fail('You have no actions left this phase');
+  fail(`${e.name} has no actions left this phase (use +1 action to override)`);
+}
+
+// Consumes one action in combat when the actor pays (see budgeted()).
+function spendAction(ctx, e) {
+  if (!budgeted(ctx, e)) return;
+  checkAction(ctx, e);
+  turnFor(ctx.state, e.id).actions += 1;
 }
 
 function rollOrFail(expr, ctx, opts) {
   try { return rollDice(expr, { rng: ctx.rng, ...opts }); } catch (err) { fail(err.message); }
 }
 
-function damageEntity(ctx, target, amount, color, sourceText) {
-  const change = applyDamage(target, amount);
-  const t = hpTexts(target);
-  ctx.fx({ kind: 'damage', entityId: target.id, text: `-${amount}`, color });
-  return { change, text: `${sourceText}${statusSuffix(target, change)}`, t };
+// The single damage path for attacks and DM damage. Tank reduction is applied here, once, and
+// everything reported (floating text, log) uses the damage actually dealt.
+function damageEntity(ctx, target, raw, color) {
+  const dealt = reduceIncoming(target, raw);
+  const change = applyDamage(target, dealt);
+  ctx.fx({ kind: 'damage', entityId: target.id, text: `-${dealt}`, color });
+  return { dealt, raw, reduced: dealt !== raw, change, suffix: statusSuffix(target, change), t: hpTexts(target) };
 }
 
 // ---------- players & identity ----------
@@ -329,8 +347,9 @@ def('entity.rename', { who: 'dm' }, (ctx) => {
 def('entity.damage', { who: 'dm', undoable: 'damage' }, (ctx) => {
   const e = getEntity(ctx, ctx.cmd.entityId);
   const amount = int(ctx.cmd.amount, 'Damage', 0, 10000);
-  const r = damageEntity(ctx, e, amount, ctx.actorColor, `${e.name} takes ${amount} damage.`);
-  ctx.log('damage', r.text + r.t.pub, { dmText: r.text + r.t.dm });
+  const d = damageEntity(ctx, e, amount, ctx.actorColor);
+  const text = `${e.name} takes ${d.dealt} damage${d.reduced ? ` (${d.raw}, reduced by Tank)` : ''}.${d.suffix}`;
+  ctx.log('damage', text + d.t.pub, { dmText: text + d.t.dm });
 });
 
 def('entity.heal', { who: 'dm', undoable: 'heal' }, (ctx) => {
@@ -434,8 +453,8 @@ def('attack', { who: 'any', undoable: 'attack' }, (ctx) => {
   const c = ctx.state.combat;
   if (!c.active) fail('Attacks are only available in combat');
   requireStatus(e, 'attack');
-  requirePlayerWindow(ctx);
-  if (ctx.actor.role === 'player') checkAction(ctx, e);
+  requireActionWindow(ctx, e);
+  checkAction(ctx, e);
   const attack = e.attacks.find((a) => a.id === ctx.cmd.attackId);
   if (!attack) fail('Unknown attack');
   const target = getEntity(ctx, ctx.cmd.targetId);
@@ -456,17 +475,17 @@ def('attack', { who: 'any', undoable: 'attack' }, (ctx) => {
     return { hit: false };
   }
   if (r.crit) ctx.fx({ kind: 'crit', entityId: target.id, text: 'CRIT', color: ctx.actorColor });
-  const d = damageEntity(ctx, target, r.damage, ctx.actorColor,
-    `${head} — ${r.crit ? 'CRITICAL HIT' : 'HIT'} for ${r.damage} (${r.damageRoll.text}).`);
-  ctx.log('attack', d.text + d.t.pub, { dmText: d.text.replace(' — ', ` vs DEF ${target.defense} — `) + d.t.dm });
-  return { hit: true, crit: r.crit, damage: r.damage };
+  const d = damageEntity(ctx, target, r.damage, ctx.actorColor);
+  const tail = `${r.crit ? 'CRITICAL HIT' : 'HIT'} for ${d.dealt} (${r.damageRoll.text}${d.reduced ? ', reduced by Tank' : ''}).${d.suffix}`;
+  ctx.log('attack', `${head} — ${tail}${d.t.pub}`, { dmText: `${head} vs DEF ${target.defense} — ${tail}${d.t.dm}` });
+  return { hit: true, crit: r.crit, damage: d.dealt };
 });
 
 def('act', { who: 'any', undoable: 'act' }, (ctx) => {
   const e = controlled(ctx, ctx.cmd.entityId);
   onActiveScene(ctx, e);
   requireStatus(e, 'act');
-  requirePlayerWindow(ctx);
+  requireActionWindow(ctx, e);
   let name, roll;
   if (ctx.cmd.actId) {
     const a = ctx.content.act(ctx.cmd.actId);
@@ -489,11 +508,10 @@ def('ability', { who: 'any', undoable: 'ability' }, (ctx) => {
   const e = controlled(ctx, ctx.cmd.entityId);
   const scene = onActiveScene(ctx, e);
   requireStatus(e, 'use abilities');
-  requirePlayerWindow(ctx);
+  requireActionWindow(ctx, e);
   const ab = e.abilities.find((a) => a.id === ctx.cmd.abilityId);
   if (!ab) fail('Unknown ability');
-  const inCombat = ctx.state.combat.active && ctx.actor.role === 'player';
-  const t = inCombat ? turnFor(ctx.state, e.id) : null;
+  const t = budgeted(ctx, e) ? turnFor(ctx.state, e.id) : null;
   if (t && ab.grantsActions) {
     if (t.abilitiesUsed.includes(ab.id)) fail(`${ab.name} can only be used once per phase`);
   } else if (!ab.free) {

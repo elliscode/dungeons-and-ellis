@@ -1,4 +1,4 @@
-# D&E: Dungeons & Ellis
+# One & Done
 
 A small multiplayer virtual tabletop for running D&D-style one-shots with a human DM. Players pick a fixed hero, move on a shared grid, and act through the action ring (the "donut") around their token. The server handles dice, HP, movement, and combat phases. The DM has the final say on everything.
 
@@ -29,6 +29,8 @@ npm test                  # unit + socket integration tests
   - *Board:* drag any token to move it. Click a stack to see every token in it, including the ones underneath. Click a token to open the inspector: damage, heal, set HP, kill, revive, scope, hostility, inventory, attacks, extra actions.
   - *Top bar:* start and end combat, switch phases, set the phase timer (off / 30 / 60 / 90 / 120 / custom), and **Undo**.
 - **Combat:** the game alternates between PLAYER PHASE and DM PHASE. During the player phase, every player gets one action (attack, act, ability, or item) plus their movement, in any order. Abilities with `grantsActions` give extra actions. The timer runs on the server; when it expires, the server switches phases. Players can't attack outside combat.
+- **Enemy actions:** monsters and hostile NPCs attack, act, and use abilities only during the DM PHASE. Each gets one action per DM phase by default (set `"actions": 2` in a definition for more); moving is free and separate. The server enforces this. The ⚡ badge on enemy tokens and the inspector show what's left. To override, use **+1 action**; the DM's Damage, HP, Kill, and Revive tools ignore the budget. Friendly NPCs aren't limited.
+- **Tanks:** heroes with `"role": "tank"` take 25% of incoming damage from attacks and from the DM's Damage button, rounded down with a minimum of 1 (8 → 2, 3 → 1). The log shows both numbers, e.g. "takes 2 damage (8, reduced by Tank)". Healing, Set HP, Kill, and status changes are exact. A downed tank dies when the *reduced* damage reaches their max HP.
 - **HP:** at 0 HP a player character or NPC goes DOWN, and their only option is a d20 roll. If a DOWN character takes damage ≥ their max HP, they die. Monsters die at 0 HP. The DM can always revive or override.
 - **Hidden info:** the server strips HP and stats for monsters and hostile NPCs from everything it sends to players, including activity log text. The DM sees everything.
 - **Undo** covers moves, damage/heal/HP changes, attacks, spawns and removals, scope changes, items, acts, and abilities, up to the last 20. Structural actions (scene changes, hero selection or release, combat start, end, and phase changes) clear the undo history.
@@ -50,13 +52,22 @@ Changes go live immediately. Open DM and player pages refresh their banks, hero 
 | `data/acts.json` | Generic actions in the Act menu (optional `roll`) |
 | `static/backgrounds`, `static/tokens`, `static/images` | Art, referenced as `/static/...` |
 
-Attack fields: `attack` (to-hit dice), `damage`, `range` (squares). Ability fields: `heal` + `range` (targets an ally and applies the healing), `roll` (narrative roll), `grantsActions`, `free`. Dice notation: `NdX±M` with d4/d6/d8/d10/d12/d20, and terms can be chained (`1d8+1d6+2`). A natural 20 is a crit (damage dice doubled). A natural 1 always misses.
+Definitions can also set `actions` (actions per combat phase, default 1). Attack fields: `attack` (to-hit dice), `damage`, `range` (squares). Ability fields: `heal` + `range` (targets an ally and applies the healing), `roll` (narrative roll), `grantsActions`, `free`. Dice notation: `NdX±M` with d4/d6/d8/d10/d12/d20, and terms can be chained (`1d8+1d6+2`). A natural 20 is a crit (damage dice doubled). A natural 1 always misses.
 
 The included art is generated placeholder art (`npm run placeholders`). Replace the SVG/PNG files, or point definitions at new files. Running the generator never overwrites existing files unless you pass `--force`.
 
+## Link previews
+
+Sharing a game link (`/g/<token>`) shows a preview with the game's title, "Join my game on One & Done!", and the active scene's map. The server writes the Open Graph and Twitter/X tags into the page HTML, so crawlers don't need to run JavaScript. It only exposes the game name and map image; no players or other game state.
+
+- Set `PUBLIC_URL=https://oneshot.elliscode.com` in `.env` so image and page URLs are absolute HTTPS. Without it, the server uses the request's host and protocol, and Caddy's `X-Forwarded-Proto` is trusted.
+- Use PNG, JPG, or WebP maps. Most crawlers can't show SVG, so an SVG background uses a same-named `.png`/`.jpg`/`.webp` next to it if one exists, and otherwise the fallback card at `static/og-default.png` (1200×630; replace it to rebrand). The fallback is also used when no scene is active.
+- **Check it:** `curl -s https://oneshot.elliscode.com/g/<token> | grep -E 'og:|twitter:'`. For a real preview, use the [Facebook Sharing Debugger](https://developers.facebook.com/tools/debug/), [opengraph.xyz](https://www.opengraph.xyz/), or paste the link into Discord, Slack, or iMessage.
+- **Caching:** platforms cache previews, sometimes for days. The image URL includes a version that changes when the active scene (or the image file) changes, so newly fetched previews pick up the new map. Links that were already shared keep their old preview until the platform rescrapes. Use the debugger's **Scrape Again**, or share the link with a throwaway query such as `?v=2` to force a fresh preview.
+
 ## Deploy
 
-1. `npm install --omit=dev`, then create `.env` from `.env.example`. Use a strong `DM_PASSWORD`, a random `SESSION_SECRET`, and `SECURE_COOKIES=true`. Keep `HOST=127.0.0.1` when Caddy runs on the same machine.
+1. `npm install --omit=dev`, then create `.env` from `.env.example`. Use a strong `DM_PASSWORD`, a random `SESSION_SECRET`, `SECURE_COOKIES=true`, and `PUBLIC_URL=https://oneshot.elliscode.com`. Keep `HOST=127.0.0.1` when Caddy runs on the same machine.
 2. Start the server: `npm start` (stop it with Ctrl-C; state is saved continuously, so stopping and restarting is safe mid-game).
 3. Add the site block from `deploy/Caddyfile` to your Caddy config. It proxies `oneshot.elliscode.com` to `127.0.0.1:3000`; adjust the upstream if `HOST`/`PORT` differ. Caddy handles HTTPS and the WebSocket upgrade.
 
@@ -71,6 +82,8 @@ server/
   auth.js         DM password + signed cookie
   db.js           SQLite schema
   dice.js         dice parser/roller
+  preview.js      link-preview (Open Graph) metadata for /g/<token>
+  assets.js       art uploads for the Assets page
   content.js      loads data/ definitions
   templates.js    scene template store + validation
   games/

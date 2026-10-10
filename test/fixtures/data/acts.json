@@ -1,0 +1,12 @@
+[
+  { "id": "open", "name": "Open / Interact" },
+  { "id": "pull-lever", "name": "Pull Lever" },
+  { "id": "investigate", "name": "Investigate", "roll": "1d20" },
+  { "id": "search", "name": "Search", "roll": "1d20" },
+  { "id": "sneak", "name": "Sneak", "roll": "1d20" },
+  { "id": "climb", "name": "Climb / Jump", "roll": "1d20" },
+  { "id": "persuade", "name": "Persuade", "roll": "1d20" },
+  { "id": "intimidate", "name": "Intimidate", "roll": "1d20" },
+  { "id": "help", "name": "Help an Ally" },
+  { "id": "dash", "name": "Dash" }
+]

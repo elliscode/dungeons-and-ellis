@@ -230,6 +230,9 @@ export class Board {
       if (t.status === 'dead') body.append(h('div.token-badge.dead', {}, '☠'));
       el.append(body);
       const stack = stacks.get(`${t.position.x},${t.position.y}`);
+      if (t.actionsLeft !== null && t.actionsLeft !== undefined) {
+        el.append(h(`div.action-badge${t.actionsLeft ? '' : '.spent'}`, { title: `${t.actionsLeft} action(s) left this phase` }, `⚡${t.actionsLeft}`));
+      }
       if (stack > 1 && v.showStacks) el.append(h('div.stack-count', { title: 'Stacked tokens — click to inspect' }, `×${stack}`));
       if (t.label !== false) el.append(h('div.token-name', {}, t.name));
 

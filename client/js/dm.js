@@ -48,11 +48,20 @@ const sceneEntities = () => Object.values(state.entities).filter((e) => e.scope 
 const playerOf = (e) => state.players.find((p) => p.id === e.ownerPlayerId);
 const selected = () => (selectedId ? state.entities[selectedId] : null);
 
+const isEnemy = (e) => e.kind === 'monster' || (e.kind === 'npc' && e.hostile);
+const allowanceOf = (e) => (e.actionsPerPhase ?? 1) + (state.turn[e.id]?.bonus ?? 0);
+// Actions an enemy has left this phase (the server enforces the same budget), or null if none applies.
+function enemyActionsLeft(e) {
+  if (!state.combat.active || !isEnemy(e)) return null;
+  return Math.max(0, allowanceOf(e) - (state.turn[e.id]?.actions ?? 0));
+}
+
 function tokenFor(e) {
   const p = playerOf(e);
   return {
     id: e.id, kind: e.kind, name: e.name, image: e.image, size: e.size, position: e.positions[state.activeSceneId],
     z: e.z, hp: e.hp, maxHp: e.maxHp, status: e.status,
+    actionsLeft: state.combat.phase === 'dm' && e.status === 'active' ? enemyActionsLeft(e) : null,
     color: p ? p.color : e.kind === 'monster' || e.hostile ? '#8a2f2f' : '#d4af37',
   };
 }
@@ -285,7 +294,7 @@ function renderBanks() {
     h('div.section-title', {}, 'Monster bank'), ...bank('monster', content.monsters),
     h('div.section-title', {}, 'Live in this scene'),
     ...(live.length ? live.map((e) => h('div.bank-item', { style: { cursor: 'pointer' }, onclick: () => select(e.id) },
-      h('span.name', {}, e.name, ' ', h('span.muted', {}, `${e.hp}/${e.maxHp} ${e.scope === 'game' ? '🧭' : '📍'}${e.status !== 'active' ? ` ${e.status}` : ''}`)))) : [h('p.muted', {}, 'None')]),
+      h('span.name', {}, e.name, ' ', h('span.muted', {}, `${e.hp}/${e.maxHp} ${e.scope === 'game' ? '🧭' : '📍'}${e.status !== 'active' ? ` ${e.status}` : ''}${enemyActionsLeft(e) !== null ? ` ⚡${enemyActionsLeft(e)}` : ''}`)))) : [h('p.muted', {}, 'None')]),
   );
 }
 
@@ -317,7 +326,9 @@ function renderInspector() {
       e.kind !== 'pc' ? h('span.tag', {}, e.hostile ? 'hostile' : 'friendly') : null,
       owner ? h('span.tag', { style: { color: owner.color } }, owner.name) : null),
     h('p', {}, `❤ ${e.hp}/${e.maxHp} · 🛡 DEF ${e.defense} · 👣 ${e.movement}`,
-      c.active && turn ? h('span.muted', {}, ` · used ${turn.actions}/${1 + turn.bonus} actions, moved ${turn.moved}`) : null),
+      c.active && (turn || isEnemy(e)) ? h('span.muted', {}, ` · actions ${turn?.actions ?? 0}/${allowanceOf(e)}, moved ${turn?.moved ?? 0}`) : null),
+    c.active && isEnemy(e) ? h('p.muted', { style: { fontSize: '12px', margin: '0 0 6px' } },
+      c.phase === 'dm' ? `⚡ ${enemyActionsLeft(e)} action(s) left this DM phase. Moving is free.` : 'Enemies attack during the DM PHASE.') : null,
     h('div.row', {}, amount,
       h('button.small.danger', { onclick: () => send({ type: 'entity.damage', entityId: id, amount: Number(amount.value) }) }, '− Damage'),
       h('button.small', { onclick: () => send({ type: 'entity.heal', entityId: id, amount: Number(amount.value) }) }, '+ Heal')),
@@ -337,7 +348,12 @@ function renderInspector() {
     e.attacks.length ? h('div.section-title', {}, c.active ? 'Attack (DM)' : 'Attacks (combat only)') : null,
     ...e.attacks.map((a) => h('div.inv-item', {},
       h('span', {}, a.name, ' ', h('span.muted', {}, `${a.attack} / ${a.damage} · r${a.range ?? 1}`)),
-      e.kind !== 'pc' ? h('button.small', { disabled: !c.active || e.status !== 'active', onclick: () => setMode({ type: 'target', attacker: e, attack: a }) }, 'Use') : null)),
+      e.kind !== 'pc' ? (() => {
+        const why = !c.active ? 'Combat only' : e.status !== 'active' ? `${e.name} is ${e.status}`
+          : isEnemy(e) && c.phase !== 'dm' ? 'Enemies attack during the DM PHASE'
+            : isEnemy(e) && enemyActionsLeft(e) === 0 ? 'No actions left — use +1 action to override' : null;
+        return h('button.small', { disabled: !!why, title: why ?? 'Pick a target', onclick: () => setMode({ type: 'target', attacker: e, attack: a }) }, 'Use');
+      })() : null)),
     h('div.section-title', {}, 'Inventory'),
     ...(e.inventory.length ? e.inventory.map((it) => h('div.inv-item', {}, it.name,
       h('button.small', { title: 'Remove', onclick: () => send({ type: 'item.remove', entityId: id, itemId: it.id }) }, '✕'))) : [h('p.muted', {}, 'Empty')]),
@@ -368,10 +384,10 @@ function render() {
   renderTop();
   memo('scenes', [state.scenes, state.sceneOrder, state.activeSceneId, templates, ents.map((e) => [e.scope, e.sceneId])], renderScenes);
   memo('players', state.players, renderPlayers);
-  memo('banks', [spawnScope, state.activeSceneId, ents.filter((e) => e.kind !== 'pc').map((e) => [e.id, e.name, e.hp, e.status, e.scope, e.sceneId])], renderBanks);
+  memo('banks', [spawnScope, state.activeSceneId, state.combat, state.turn, ents.filter((e) => e.kind !== 'pc').map((e) => [e.id, e.name, e.hp, e.status, e.scope, e.sceneId])], renderBanks);
   renderBoard();
   const sel = selected();
-  memo('inspector', [selectedId, sel, state.combat.active, state.turn[selectedId], sel && playerOf(sel), state.activeSceneId], renderInspector);
+  memo('inspector', [selectedId, sel, state.combat, state.turn[selectedId], sel && playerOf(sel), state.activeSceneId], renderInspector);
 }
 
 loadTemplates();

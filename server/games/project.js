@@ -28,7 +28,7 @@ function entityView(e, sceneId, viewerPlayerId) {
   }
   if (viewerPlayerId && e.ownerPlayerId === viewerPlayerId) {
     Object.assign(v, structuredClone({
-      defense: e.defense, movement: e.movement, attacks: e.attacks, abilities: e.abilities, inventory: e.inventory,
+      defense: e.defense, movement: e.movement, actionsPerPhase: e.actionsPerPhase ?? 1, attacks: e.attacks, abilities: e.abilities, inventory: e.inventory,
     }));
   }
   return v;

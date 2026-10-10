@@ -7,12 +7,12 @@ import { loadContent, validateDefs } from '../server/content.js';
 import { openDb } from '../server/db.js';
 import { TemplateStore } from '../server/templates.js';
 import { GameService } from '../server/games/service.js';
-import { ROOT } from './helpers.js';
+import { FIXTURE_DATA } from './helpers.js';
 
 function tempContent() {
   const dir = mkdtempSync(join(tmpdir(), 'dne-content-'));
-  for (const sub of ['characters', 'monsters', 'npcs']) cpSync(join(ROOT, 'data', sub), join(dir, sub), { recursive: true });
-  cpSync(join(ROOT, 'data', 'acts.json'), join(dir, 'acts.json'));
+  for (const sub of ['characters', 'monsters', 'npcs']) cpSync(join(FIXTURE_DATA, sub), join(dir, sub), { recursive: true });
+  cpSync(join(FIXTURE_DATA, 'acts.json'), join(dir, 'acts.json'));
   return { dir, cleanup: () => rmSync(dir, { recursive: true, force: true }) };
 }
 

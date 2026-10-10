@@ -74,10 +74,11 @@ function availability() {
   const me = myEntity();
   const c = state.combat;
   const t = state.turn ?? { actions: 0, bonus: 0, moved: 0 };
-  const actionLeft = !c.active || t.actions < 1 + t.bonus;
+  const actionsLeft = Math.max(0, (me.actionsPerPhase ?? 1) + t.bonus - t.actions);
+  const actionLeft = !c.active || actionsLeft > 0;
   const dmPhase = c.active && c.phase !== 'player';
   const moveLeft = c.active ? Math.max(0, me.movement - t.moved) : Infinity;
-  return { me, c, t, actionLeft, dmPhase, moveLeft, canAct: me.status === 'active' && !dmPhase && actionLeft };
+  return { me, c, t, actionLeft, actionsLeft, dmPhase, moveLeft, canAct: me.status === 'active' && !dmPhase && actionLeft };
 }
 
 function cellsWithin(origin, size, range) {
@@ -251,7 +252,7 @@ function nameScreen() {
     });
   };
   showFlow(
-    h('h1', {}, state?.game?.name ?? 'Dungeons & Ellis'),
+    h('h1', {}, state?.game?.name ?? 'One & Done'),
     h('h2', {}, "What's your name?"),
     remembered ? h('p', {}, h('button.gold', { onclick: () => join(remembered) }, `Continue as ${remembered}`)) : null,
     h('form', { onsubmit: (e) => { e.preventDefault(); join(input.value); } },
@@ -337,7 +338,7 @@ function gameScreen() {
   if (me && state.combat.active) {
     const a = availability();
     info.textContent = me.status !== 'active' ? me.status.toUpperCase()
-      : `Action: ${a.actionLeft ? 'ready' : 'used'} · Move: ${a.moveLeft}/${me.movement}`;
+      : `Actions: ${a.actionsLeft}/${(me.actionsPerPhase ?? 1) + (a.t.bonus ?? 0)} · Move: ${a.moveLeft}/${me.movement}`;
   } else info.textContent = me?.status && me.status !== 'active' ? me.status.toUpperCase() : '';
   // Cancel a pending mode if it no longer makes sense (e.g. phase changed).
   if (mode && (!me || me.status !== 'active' || (state.combat.active && state.combat.phase !== 'player'))) mode = null;
@@ -346,7 +347,7 @@ function gameScreen() {
 
 let lastScreen = null;
 function render() {
-  if (fatal) return showFlow(h('h1', {}, 'Dungeons & Ellis'), h('h2', {}, fatal));
+  if (fatal) return showFlow(h('h1', {}, 'One & Done'), h('h2', {}, fatal));
   if (!state) return;
   const screen = !state.me ? 'name' : !state.me.characterId ? `pick:${pickedRole}` : !state.scene ? 'wait' : 'game';
   const same = screen === lastScreen;

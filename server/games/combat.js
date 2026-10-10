@@ -30,6 +30,15 @@ export function endCombat(state) {
   state.turn = {};
 }
 
+export const TANK_DAMAGE_TAKEN = 0.25;
+
+// Tank heroes take 25% of incoming damage (rounded down, at least 1 for any positive hit).
+export function reduceIncoming(e, amount) {
+  amount = Math.max(0, Math.floor(amount));
+  if (amount > 0 && e.kind === 'pc' && e.role === 'tank') return Math.max(1, Math.floor(amount * TANK_DAMAGE_TAKEN));
+  return amount;
+}
+
 // Returns the resulting status transition, if any. PCs and NPCs go DOWN at 0 HP and die when a
 // downed creature takes damage >= max HP. Monsters die at 0 HP.
 export function applyDamage(e, amount) {

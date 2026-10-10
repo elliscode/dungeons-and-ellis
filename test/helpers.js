@@ -6,7 +6,9 @@ import { TemplateStore } from '../server/templates.js';
 import { GameService } from '../server/games/service.js';
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-export const content = loadContent(join(ROOT, 'data'));
+// Tests use a fixed copy of the starter content so live edits to data/ (via the Data page) can't break them.
+export const FIXTURE_DATA = join(ROOT, 'test', 'fixtures', 'data');
+export const content = loadContent(FIXTURE_DATA);
 
 // rng that returns queued values, then falls back to `fallback` (default: max roll).
 export function scriptedRng(fallback = (s) => s) {

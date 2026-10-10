@@ -45,6 +45,7 @@ export function validateDefs(category, files, { imageExists } = {}) {
       }
       if (!isNum(d.maxHp) || d.maxHp < 1) err('maxHp must be a number ≥ 1');
       for (const k of ['defense', 'movement']) if (d[k] !== undefined && !isNum(d[k])) err(`${k} must be a number`);
+      if (d.actions !== undefined && !(Number.isInteger(d.actions) && d.actions >= 1 && d.actions <= 10)) err('actions must be a whole number from 1 to 10');
       if (category === 'characters' && !ROLES.includes(d.role)) err(`role must be one of ${ROLES.join(', ')}`);
       if (d.size !== undefined) {
         const ok = d.size && Number.isInteger(d.size.w) && Number.isInteger(d.size.h) && d.size.w >= 1 && d.size.h >= 1 && d.size.w <= 10 && d.size.h <= 10;
@@ -222,7 +223,7 @@ export function loadContent(dir, { staticDir = null, watchFiles = false } = {}) 
   const initial = build();
   if (initial.errors.length) throw new Error(`Invalid content in ${dir}:\n  ${initial.errors.join('\n  ')}`);
   apply(initial);
-  for (const w of initial.warnings) console.warn(`content warning: ${w}`);
+  if (initial.warnings.length) console.warn(`${initial.warnings.length} content warning(s), e.g. ${initial.warnings[0]} — see the Data page`);
 
   // Pick up edits made directly on disk (debounced; editors often write several events).
   if (watchFiles) {

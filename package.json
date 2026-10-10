@@ -2,7 +2,7 @@
   "name": "d-and-e",
   "version": "0.1.0",
   "private": true,
-  "description": "D&E: Dungeons & Ellis — a lightweight DM-run virtual tabletop for one-shots",
+  "description": "One & Done — a lightweight DM-run virtual tabletop for one-shots",
   "type": "module",
   "engines": { "node": ">=22.13" },
   "scripts": {

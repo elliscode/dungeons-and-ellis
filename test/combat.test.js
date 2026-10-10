@@ -33,7 +33,7 @@ test('player phase: one action, movement separate and limited, range enforced', 
   const r = ok(run(a, { type: 'attack', entityId: ea, attackId: 'throwing-knife', targetId: gob }));
   assert.equal(r.hit, true);
   assert.equal(state().entities[gob].hp, 9 - 5);
-  assert.match(run(a, { type: 'attack', entityId: ea, attackId: 'throwing-knife', targetId: gob }).error, /already used your action/);
+  assert.match(run(a, { type: 'attack', entityId: ea, attackId: 'throwing-knife', targetId: gob }).error, /no actions left/);
   ok(run(a, { type: 'move', entityId: ea, x: 7, y: 7 }), 'can still move after attacking');
   assert.match(run(a, { type: 'move', entityId: ea, x: 9, y: 7 }).error, /Not enough movement/);
 });
@@ -115,7 +115,7 @@ test('inventory: use removes item and consumes action in combat', () => {
   ok(run(DM, { type: 'combat.start' }));
   const [i1, i2] = state().entities[ea].inventory;
   ok(run(a, { type: 'item.use', entityId: ea, itemId: i1.id }));
-  assert.match(run(a, { type: 'item.use', entityId: ea, itemId: i2.id }).error, /already used/);
+  assert.match(run(a, { type: 'item.use', entityId: ea, itemId: i2.id }).error, /no actions left/);
 });
 
 test('player projection hides enemy HP and stats; activity text does not leak it', () => {

@@ -262,3 +262,5 @@ code { background: var(--bg3); padding: 1px 5px; border-radius: 4px; font-size: 
 .messages .warn { color: var(--warn); }
 .messages .ok { color: var(--good); }
 details.example pre { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px; overflow: auto; font-size: 12px; max-height: 260px; }
+.action-badge { position: absolute; left: -6px; top: -6px; background: #ffe119; color: #000; border-radius: 999px; font-size: 10px; font-weight: bold; padding: 1px 5px; z-index: 3; box-shadow: 0 0 6px #ffe11988; }
+.action-badge.spent { background: #555; color: #ccc; box-shadow: none; }

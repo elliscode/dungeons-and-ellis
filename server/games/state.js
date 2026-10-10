@@ -79,6 +79,8 @@ export function entityFromDef(def, kind, extra = {}) {
     attacks: structuredClone(def.attacks ?? []),
     abilities: structuredClone(def.abilities ?? []),
     inventory: (def.inventory ?? []).map((i) => makeItem(typeof i === 'string' ? prettyItemName(i) : i.name)),
+    // Actions per combat phase (movement is separate). Definitions may set "actions".
+    actionsPerPhase: Number.isInteger(def.actions) && def.actions >= 1 ? def.actions : 1,
     status: 'active',
     hostile: kind === 'monster' ? def.hostile !== false : kind === 'npc' ? !!def.hostile : false,
     scope: 'scene',
@@ -88,6 +90,11 @@ export function entityFromDef(def, kind, extra = {}) {
     ownerPlayerId: null,
     ...extra,
   };
+}
+
+// Actions available this phase: the entity's allowance plus any granted extras.
+export function actionAllowance(entity, turn) {
+  return (entity.actionsPerPhase ?? 1) + (turn?.bonus ?? 0);
 }
 
 export function turnFor(state, entityId) {

@@ -1,0 +1,38 @@
+[
+  {
+    "id": "fire-mage", "name": "Fire Mage", "role": "dps", "image": "/static/tokens/fire-mage.svg",
+    "maxHp": 30, "movement": 6, "defense": 13,
+    "attacks": [
+      { "id": "fire-bolt", "name": "Fire Bolt", "attack": "1d20+5", "damage": "1d10+3", "range": 8 },
+      { "id": "flame-burst", "name": "Flame Burst", "attack": "1d20+4", "damage": "2d6+2", "range": 4 }
+    ],
+    "abilities": [
+      { "id": "light", "name": "Light", "free": true, "description": "Make an object glow." }
+    ],
+    "inventory": ["spellbook", "healing-potion", "candle"]
+  },
+  {
+    "id": "shadow-rogue", "name": "Shadow Rogue", "role": "dps", "image": "/static/tokens/shadow-rogue.svg",
+    "maxHp": 32, "movement": 7, "defense": 15,
+    "attacks": [
+      { "id": "twin-daggers", "name": "Twin Daggers", "attack": "1d20+6", "damage": "2d4+4", "range": 1 },
+      { "id": "throwing-knife", "name": "Throwing Knife", "attack": "1d20+6", "damage": "1d6+4", "range": 6 }
+    ],
+    "abilities": [
+      { "id": "cunning-action", "name": "Cunning Action", "grantsActions": 1, "description": "Gain one extra action this phase (once per phase)." }
+    ],
+    "inventory": ["thieves-tools", "smoke-bomb", "healing-potion"]
+  },
+  {
+    "id": "ranger", "name": "Ranger", "role": "dps", "image": "/static/tokens/ranger.svg",
+    "maxHp": 34, "movement": 6, "defense": 14,
+    "attacks": [
+      { "id": "longbow", "name": "Longbow", "attack": "1d20+6", "damage": "1d8+4", "range": 12 },
+      { "id": "shortsword", "name": "Shortsword", "attack": "1d20+5", "damage": "1d6+3", "range": 1 }
+    ],
+    "abilities": [
+      { "id": "track", "name": "Track", "roll": "1d20+5", "description": "Read the trail." }
+    ],
+    "inventory": ["rope", "hunting-trap", "healing-potion"]
+  }
+]

@@ -5,9 +5,10 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { io as connect } from 'socket.io-client';
 import { createServer } from '../server/index.js';
+import { FIXTURE_DATA } from './helpers.js';
 
 async function start(dbFile) {
-  const server = createServer({ dbFile, password: 'pw', graceMs: 100 });
+  const server = createServer({ dbFile, password: 'pw', graceMs: 100, contentDir: FIXTURE_DATA });
   await new Promise((r) => server.httpServer.listen(0, '127.0.0.1', r));
   const base = `http://127.0.0.1:${server.httpServer.address().port}`;
   return { server, base };
