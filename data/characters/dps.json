@@ -1,38 +1,182 @@
 [
   {
-    "id": "fire-mage", "name": "Fire Mage", "role": "dps", "image": "/static/tokens/fire-mage.svg",
-    "maxHp": 30, "movement": 6, "defense": 13,
+    "id": "fire-mage",
+    "name": "Tabasco Habanero",
+    "role": "dps",
+    "image": "/static/tokens/token_132.webp",
+    "maxHp": 30,
+    "movement": 6,
+    "defense": 13,
     "attacks": [
       { "id": "fire-bolt", "name": "Fire Bolt", "attack": "1d20+5", "damage": "1d10+3", "range": 8 },
       { "id": "flame-burst", "name": "Flame Burst", "attack": "1d20+4", "damage": "2d6+2", "range": 4 }
     ],
     "abilities": [
-      { "id": "light", "name": "Light", "free": true, "description": "Make an object glow." }
+      { "id": "inferno-surge", "name": "Inferno Surge", "attack": "1d20+5", "damage": "2d8+2", "range": 6, "description": "Unleash a concentrated blast of fire at one target." },
+      { "id": "light", "name": "Light", "free": true, "description": "Make a small object glow with magical light." }
     ],
     "inventory": ["spellbook", "healing-potion", "candle"]
   },
   {
-    "id": "shadow-rogue", "name": "Shadow Rogue", "role": "dps", "image": "/static/tokens/shadow-rogue.svg",
-    "maxHp": 32, "movement": 7, "defense": 15,
+    "id": "shadow-rogue",
+    "name": "Sneaks Enstabbs",
+    "role": "dps",
+    "image": "/static/tokens/token_019.webp",
+    "maxHp": 32,
+    "movement": 7,
+    "defense": 15,
     "attacks": [
       { "id": "twin-daggers", "name": "Twin Daggers", "attack": "1d20+6", "damage": "2d4+4", "range": 1 },
       { "id": "throwing-knife", "name": "Throwing Knife", "attack": "1d20+6", "damage": "1d6+4", "range": 6 }
     ],
     "abilities": [
-      { "id": "cunning-action", "name": "Cunning Action", "grantsActions": 1, "description": "Gain one extra action this phase (once per phase)." }
+      { "id": "cunning-action", "name": "Cunning Action", "grantsActions": 1, "description": "Gain one extra action this phase; once per phase." },
+      { "id": "backstab", "name": "Backstab", "attack": "1d20+6", "damage": "2d6+4", "range": 1, "description": "Exploit a distracted enemy for a precise, punishing strike." }
     ],
     "inventory": ["thieves-tools", "smoke-bomb", "healing-potion"]
   },
   {
-    "id": "ranger", "name": "Ranger", "role": "dps", "image": "/static/tokens/ranger.svg",
-    "maxHp": 34, "movement": 6, "defense": 14,
+    "id": "ranger",
+    "name": "Tessa Winmer",
+    "role": "dps",
+    "image": "/static/tokens/token_029.webp",
+    "maxHp": 34,
+    "movement": 6,
+    "defense": 14,
     "attacks": [
       { "id": "longbow", "name": "Longbow", "attack": "1d20+6", "damage": "1d8+4", "range": 12 },
       { "id": "shortsword", "name": "Shortsword", "attack": "1d20+5", "damage": "1d6+3", "range": 1 }
     ],
     "abilities": [
-      { "id": "track", "name": "Track", "roll": "1d20+5", "description": "Read the trail." }
+      { "id": "hunters-mark", "name": "Hunter's Mark", "roll": "1d20+5", "description": "Mark a visible target; your next hit against it deals extra damage." },
+      { "id": "pinning-shot", "name": "Pinning Shot", "attack": "1d20+5", "damage": "1d8+3", "range": 10, "description": "A careful shot that can pin a target's clothing or slow its movement." }
     ],
     "inventory": ["rope", "hunting-trap", "healing-potion"]
+  },
+  {
+    "id": "frost-sorcerer",
+    "name": "Ilyra Snowspell",
+    "role": "dps",
+    "image": "/static/tokens/token_127.webp",
+    "maxHp": 29,
+    "movement": 6,
+    "defense": 13,
+    "attacks": [
+      { "id": "frostbolt", "name": "Frostbolt", "attack": "1d20+5", "damage": "1d10+3", "range": 8 },
+      { "id": "ice-lance", "name": "Ice Lance", "attack": "1d20+5", "damage": "1d8+4", "range": 6 }
+    ],
+    "abilities": [
+      { "id": "cone-of-cold", "name": "Cone of Cold", "attack": "1d20+4", "damage": "2d6+3", "range": 3, "description": "Blast a short cone of freezing air, threatening several nearby foes." },
+      { "id": "blink-step", "name": "Blink Step", "free": true, "description": "Teleport a short distance to escape an enemy or gain a better firing angle." }
+    ],
+    "inventory": ["crystal-focus", "mana-potion", "fur-lined-robe"]
+  },
+  {
+    "id": "stormcaller",
+    "name": "Rurik Stormvein",
+    "role": "dps",
+    "image": "/static/tokens/token_086.webp",
+    "maxHp": 32,
+    "movement": 6,
+    "defense": 14,
+    "attacks": [
+      { "id": "storm-staff", "name": "Storm Staff", "attack": "1d20+4", "damage": "1d6+2", "range": 1 },
+      { "id": "lightning-spear", "name": "Lightning Spear", "attack": "1d20+5", "damage": "1d10+3", "range": 8 }
+    ],
+    "abilities": [
+      { "id": "chain-lightning", "name": "Chain Lightning", "attack": "1d20+5", "damage": "2d8+1", "range": 8, "description": "Lightning leaps from the first target to another nearby enemy." },
+      { "id": "thunderclap", "name": "Thunderclap", "attack": "1d20+4", "damage": "1d8+3", "range": 2, "description": "Release a close-range burst of thunder that can stagger nearby foes." }
+    ],
+    "inventory": ["storm-totem", "mana-potion", "copper-wire"]
+  },
+  {
+    "id": "void-warlock",
+    "name": "Nyx Ashwhisper",
+    "role": "dps",
+    "image": "/static/tokens/token_170.webp",
+    "maxHp": 30,
+    "movement": 6,
+    "defense": 13,
+    "attacks": [
+      { "id": "eldritch-blast", "name": "Eldritch Blast", "attack": "1d20+6", "damage": "1d10+4", "range": 10 },
+      { "id": "shadow-dagger", "name": "Shadow Dagger", "attack": "1d20+4", "damage": "1d6+2", "range": 1 }
+    ],
+    "abilities": [
+      { "id": "life-drain", "name": "Life Drain", "attack": "1d20+5", "damage": "1d8+3", "heal": "1d6+2", "range": 6, "description": "Pull vitality from an enemy to mend your own wounds." },
+      { "id": "curse-of-weakness", "name": "Curse of Weakness", "roll": "1d20+5", "description": "Curse a target, weakening its next attack." }
+    ],
+    "inventory": ["grimoire", "soul-crystal", "mana-potion"]
+  },
+  {
+    "id": "wind-monk",
+    "name": "Juno Quickstep",
+    "role": "dps",
+    "image": "/static/tokens/token_038.webp",
+    "maxHp": 33,
+    "movement": 7,
+    "defense": 15,
+    "attacks": [
+      { "id": "bo-staff", "name": "Bo Staff", "attack": "1d20+5", "damage": "1d8+3", "range": 1 },
+      { "id": "rapid-strikes", "name": "Rapid Strikes", "attack": "1d20+5", "damage": "2d4+3", "range": 1 }
+    ],
+    "abilities": [
+      { "id": "flurry-of-blows", "name": "Flurry of Blows", "attack": "1d20+5", "damage": "2d6+2", "range": 1, "description": "Spend your momentum on a flurry of fast unarmed strikes." },
+      { "id": "chi-dash", "name": "Chi Dash", "free": true, "description": "Burst forward with ki, repositioning without giving up your attack." }
+    ],
+    "inventory": ["prayer-beads", "traveler-tea", "healing-potion"]
+  },
+  {
+    "id": "beastmaster",
+    "name": "Corin Wolfmark",
+    "role": "dps",
+    "image": "/static/tokens/token_015.webp",
+    "maxHp": 35,
+    "movement": 6,
+    "defense": 14,
+    "attacks": [
+      { "id": "longbow", "name": "Longbow", "attack": "1d20+6", "damage": "1d8+4", "range": 10 },
+      { "id": "hunting-spear", "name": "Hunting Spear", "attack": "1d20+4", "damage": "1d6+3", "range": 1 }
+    ],
+    "abilities": [
+      { "id": "companion-strike", "name": "Companion Strike", "attack": "1d20+5", "damage": "1d8+3", "range": 4, "description": "Command your loyal beast to lunge at a nearby enemy." },
+      { "id": "snare-trap", "name": "Snare Trap", "roll": "1d20+4", "description": "Set or trigger a snare that can hinder an enemy crossing its space." }
+    ],
+    "inventory": ["animal-whistle", "snare-wire", "healing-potion"]
+  },
+  {
+    "id": "gunslinger",
+    "name": "Pip Coppershot",
+    "role": "dps",
+    "image": "/static/tokens/token_103.webp",
+    "maxHp": 31,
+    "movement": 6,
+    "defense": 14,
+    "attacks": [
+      { "id": "hand-crossbow", "name": "Hand Crossbow", "attack": "1d20+6", "damage": "1d8+4", "range": 8 },
+      { "id": "powder-bomb", "name": "Powder Bomb", "attack": "1d20+4", "damage": "2d6+2", "range": 4 }
+    ],
+    "abilities": [
+      { "id": "quick-reload", "name": "Quick Reload", "grantsActions": 1, "description": "Reload and fire in one smooth motion; once per phase." },
+      { "id": "trick-shot", "name": "Trick Shot", "attack": "1d20+5", "damage": "1d10+3", "range": 8, "description": "Bank a shot around cover or aim for a weapon held by the target." }
+    ],
+    "inventory": ["powder-horn", "spare-bolts", "healing-potion"]
+  },
+  {
+    "id": "dragon-spellblade",
+    "name": "Kael Embercrest",
+    "role": "dps",
+    "image": "/static/tokens/token_112.webp",
+    "maxHp": 36,
+    "movement": 6,
+    "defense": 15,
+    "attacks": [
+      { "id": "dragonfang-sword", "name": "Dragonfang Sword", "attack": "1d20+6", "damage": "1d8+4", "range": 1 },
+      { "id": "searing-breath", "name": "Searing Breath", "attack": "1d20+5", "damage": "2d6+3", "range": 4 }
+    ],
+    "abilities": [
+      { "id": "flame-lunge", "name": "Flame Lunge", "attack": "1d20+5", "damage": "1d10+4", "range": 2, "description": "Dash into melee with a flaming blade strike." },
+      { "id": "draconic-roar", "name": "Draconic Roar", "roll": "1d20+4", "description": "Unleash a fierce roar that can shake the resolve of nearby enemies." }
+    ],
+    "inventory": ["dragon-scale", "ember-vial", "healing-potion"]
   }
 ]

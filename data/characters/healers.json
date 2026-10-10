@@ -1,41 +1,188 @@
 [
   {
-    "id": "cleric", "name": "Cleric", "role": "heal", "image": "/static/tokens/cleric.svg",
-    "maxHp": 34, "movement": 5, "defense": 16,
+    "id": "cleric",
+    "name": "Helga Christenlight",
+    "role": "heal",
+    "image": "/static/tokens/token_020.webp",
+    "maxHp": 34,
+    "movement": 5,
+    "defense": 16,
     "attacks": [
       { "id": "mace", "name": "Mace", "attack": "1d20+4", "damage": "1d6+3", "range": 1 },
       { "id": "sacred-flame", "name": "Sacred Flame", "attack": "1d20+5", "damage": "1d8+2", "range": 6 }
     ],
     "abilities": [
-      { "id": "healing-word", "name": "Healing Word", "heal": "1d8+3", "range": 6, "description": "Heal an ally within 6 squares." },
-      { "id": "cure-wounds", "name": "Cure Wounds", "heal": "2d8+3", "range": 1, "description": "A strong heal on an adjacent ally." }
+      { "id": "healing-word", "name": "Healing Word", "heal": "1d8+3", "range": 6, "description": "Heal an ally within 6 squares with a quick prayer." },
+      { "id": "cure-wounds", "name": "Cure Wounds", "heal": "2d8+3", "range": 1, "description": "Deliver a stronger heal to yourself or an adjacent ally." }
     ],
     "inventory": ["holy-water", "healing-potion", "bandages"]
   },
   {
-    "id": "druid", "name": "Druid", "role": "heal", "image": "/static/tokens/druid.svg",
-    "maxHp": 32, "movement": 6, "defense": 14,
+    "id": "druid",
+    "name": "Daisy Sunbeam",
+    "role": "heal",
+    "image": "/static/tokens/token_052.webp",
+    "maxHp": 32,
+    "movement": 6,
+    "defense": 14,
     "attacks": [
       { "id": "thorn-whip", "name": "Thorn Whip", "attack": "1d20+5", "damage": "1d6+3", "range": 3 },
       { "id": "quarterstaff", "name": "Quarterstaff", "attack": "1d20+3", "damage": "1d6+2", "range": 1 }
     ],
     "abilities": [
-      { "id": "goodberry", "name": "Goodberry", "heal": "1d6+4", "range": 1, "description": "Feed an adjacent ally a magic berry." },
-      { "id": "speak-with-animals", "name": "Speak with Animals", "roll": "1d20+4" }
+      { "id": "goodberry", "name": "Goodberry", "heal": "1d6+4", "range": 1, "description": "Feed an adjacent ally a nourishing magic berry." },
+      { "id": "natures-mend", "name": "Nature's Mend", "heal": "1d8+2", "range": 4, "description": "Send restorative roots and green light to a wounded ally." },
+      { "id": "speak-with-animals", "name": "Speak with Animals", "roll": "1d20+4", "description": "Communicate with nearby beasts and learn what they have seen." }
     ],
     "inventory": ["herbs", "healing-potion", "rope"]
   },
   {
-    "id": "bard", "name": "Bard", "role": "heal", "image": "/static/tokens/bard.svg",
-    "maxHp": 30, "movement": 6, "defense": 14,
+    "id": "bard",
+    "name": "Luten Tuter",
+    "role": "heal",
+    "image": "/static/tokens/token_012.webp",
+    "maxHp": 30,
+    "movement": 6,
+    "defense": 14,
     "attacks": [
       { "id": "rapier", "name": "Rapier", "attack": "1d20+5", "damage": "1d8+3", "range": 1 },
       { "id": "vicious-mockery", "name": "Vicious Mockery", "attack": "1d20+5", "damage": "1d6+2", "range": 8 }
     ],
     "abilities": [
-      { "id": "song-of-rest", "name": "Song of Rest", "heal": "1d8+2", "range": 4, "description": "Heal an ally within 4 squares." },
-      { "id": "inspire", "name": "Inspire", "roll": "1d6", "description": "Give an ally an inspiration die." }
+      { "id": "song-of-rest", "name": "Song of Rest", "heal": "1d8+2", "range": 4, "description": "Play a restorative melody that heals an ally within 4 squares." },
+      { "id": "inspire", "name": "Inspire", "roll": "1d6", "description": "Give an ally an inspiration die to add to a future roll." }
     ],
     "inventory": ["lute", "healing-potion", "disguise-kit"]
+  },
+  {
+    "id": "holy-priest",
+    "name": "Mira Dawnweave",
+    "role": "heal",
+    "image": "/static/tokens/token_071.webp",
+    "maxHp": 30,
+    "movement": 5,
+    "defense": 14,
+    "attacks": [
+      { "id": "sunstaff", "name": "Sunstaff", "attack": "1d20+4", "damage": "1d6+2", "range": 1 },
+      { "id": "holy-smite", "name": "Holy Smite", "attack": "1d20+5", "damage": "1d8+3", "range": 6 }
+    ],
+    "abilities": [
+      { "id": "prayer-of-mending", "name": "Prayer of Mending", "heal": "1d8+3", "range": 6, "description": "Send a pulse of light to restore an ally at range." },
+      { "id": "sanctuary", "name": "Sanctuary", "roll": "1d20+4", "description": "Wrap an ally in a protective blessing that discourages attacks against them." }
+    ],
+    "inventory": ["sun-charm", "holy-water", "mana-potion"]
+  },
+  {
+    "id": "restoration-shaman",
+    "name": "Orla Raincaller",
+    "role": "heal",
+    "image": "/static/tokens/token_133.webp",
+    "maxHp": 33,
+    "movement": 6,
+    "defense": 14,
+    "attacks": [
+      { "id": "storm-rod", "name": "Storm Rod", "attack": "1d20+5", "damage": "1d8+3", "range": 6 },
+      { "id": "spirit-maul", "name": "Spirit Maul", "attack": "1d20+4", "damage": "1d6+2", "range": 1 }
+    ],
+    "abilities": [
+      { "id": "healing-surge", "name": "Healing Surge", "heal": "1d10+3", "range": 6, "description": "Call a rush of restorative water into a wounded ally." },
+      { "id": "chain-heal", "name": "Chain Heal", "heal": "1d8+2", "range": 6, "description": "Heal one ally; the spell may leap to another nearby wounded ally." },
+      { "id": "healing-totem", "name": "Healing Totem", "roll": "1d20+3", "description": "Plant a spirit totem that supports nearby allies with steady healing." }
+    ],
+    "inventory": ["carved-totem", "rain-stone", "healing-potion"]
+  },
+  {
+    "id": "mistweaver",
+    "name": "Bao Lotusstep",
+    "role": "heal",
+    "image": "/static/tokens/token_144.webp",
+    "maxHp": 34,
+    "movement": 7,
+    "defense": 15,
+    "attacks": [
+      { "id": "bamboo-staff", "name": "Bamboo Staff", "attack": "1d20+4", "damage": "1d8+2", "range": 1 },
+      { "id": "healing-palm", "name": "Healing Palm", "attack": "1d20+5", "damage": "1d6+3", "range": 1 }
+    ],
+    "abilities": [
+      { "id": "soothing-mist", "name": "Soothing Mist", "heal": "1d8+3", "range": 4, "description": "Guide a ribbon of mist to soothe and heal an ally." },
+      { "id": "renewing-wave", "name": "Renewing Wave", "heal": "1d6+3", "range": 6, "description": "Send a quick wave of chi to a distant ally." },
+      { "id": "serene-focus", "name": "Serene Focus", "roll": "1d20+4", "description": "Center your breathing and improve your defense against the next attack." }
+    ],
+    "inventory": ["prayer-beads", "herbal-tea", "healing-potion"]
+  },
+  {
+    "id": "light-paladin",
+    "name": "Seraphine Goldvein",
+    "role": "heal",
+    "image": "/static/tokens/token_032.webp",
+    "maxHp": 36,
+    "movement": 5,
+    "defense": 17,
+    "attacks": [
+      { "id": "warhammer", "name": "Warhammer", "attack": "1d20+5", "damage": "1d8+3", "range": 1 },
+      { "id": "radiant-javelin", "name": "Radiant Javelin", "attack": "1d20+4", "damage": "1d6+2", "range": 5 }
+    ],
+    "abilities": [
+      { "id": "flash-of-light", "name": "Flash of Light", "heal": "1d8+4", "range": 6, "description": "Quickly restore an ally with a burst of holy light." },
+      { "id": "beacon-of-grace", "name": "Beacon of Grace", "free": true, "description": "Bless an ally; your next healing ability on them restores a little extra health." }
+    ],
+    "inventory": ["holy-symbol", "healing-potion", "silver-shield"]
+  },
+  {
+    "id": "field-alchemist",
+    "name": "Mallow Brassleaf",
+    "role": "heal",
+    "image": "/static/tokens/token_110.webp",
+    "maxHp": 31,
+    "movement": 6,
+    "defense": 13,
+    "attacks": [
+      { "id": "acid-vial", "name": "Acid Vial", "attack": "1d20+4", "damage": "1d6+3", "range": 6 },
+      { "id": "reinforced-cane", "name": "Reinforced Cane", "attack": "1d20+3", "damage": "1d6+2", "range": 1 }
+    ],
+    "abilities": [
+      { "id": "restorative-draught", "name": "Restorative Draught", "heal": "2d6+2", "range": 4, "description": "Toss an ally a potent healing mixture." },
+      { "id": "antidote", "name": "Antidote", "heal": "1d6+3", "range": 1, "description": "Treat an adjacent ally with an antidote and medicinal salve." },
+      { "id": "volatile-flask", "name": "Volatile Flask", "attack": "1d20+4", "damage": "1d8+3", "range": 5, "description": "Hurl a flask that bursts in a cloud of stinging alchemical fumes." }
+    ],
+    "inventory": ["alchemists-kit", "restorative-draught", "antitoxin"]
+  },
+  {
+    "id": "star-oracle",
+    "name": "Ysra Starbloom",
+    "role": "heal",
+    "image": "/static/tokens/token_145.webp",
+    "maxHp": 31,
+    "movement": 6,
+    "defense": 14,
+    "attacks": [
+      { "id": "starfire-bolt", "name": "Starfire Bolt", "attack": "1d20+5", "damage": "1d8+3", "range": 8 },
+      { "id": "crescent-staff", "name": "Crescent Staff", "attack": "1d20+3", "damage": "1d6+2", "range": 1 }
+    ],
+    "abilities": [
+      { "id": "celestial-balm", "name": "Celestial Balm", "heal": "1d8+3", "range": 6, "description": "Call down a gentle starbeam to restore an ally." },
+      { "id": "warding-rune", "name": "Warding Rune", "roll": "1d20+4", "description": "Place a glowing rune that shields an ally from the next harmful strike." },
+      { "id": "foresight", "name": "Foresight", "roll": "1d6", "description": "Read a flicker of possible futures and grant an ally a bonus on their next roll." }
+    ],
+    "inventory": ["astral-focus", "chalk-runes", "mana-potion"]
+  },
+  {
+    "id": "spirit-weaver",
+    "name": "Nima Veilwhisper",
+    "role": "heal",
+    "image": "/static/tokens/token_151.webp",
+    "maxHp": 32,
+    "movement": 6,
+    "defense": 14,
+    "attacks": [
+      { "id": "spirit-fan", "name": "Spirit Fan", "attack": "1d20+4", "damage": "1d6+3", "range": 1 },
+      { "id": "ghost-lantern", "name": "Ghost Lantern", "attack": "1d20+5", "damage": "1d8+2", "range": 6 }
+    ],
+    "abilities": [
+      { "id": "ancestral-call", "name": "Ancestral Call", "heal": "1d8+3", "range": 5, "description": "Ask a friendly ancestor spirit to mend a distant ally." },
+      { "id": "spirit-tether", "name": "Spirit Tether", "heal": "1d6+3", "range": 4, "description": "Link your spirit to an ally, sharing a little vitality with them." },
+      { "id": "veil-step", "name": "Veil Step", "free": true, "description": "Slip briefly through the spirit veil to reposition safely." }
+    ],
+    "inventory": ["ancestor-mask", "spirit-incense", "healing-potion"]
   }
 ]
