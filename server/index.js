@@ -12,6 +12,8 @@ import { GameService } from './games/service.js';
 import { GameError } from './games/state.js';
 import { attachSockets } from './sockets.js';
 import { previewMeta, renderPlayPage } from './preview.js';
+import { loadSettings, SettingsError } from './settings.js';
+import { ROLE_STRENGTHS, describeStrength } from './games/roles.js';
 import { readFileSync } from 'node:fs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -29,6 +31,7 @@ export function createServer({
   publicUrl = null,
 } = {}) {
   const db = openDb(dbFile);
+  const settings = loadSettings(contentDir);
   const content = loadContent(contentDir, { staticDir, watchFiles: watchContent });
   const assets = createAssetStore(staticDir);
   const auth = createAuth({ password, secret });
@@ -50,6 +53,7 @@ export function createServer({
       if (err instanceof GameError) return res.status(400).json({ error: err.message });
       if (err instanceof ContentError) return res.status(err.status).json({ error: err.message, errors: err.errors, warnings: err.warnings });
       if (err instanceof AssetError) return res.status(err.status).json({ error: err.message });
+      if (err instanceof SettingsError) return res.status(400).json({ error: err.message });
       console.error(err);
       res.status(500).json({ error: 'Server error' });
     }
@@ -96,6 +100,17 @@ export function createServer({
     assets.remove(req.params.folder, req.params.name);
     notifyContent();
     return { ok: true };
+  }));
+
+  // ---- global settings ----
+  const settingsView = () => ({
+    ...settings.get(),
+    options: ROLE_STRENGTHS.map((n) => ({ value: n, label: `${n} — ${describeStrength(n)}` })),
+  });
+  app.get('/api/settings', requireDm, handle(() => settingsView()));
+  app.put('/api/settings', requireDm, handle((req) => {
+    if (req.body?.roleStrength !== undefined) settings.setRoleStrength(req.body.roleStrength);
+    return settingsView();
   }));
 
   // ---- data (definition JSON files) ----
@@ -167,9 +182,14 @@ export function createServer({
     }, 50);
   }
   content.on('change', notifyContent);
+  // Role strength applies on the next hit/heal everywhere; tell open pages and note it for DMs.
+  settings.on('change', ({ before, after }) => {
+    notifyContent();
+    service.noteToLoadedGames(`Role strength changed from ${before} to ${after}: ${describeStrength(after)}`);
+  });
 
   return {
-    app, httpServer, io, service, db, content,
+    app, httpServer, io, service, db, content, settings,
     close() {
       service.close();
       content.close();

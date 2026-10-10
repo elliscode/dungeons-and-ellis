@@ -513,7 +513,7 @@
             "range": 6
           }
         ],
-        "description": "Restore four times the rolled 1d4+1 healing amount to an ally within 6 squares."
+        "description": "Restore 1d4+1 HP to an ally within 6 squares."
       },
       {
         "id": "dawnstride-blessing",
@@ -590,7 +590,7 @@
             "range": 6
           }
         ],
-        "description": "Call upon the wilds to restore four times the rolled healing amount to an ally within 6 squares."
+        "description": "Call upon the wilds to restore health to an ally within 6 squares."
       },
       {
         "id": "brambleveil-entangling-vines",
@@ -660,7 +660,7 @@
             "range": 6
           }
         ],
-        "description": "Administer a potent remedy, restoring four times the rolled healing amount to an ally within 6 squares."
+        "description": "Administer a potent remedy, restoring health to an ally within 6 squares."
       },
       {
         "id": "blackquill-antitoxin",
@@ -727,7 +727,7 @@
             "range": 6
           }
         ],
-        "description": "Channel golden sunlight to restore four times the rolled healing amount to an ally within 6 squares."
+        "description": "Channel golden sunlight to restore health to an ally within 6 squares."
       },
       {
         "id": "solcrown-golden-aegis",

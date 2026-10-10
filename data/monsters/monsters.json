@@ -28,5 +28,831 @@
       { "id": "bite", "name": "Bite", "attack": "1d20+10", "damage": "2d10+6", "range": 2 },
       { "id": "claw", "name": "Claw", "attack": "1d20+10", "damage": "2d6+6", "range": 1 },
       { "id": "fire-breath", "name": "Fire Breath", "attack": "1d20+8", "damage": "6d6", "range": 6 }
-    ] }
+    ] },
+  {
+    "id": "giant-rat",
+    "name": "Giant Rat",
+    "image": "/static/tokens/monster_001.webp",
+    "maxHp": 8,
+    "defense": 12,
+    "movement": 6,
+    "attacks": [
+      {
+        "id": "bite",
+        "name": "Bite",
+        "attack": "1d20+4",
+        "damage": "1d4+2",
+        "range": 1
+      }
+    ],
+    "description": "A diseased oversized rodent that darts between adventurers and bites at exposed flesh."
+  },
+  {
+    "id": "rat-swarm",
+    "name": "Rat Swarm",
+    "image": "/static/tokens/monster_002.webp",
+    "maxHp": 20,
+    "defense": 13,
+    "movement": 6,
+    "size": {
+      "w": 2,
+      "h": 2
+    },
+    "attacks": [
+      {
+        "id": "swarm-bites",
+        "name": "Swarm of Bites",
+        "attack": "1d20+5",
+        "damage": "2d6+2",
+        "range": 1
+      }
+    ],
+    "abilities": [
+      {
+        "id": "overwhelm",
+        "name": "Overwhelm",
+        "actionCost": 1,
+        "range": 1,
+        "effects": [
+          {
+            "type": "multi_attack",
+            "count": 2,
+            "attack": "1d20+4",
+            "damage": "1d6+1",
+            "range": 1
+          }
+        ],
+        "description": "The swarm surges over a nearby target, making two separate bite attacks."
+      }
+    ],
+    "description": "A writhing mass of red-eyed rats that surrounds prey and attacks in a frenzy."
+  },
+  {
+    "id": "kobold-scout",
+    "name": "Kobold Scout",
+    "image": "/static/tokens/monster_003.webp",
+    "maxHp": 13,
+    "defense": 13,
+    "movement": 7,
+    "attacks": [
+      {
+        "id": "spear",
+        "name": "Spear",
+        "attack": "1d20+5",
+        "damage": "1d6+3",
+        "range": 1,
+        "damageType": "piercing"
+      },
+      {
+        "id": "javelin",
+        "name": "Javelin",
+        "attack": "1d20+4",
+        "damage": "1d6+2",
+        "range": 5,
+        "damageType": "piercing"
+      }
+    ],
+    "abilities": [
+      {
+        "id": "nimble-retreat",
+        "name": "Nimble Retreat",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [
+          {
+            "type": "modify_movement",
+            "target": "self",
+            "amount": 3,
+            "duration": "current_turn"
+          }
+        ],
+        "description": "The kobold darts away with a sudden burst of speed."
+      }
+    ],
+    "description": "A cunning reptilian scout who throws javelins before darting into cover."
+  },
+  {
+    "id": "zombie",
+    "name": "Zombie",
+    "image": "/static/tokens/monster_004.webp",
+    "maxHp": 16,
+    "defense": 13,
+    "movement": 4,
+    "attacks": [
+      {
+        "id": "slam",
+        "name": "Slam",
+        "attack": "1d20+5",
+        "damage": "1d8+3",
+        "range": 1,
+        "damageType": "necrotic"
+      }
+    ],
+    "abilities": [
+      {
+        "id": "putrid-grasp",
+        "name": "Putrid Grasp",
+        "actionCost": 1,
+        "range": 1,
+        "effects": [
+          {
+            "type": "attack",
+            "target": "enemy",
+            "range": 1,
+            "attack": "1d20+3",
+            "damage": "1d6+2",
+            "damageType": "necrotic"
+          },
+          {
+            "type": "apply_status",
+            "target": "enemy",
+            "status": "poisoned",
+            "duration": "next_dm_phase",
+            "when": "attack_hits"
+          }
+        ],
+        "description": "The zombie grabs a nearby foe with a filthy hand, dealing necrotic damage and poisoning the target on a hit."
+      }
+    ],
+    "description": "A shambling corpse that relentlessly pursues the living and spreads its corruption through a putrid touch."
+  },
+  {
+    "id": "bandit-rogue",
+    "name": "Bandit Rogue",
+    "image": "/static/tokens/monster_005.webp",
+    "maxHp": 14,
+    "defense": 13,
+    "movement": 7,
+    "attacks": [
+      {
+        "id": "dagger",
+        "name": "Dagger",
+        "attack": "1d20+5",
+        "damage": "1d6+3",
+        "range": 1,
+        "damageType": "piercing"
+      },
+      {
+        "id": "throwing-knife",
+        "name": "Throwing Knife",
+        "attack": "1d20+5",
+        "damage": "1d4+3",
+        "range": 4,
+        "damageType": "piercing"
+      }
+    ],
+    "abilities": [
+      {
+        "id": "smoke-bomb",
+        "name": "Smoke Bomb",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [
+          {
+            "type": "defense_bonus",
+            "target": "self",
+            "amount": 3,
+            "duration": "next_dm_phase"
+          },
+          {
+            "type": "modify_movement",
+            "target": "self",
+            "amount": 2,
+            "duration": "current_turn"
+          }
+        ],
+        "description": "The rogue throws down a smoke bomb, obscuring their position and granting temporary defense while escaping."
+      }
+    ],
+    "description": "A masked cutthroat who uses thrown blades, dirty tricks, and smoke to escape retaliation."
+  },
+  {
+    "id": "orc-warrior",
+    "name": "Orc Warrior",
+    "image": "/static/tokens/monster_006.webp",
+    "maxHp": 28,
+    "defense": 14,
+    "movement": 6,
+    "attacks": [
+      {
+        "id": "greataxe",
+        "name": "Greataxe",
+        "attack": "1d20+6",
+        "damage": "1d12+4",
+        "range": 1,
+        "damageType": "slashing"
+      }
+    ],
+    "abilities": [
+      {
+        "id": "battle-cry",
+        "name": "Battle Cry",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [
+          {
+            "type": "grant_roll_bonus",
+            "target": "self",
+            "bonus": 2,
+            "duration": "next_dm_phase"
+          }
+        ],
+        "description": "The orc bellows a war cry, empowering its next attack with a +2 attack bonus."
+      }
+    ],
+    "description": "A heavily muscled orc who charges into melee and relies on brutal strength."
+  },
+  {
+    "id": "ogre-brute",
+    "name": "Ogre Brute",
+    "image": "/static/tokens/monster_007.webp",
+    "maxHp": 59,
+    "defense": 11,
+    "movement": 5,
+    "size": {
+      "w": 2,
+      "h": 2
+    },
+    "attacks": [
+      {
+        "id": "huge-club",
+        "name": "Huge Club",
+        "attack": "1d20+6",
+        "damage": "2d8+4",
+        "range": 2,
+        "damageType": "bludgeoning"
+      },
+      {
+        "id": "throw-rock",
+        "name": "Throw Rock",
+        "attack": "1d20+5",
+        "damage": "2d6+4",
+        "range": 5,
+        "damageType": "bludgeoning"
+      }
+    ],
+    "description": "A towering, thick-skinned brute that smashes nearby foes with a massive club and hurls rocks at distant targets."
+  },
+  {
+    "id": "giant-spider",
+    "name": "Giant Spider",
+    "image": "/static/tokens/monster_008.webp",
+    "maxHp": 32,
+    "defense": 14,
+    "movement": 5,
+    "attacks": [
+      {
+        "id": "bite",
+        "name": "Venomous Bite",
+        "attack": "1d20+6",
+        "damage": "1d8+4",
+        "range": 1,
+        "damageType": "poison"
+      }
+    ],
+    "abilities": [
+      {
+        "id": "web",
+        "name": "Web",
+        "actionCost": 1,
+        "range": 4,
+        "effects": [
+          {
+            "type": "attack",
+            "target": "enemy",
+            "range": 4,
+            "attack": "1d20+4",
+            "damage": "1d4+2",
+            "damageType": "nature"
+          },
+          {
+            "type": "apply_status",
+            "target": "enemy",
+            "status": "snared",
+            "duration": "next_dm_phase",
+            "when": "attack_hits"
+          }
+        ],
+        "description": "The spider launches sticky webbing at a target within four squares, dealing minor damage and snaring the target on a hit."
+      }
+    ],
+    "description": "A large, red-eyed arachnid that ambushes prey with venomous fangs and sticky webs."
+  },
+  {
+    "id": "dire-wolf",
+    "name": "Dire Wolf",
+    "image": "/static/tokens/monster_009.webp",
+    "maxHp": 26,
+    "defense": 13,
+    "movement": 8,
+    "attacks": [
+      {
+        "id": "bite",
+        "name": "Savage Bite",
+        "attack": "1d20+6",
+        "damage": "1d10+4",
+        "range": 1,
+        "damageType": "piercing"
+      }
+    ],
+    "abilities": [
+      {
+        "id": "pack-tactics",
+        "name": "Pack Tactics",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [
+          {
+            "type": "grant_roll_bonus",
+            "target": "self",
+            "bonus": 2,
+            "duration": "next_dm_phase"
+          }
+        ],
+        "description": "The wolf coordinates with its pack, gaining a +2 bonus to its next attack roll."
+      }
+    ],
+    "description": "A massive gray wolf that uses its speed and hunting instincts to chase down isolated prey."
+  },
+  {
+    "id": "cultist-acolyte",
+    "name": "Cultist Acolyte",
+    "image": "/static/tokens/monster_010.webp",
+    "maxHp": 18,
+    "defense": 13,
+    "movement": 6,
+    "attacks": [
+      {
+        "id": "ritual-dagger",
+        "name": "Ritual Dagger",
+        "attack": "1d20+4",
+        "damage": "1d6+2",
+        "range": 1,
+        "damageType": "piercing"
+      }
+    ],
+    "abilities": [
+      {
+        "id": "shadow-bolt",
+        "name": "Shadow Bolt",
+        "actionCost": 1,
+        "range": 4,
+        "effects": [
+          {
+            "type": "attack",
+            "target": "enemy",
+            "range": 4,
+            "attack": "1d20+5",
+            "damage": "2d6+3",
+            "damageType": "necrotic"
+          }
+        ],
+        "description": "The acolyte hurls a bolt of dark energy at a target within four squares."
+      }
+    ],
+    "description": "A hooded devotee of a forbidden power who fights with a ritual dagger and blasts of necrotic magic."
+  },
+  {
+    "id": "skeleton-cultist",
+    "name": "Skeleton Cultist",
+    "image": "/static/tokens/monster_011.webp",
+    "maxHp": 18,
+    "defense": 14,
+    "movement": 6,
+    "attacks": [
+      {
+        "id": "rusted-blade",
+        "name": "Rusted Blade",
+        "attack": "1d20+5",
+        "damage": "1d8+3",
+        "range": 1,
+        "damageType": "necrotic"
+      }
+    ],
+    "abilities": [
+      {
+        "id": "dark-ritual",
+        "name": "Dark Ritual",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [
+          {
+            "type": "grant_roll_bonus",
+            "target": "self",
+            "bonus": 3,
+            "duration": "next_dm_phase"
+          }
+        ],
+        "description": "The skeleton invokes forbidden powers, gaining a +3 bonus to its next attack roll."
+      }
+    ],
+    "description": "A skeletal servant of a dark cult, clad in tattered robes and wielding a corroded weapon."
+  },
+  {
+    "id": "ancient-treant",
+    "name": "Ancient Treant",
+    "image": "/static/tokens/monster_012.webp",
+    "maxHp": 75,
+    "defense": 15,
+    "movement": 3,
+    "size": {
+      "w": 2,
+      "h": 2
+    },
+    "attacks": [
+      {
+        "id": "branch-slam",
+        "name": "Branch Slam",
+        "attack": "1d20+7",
+        "damage": "2d8+4",
+        "range": 2,
+        "damageType": "nature"
+      }
+    ],
+    "abilities": [
+      {
+        "id": "root-snare",
+        "name": "Root Snare",
+        "actionCost": 1,
+        "range": 3,
+        "effects": [
+          {
+            "type": "attack",
+            "target": "enemy",
+            "range": 3,
+            "attack": "1d20+5",
+            "damage": "1d6+3",
+            "damageType": "nature"
+          },
+          {
+            "type": "apply_status",
+            "target": "enemy",
+            "status": "snared",
+            "duration": "next_dm_phase",
+            "when": "attack_hits"
+          }
+        ],
+        "description": "The treant lashes roots toward a target, dealing nature damage and snaring it on a hit."
+      }
+    ],
+    "description": "An ancient forest guardian with bark-like skin and glowing eyes, capable of crushing intruders and entangling them with roots."
+  },
+  {
+    "id": "goblin-raider",
+    "name": "Goblin Raider",
+    "image": "/static/tokens/monster_013.webp",
+    "maxHp": 12,
+    "defense": 13,
+    "movement": 7,
+    "attacks": [
+      {
+        "id": "crude-sword",
+        "name": "Crude Sword",
+        "attack": "1d20+5",
+        "damage": "1d8+2",
+        "range": 1,
+        "damageType": "slashing"
+      },
+      {
+        "id": "dirty-knife",
+        "name": "Dirty Knife",
+        "attack": "1d20+4",
+        "damage": "1d4+3",
+        "range": 1,
+        "damageType": "piercing"
+      }
+    ],
+    "abilities": [
+      {
+        "id": "dirty-trick",
+        "name": "Dirty Trick",
+        "actionCost": 1,
+        "range": 1,
+        "effects": [
+          {
+            "type": "attack",
+            "target": "enemy",
+            "range": 1,
+            "attack": "1d20+4",
+            "damage": "1d4+2",
+            "damageType": "piercing"
+          },
+          {
+            "type": "apply_status",
+            "target": "enemy",
+            "status": "shaken",
+            "duration": "next_dm_phase",
+            "when": "attack_hits"
+          }
+        ],
+        "description": "The goblin makes a sneaky low strike that deals damage and leaves its target shaken on a hit."
+      }
+    ],
+    "description": "A vicious goblin fighter who relies on speed, cheap shots, and unpredictable attacks."
+  },
+  {
+    "id": "spotted-hyena",
+    "name": "Spotted Hyena",
+    "image": "/static/tokens/monster_014.webp",
+    "maxHp": 22,
+    "defense": 13,
+    "movement": 8,
+    "attacks": [
+      {
+        "id": "bone-crunching-bite",
+        "name": "Bone-Crunching Bite",
+        "attack": "1d20+5",
+        "damage": "1d8+3",
+        "range": 1,
+        "damageType": "piercing"
+      }
+    ],
+    "abilities": [
+      {
+        "id": "savage-pounce",
+        "name": "Savage Pounce",
+        "actionCost": 1,
+        "range": 2,
+        "effects": [
+          {
+            "type": "modify_movement",
+            "target": "self",
+            "amount": 2,
+            "duration": "current_turn"
+          },
+          {
+            "type": "attack",
+            "target": "enemy",
+            "range": 2,
+            "attack": "1d20+5",
+            "damage": "1d8+3",
+            "damageType": "piercing"
+          }
+        ],
+        "description": "The hyena bounds toward a target, gaining extra movement before making a vicious bite attack."
+      }
+    ],
+    "description": "A feral spotted predator that races across the battlefield and tears into vulnerable prey."
+  },
+  {
+    "id": "cave-troll",
+    "name": "Cave Troll",
+    "image": "/static/tokens/monster_015.webp",
+    "maxHp": 65,
+    "defense": 12,
+    "movement": 5,
+    "size": {
+      "w": 2,
+      "h": 2
+    },
+    "attacks": [
+      {
+        "id": "heavy-fist",
+        "name": "Heavy Fist",
+        "attack": "1d20+6",
+        "damage": "2d8+4",
+        "range": 2,
+        "damageType": "bludgeoning"
+      },
+      {
+        "id": "savage-bite",
+        "name": "Savage Bite",
+        "attack": "1d20+5",
+        "damage": "1d10+3",
+        "range": 1,
+        "damageType": "piercing"
+      }
+    ],
+    "abilities": [
+      {
+        "id": "ground-pound",
+        "name": "Ground Pound",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [
+          {
+            "type": "area_attack",
+            "target": "enemies_in_area",
+            "center": "self",
+            "radius": 1,
+            "attack": "1d20+4",
+            "damage": "2d6+3",
+            "damageType": "bludgeoning"
+          }
+        ],
+        "description": "The troll smashes the ground, attacking every enemy within one square."
+      }
+    ],
+    "description": "A hulking cave-dweller with thick gray hide, immense fists, and a brutal appetite."
+  },
+  {
+    "id": "stone-golem",
+    "name": "Stone Golem",
+    "image": "/static/tokens/monster_016.webp",
+    "maxHp": 85,
+    "defense": 17,
+    "movement": 3,
+    "size": {
+      "w": 2,
+      "h": 2
+    },
+    "attacks": [
+      {
+        "id": "stone-fist",
+        "name": "Stone Fist",
+        "attack": "1d20+7",
+        "damage": "2d8+5",
+        "range": 2,
+        "damageType": "bludgeoning"
+      }
+    ],
+    "abilities": [
+      {
+        "id": "stone-guard",
+        "name": "Stone Guard",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [
+          {
+            "type": "defense_bonus",
+            "target": "self",
+            "amount": 3,
+            "duration": "next_dm_phase"
+          },
+          {
+            "type": "grant_protection",
+            "target": "self",
+            "fraction": 0.5,
+            "duration": "next_dm_phase"
+          }
+        ],
+        "description": "The golem braces itself, gaining +3 Defense and reducing damage from its next incoming hit by half."
+      }
+    ],
+    "description": "A massive construct of living stone that guards ancient ruins and shrugs off punishment."
+  },
+  {
+    "id": "acid-slime",
+    "name": "Acid Slime",
+    "image": "/static/tokens/monster_017.webp",
+    "maxHp": 24,
+    "defense": 11,
+    "movement": 3,
+    "attacks": [
+      {
+        "id": "acidic-pseudopod",
+        "name": "Acidic Pseudopod",
+        "attack": "1d20+4",
+        "damage": "1d8+3",
+        "range": 1,
+        "damageType": "acid"
+      }
+    ],
+    "abilities": [
+      {
+        "id": "corrosive-splash",
+        "name": "Corrosive Splash",
+        "actionCost": 1,
+        "range": 3,
+        "effects": [
+          {
+            "type": "attack",
+            "target": "enemy",
+            "range": 3,
+            "attack": "1d20+4",
+            "damage": "2d6+2",
+            "damageType": "acid"
+          }
+        ],
+        "description": "The slime launches a glob of corrosive fluid at a target up to three squares away."
+      }
+    ],
+    "description": "A translucent green blob filled with bubbling acid that slowly oozes toward anything it can digest."
+  },
+  {
+    "id": "mimic",
+    "name": "Mimic",
+    "image": "/static/tokens/monster_018.webp",
+    "maxHp": 32,
+    "defense": 14,
+    "movement": 4,
+    "attacks": [
+      {
+        "id": "toothy-bite",
+        "name": "Toothy Bite",
+        "attack": "1d20+6",
+        "damage": "1d10+4",
+        "range": 1,
+        "damageType": "piercing"
+      }
+    ],
+    "abilities": [
+      {
+        "id": "sticky-tongue",
+        "name": "Sticky Tongue",
+        "actionCost": 1,
+        "range": 4,
+        "effects": [
+          {
+            "type": "attack",
+            "target": "enemy",
+            "range": 4,
+            "attack": "1d20+5",
+            "damage": "1d6+2",
+            "damageType": "bludgeoning"
+          },
+          {
+            "type": "apply_status",
+            "target": "enemy",
+            "status": "snared",
+            "duration": "next_dm_phase",
+            "when": "attack_hits"
+          }
+        ],
+        "description": "The mimic lashes its sticky tongue at a target, dealing damage and snaring it on a hit."
+      }
+    ],
+    "description": "A predatory shapeshifter disguised as a treasure chest, revealing a huge tooth-filled maw when prey approaches."
+  },
+  {
+    "id": "skeleton-guard",
+    "name": "Skeleton Guard",
+    "image": "/static/tokens/monster_019.webp",
+    "maxHp": 16,
+    "defense": 15,
+    "movement": 5,
+    "attacks": [
+      {
+        "id": "rusty-spear",
+        "name": "Rusty Spear",
+        "attack": "1d20+5",
+        "damage": "1d8+3",
+        "range": 2,
+        "damageType": "piercing"
+      }
+    ],
+    "abilities": [
+      {
+        "id": "shield-wall",
+        "name": "Shield Wall",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [
+          {
+            "type": "defense_bonus",
+            "target": "self",
+            "amount": 2,
+            "duration": "next_dm_phase"
+          }
+        ],
+        "description": "The skeleton raises its shield, gaining +2 Defense until the end of the next DM phase."
+      }
+    ],
+    "description": "An armored undead sentinel that holds its ground behind a battered shield and thrusts with a rusty spear."
+  },
+  {
+    "id": "mummy",
+    "name": "Mummy",
+    "image": "/static/tokens/monster_020.webp",
+    "maxHp": 30,
+    "defense": 14,
+    "movement": 4,
+    "attacks": [
+      {
+        "id": "cursed-wraps",
+        "name": "Cursed Wraps",
+        "attack": "1d20+5",
+        "damage": "1d8+3",
+        "range": 1,
+        "damageType": "necrotic"
+      }
+    ],
+    "abilities": [
+      {
+        "id": "desiccating-curse",
+        "name": "Desiccating Curse",
+        "actionCost": 1,
+        "range": 3,
+        "effects": [
+          {
+            "type": "attack",
+            "target": "enemy",
+            "range": 3,
+            "attack": "1d20+5",
+            "damage": "1d6+3",
+            "damageType": "necrotic"
+          },
+          {
+            "type": "apply_status",
+            "target": "enemy",
+            "status": "slowed",
+            "duration": "next_dm_phase",
+            "when": "attack_hits"
+          }
+        ],
+        "description": "The mummy projects a curse that deals necrotic damage and slows its target on a hit."
+      }
+    ],
+    "description": "An ancient tomb guardian wrapped in stained linen, wielding curses and grasping bandages to halt intruders."
+  }
 ]

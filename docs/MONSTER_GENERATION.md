@@ -35,7 +35,7 @@ Run `npm run validate:monsters` with no arguments to check the whole bank.
 
 - Hostile monsters act only in the DM PHASE. Each phase they get `actions` actions (one weapon attack or one ability each), plus `movement` squares.
 - Monster abilities follow the same enemy rules. Abilities that deal damage only work in combat.
-- Monsters get no role bonuses, but heroes do: DPS heroes deal 4× damage, tanks take ¼, and healers heal 4×. Size `maxHp` with that in mind.
+- Monsters get no role bonuses, but heroes do: DPS heroes multiply their damage, tanks take reduced damage, and healers heal for more. The multiplier is the global *role strength* setting (1–5, default 4). Size `maxHp` with that in mind.
 - In a monster's abilities, `enemy` means heroes (and friendly NPCs), and `ally` means other monsters.
 
 ## Prompt
@@ -50,7 +50,7 @@ Rules:
 - Use only the effect types and fields defined in the schema. If an idea can't be expressed,
   pick the closest supported effect, or leave it to the DM in the description.
 - Match the power level of the example monsters and stay inside the "Typical" ranges in the
-  field descriptions. Remember DPS heroes deal 4× damage when choosing maxHp.
+  field descriptions. Remember DPS heroes multiply their damage (default 4×) when choosing maxHp.
 - Most monsters have 1–2 weapon attacks and no abilities. Bosses may have actions: 2 and 1–2 abilities.
 - Resistible debuffs on heroes go inside roll_to_apply (roll vs the target's Defense).
 - Large creatures set size (2×2 or 3×3) and usually reach 2 with melee.

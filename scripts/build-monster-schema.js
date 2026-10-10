@@ -41,7 +41,7 @@ export function buildMonsterSchema(character) {
     ...defs.weaponAttack,
     properties: {
       ...defs.weaponAttack.properties,
-      damage: { $ref: '#/$defs/dice', description: 'Typical: 1d4+2 (vermin) to 1d12+3 (brutes); bosses 2d10+6 or 6d6 breath weapons. Heroes take these as written (tanks take ¼).' },
+      damage: { $ref: '#/$defs/dice', description: 'Typical: 1d4+2 (vermin) to 1d12+3 (brutes); bosses 2d10+6 or 6d6 breath weapons. Heroes take these as written (tanks take reduced damage).' },
       range: { type: 'integer', minimum: 0, maximum: 30, description: '1 = melee. Reach 2 for big creatures; ranged attacks are typically 6–10.' },
       damageType: { $ref: '#/$defs/damageType' },
     },
@@ -60,7 +60,7 @@ export function buildMonsterSchema(character) {
       'All mechanics come from structured fields; `description` is a note for the DM and never drives mechanics.',
       'Rules: each round has a PLAYER PHASE and a DM PHASE. Hostile monsters act only in the DM PHASE, with `actions` actions (default 1) plus `movement` squares, which are separate. An action is one weapon attack or one ability.',
       'Attacks roll `attack` (always 1d20+N) against the target\'s Defense; on a hit, roll `damage`. A natural 20 is a crit (damage dice doubled), and a natural 1 always misses. Attacks and damaging abilities only work in combat.',
-      'Monsters get no role bonuses, but heroes do: DPS heroes deal 4× damage to monsters, tanks take ¼ damage, and healers heal 4×. Size maxHp with that in mind.',
+      'Monsters get no role bonuses, but heroes do: DPS heroes multiply their damage against monsters, tanks take reduced damage, and healers heal for more (a game setting from 1× to 5×, default 4×). Size maxHp with that in mind.',
       'Distances are grid squares (1 = adjacent).',
     ].join(' '),
     type: 'object',
@@ -76,7 +76,7 @@ export function buildMonsterSchema(character) {
       },
       maxHp: {
         type: 'integer', minimum: 1, maximum: 9999,
-        description: 'Required unless `immortal`. Remember DPS heroes deal 4×. Typical: vermin 7–9, soldiers 13–16, brutes 50–60, bosses 120+.',
+        description: 'Required unless `immortal`. Remember DPS heroes multiply their damage (default 4×). Typical: vermin 7–9, soldiers 13–16, brutes 50–60, bosses 120+.',
       },
       defense: { type: 'integer', minimum: 0, maximum: 30, description: 'Number an attack roll must meet or beat to hit. Typical: 11 (lumbering) to 13 (most), 18 (armored boss).' },
       movement: {

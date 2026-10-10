@@ -186,6 +186,14 @@ export class GameService extends EventEmitter {
     return { id: Number(r.lastInsertRowid), ...row };
   }
 
+  // A DM-only Game Feed note in every game that is currently loaded (e.g. a settings change).
+  noteToLoadedGames(text) {
+    for (const game of this.games.values()) {
+      const row = this.insertFeed(game.id, { kind: 'event', type: 'settings', text: '', dmText: text, visibility: 'dm', color: DM_COLOR });
+      this.emit('change', game.id, { feed: [row] });
+    }
+  }
+
   undoInfo(gameId) {
     const r = this.db.prepare('SELECT label FROM undo_snapshots WHERE game_id = ? ORDER BY id DESC LIMIT 1').get(gameId);
     return r ? r.label : null;

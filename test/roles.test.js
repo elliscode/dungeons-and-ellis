@@ -1,7 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { setup, scriptedRng, ok, DM, content } from './helpers.js';
-import { ROLE_RULES } from '../server/games/roles.js';
+import { mkdtempSync, rmSync, writeFileSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { roleRules, setRoleStrength, getRoleStrength, DEFAULT_ROLE_STRENGTH } from '../server/games/roles.js';
+import { loadSettings } from '../server/settings.js';
 
 // d20 → 15, every other die → 1 unless queued.
 const fallback = (sides) => (sides === 20 ? 15 : 1);
@@ -132,7 +136,7 @@ test('other roles and DM-controlled entities get no multiplier', () => {
 test('role tiles are driven by the same rules', () => {
   const roles = content.publicContent().roles;
   assert.deepEqual(Object.keys(roles).sort(), ['dps', 'heal', 'tank']);
-  for (const [id, r] of Object.entries(ROLE_RULES)) assert.equal(roles[id].blurb, r.blurb);
+  for (const [id, r] of Object.entries(roleRules())) assert.equal(roles[id].blurb, r.blurb);
   assert.equal(roles.tank.blurb, 'Takes ¼ damage');
   assert.equal(roles.dps.blurb, 'Deals 4× damage');
   assert.equal(roles.heal.blurb, 'Heals for 4×');
@@ -152,4 +156,85 @@ test('damage abilities are combat-only; heals, buffs and debuffs are not', async
   assert.deepEqual(Object.fromEntries(mine.abilities.map((a) => [a.id, a.combatOnly])), { 'inferno-surge': true, light: false });
   ok(w.run(DM, { type: 'combat.start' }));
   ok(w.use('mage', 'inferno-surge', { targetId: gob }), 'allowed once combat starts');
+});
+
+// ---------- configurable role strength (global setting, presets 1–5) ----------
+
+// Runs fn with a given role strength and always restores the default afterwards.
+function withStrength(n, fn) {
+  setRoleStrength(n);
+  try { return fn(); } finally { setRoleStrength(DEFAULT_ROLE_STRENGTH); }
+}
+
+test('every preset 1–5 changes DPS damage, healing and tank mitigation everywhere', () => {
+  for (const n of [1, 2, 3, 4, 5]) {
+    withStrength(n, () => {
+      const w = world([['rogue', 'x-shadow-rogue', 0, 0], ['cleric', 'x-cleric', 1, 0], ['wall', 'x-shieldmarshal', 2, 0], ['ranger', 'x-ranger', 3, 0]]);
+      const dummy = w.spawn('training-dummy', 0, 1);
+      ok(w.run(DM, { type: 'combat.start' }));
+      w.rng.push(15, 2, 2); // twin daggers 2d4+4 = 8
+      assert.equal(ok(w.attack('rogue', 'twin-daggers', dummy)).damage, 8 * n, `DPS ×${n}`);
+      ok(w.run(DM, { type: 'entity.damage', entityId: w.h.wall.id, amount: 30 }));
+      assert.equal(w.hero('wall').hp, 44 - Math.max(1, Math.floor(30 / n)), `tank takes 1/${n}`);
+      ok(w.run(DM, { type: 'entity.damage', entityId: w.h.ranger.id, amount: 30 }));
+      w.rng.push(1); // healing word 1d8+3 = 4
+      ok(w.use('cleric', 'healing-word', { targetId: w.h.ranger.id }));
+      assert.equal(w.hero('ranger').hp, Math.min(34, 4 + 4 * n), `heal ×${n}`);
+      if (n === 1) assert.doesNotMatch(w.last(), /×1/, 'no "×1" notes when bonuses are off');
+    });
+  }
+});
+
+test('tank minimum of 1 and exact integer division at every strength', () => {
+  for (const n of [2, 3, 4, 5]) {
+    withStrength(n, () => {
+      const w = world([['wall', 'x-shieldmarshal', 0, 0]]);
+      for (const raw of [1, 2, 3, 9, 10, 15, 30]) {
+        const before = w.hero('wall').hp;
+        ok(w.run(DM, { type: 'entity.damage', entityId: w.h.wall.id, amount: raw }));
+        assert.equal(before - w.hero('wall').hp, Math.max(1, Math.floor(raw / n)), `raw ${raw} at 1/${n}`);
+        ok(w.run(DM, { type: 'entity.setHp', entityId: w.h.wall.id, hp: 44 }));
+      }
+    });
+  }
+});
+
+test('role tile blurbs follow the setting', () => {
+  const expected = {
+    1: ['Takes full damage', 'Deals normal damage', 'Heals normally'],
+    2: ['Takes ½ damage', 'Deals 2× damage', 'Heals for 2×'],
+    3: ['Takes ⅓ damage', 'Deals 3× damage', 'Heals for 3×'],
+    4: ['Takes ¼ damage', 'Deals 4× damage', 'Heals for 4×'],
+    5: ['Takes ⅕ damage', 'Deals 5× damage', 'Heals for 5×'],
+  };
+  for (const [n, [tank, dps, heal]] of Object.entries(expected)) {
+    withStrength(Number(n), () => {
+      const roles = content.publicContent().roles;
+      assert.deepEqual([roles.tank.blurb, roles.dps.blurb, roles.heal.blurb], [tank, dps, heal]);
+    });
+  }
+});
+
+test('settings file: defaults to 4, only accepts 1–5, persists, survives a bad file', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'dne-settings-'));
+  try {
+    const s1 = loadSettings(dir);
+    assert.equal(s1.get().roleStrength, 4, 'missing file → default 4');
+    for (const bad of [0, 6, 2.5, -1, 'abc', '', null, '10']) assert.throws(() => s1.setRoleStrength(bad), /one of 1, 2, 3, 4, 5/, String(bad));
+    let changed = null;
+    s1.on('change', (c) => { changed = c; });
+    s1.setRoleStrength('3');
+    assert.deepEqual(changed, { before: 4, after: 3 });
+    assert.equal(getRoleStrength(), 3, 'applied to the live rules');
+    assert.deepEqual(JSON.parse(readFileSync(join(dir, 'settings.json'), 'utf8')), { roleStrength: 3 });
+    const s2 = loadSettings(dir);
+    assert.equal(s2.get().roleStrength, 3, 'reloaded from disk');
+    writeFileSync(join(dir, 'settings.json'), '{"roleStrength": 9}');
+    assert.equal(loadSettings(dir).get().roleStrength, 4, 'invalid value → default');
+    writeFileSync(join(dir, 'settings.json'), '{ nope');
+    assert.equal(loadSettings(dir).get().roleStrength, 4, 'broken JSON → default');
+  } finally {
+    setRoleStrength(DEFAULT_ROLE_STRENGTH);
+    rmSync(dir, { recursive: true, force: true });
+  }
 });

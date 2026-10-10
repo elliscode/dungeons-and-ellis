@@ -85,4 +85,21 @@ $('#logout').addEventListener('click', async () => {
   location.href = '/login';
 });
 
+// Global role strength (presets 1–5).
+async function loadSettings() {
+  const s = await api('GET', '/api/settings');
+  const sel = $('#role-strength');
+  sel.replaceChildren(...s.options.map((o) => h('option', { value: o.value, selected: o.value === s.roleStrength }, o.label)));
+}
+$('#role-strength').addEventListener('change', async (e) => {
+  try {
+    const s = await api('PUT', '/api/settings', { roleStrength: Number(e.target.value) });
+    toast(`Role strength set to ${s.roleStrength}`);
+  } catch (err) {
+    toast(err.message, 'error');
+    loadSettings();
+  }
+});
+loadSettings();
+
 showTab(location.hash === '#scenes' ? 'scenes' : 'games');

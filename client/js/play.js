@@ -291,6 +291,7 @@ function heroScreen() {
       },
       h('img.portrait', { src: c.image, alt: '' }),
       h('h3', {}, c.name),
+      content.roles?.[c.role]?.blurb ? h('div.role-bonus', { title: 'Automatic role bonus' }, content.roles[c.role].blurb) : null,
       h('div.stats', {}, h('span', {}, '❤ ', h('b', {}, c.maxHp)), h('span', {}, '🛡 ', h('b', {}, c.defense)), h('span', {}, '👣 ', h('b', {}, c.movement))),
       h('div.section-title', {}, 'Attacks'),
       h('ul', {}, ...c.attacks.map((a) => h('li', {}, `${a.name} — ${a.damage}, range ${a.range ?? 1}`))),

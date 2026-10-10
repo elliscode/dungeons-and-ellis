@@ -1,6 +1,6 @@
 import { rollDice } from '../dice.js';
 import { effectsOf, removeEffect } from './status.js';
-import { ROLE_RULES, roleOf } from './roles.js';
+import { roleOf } from './roles.js';
 
 export function phaseDurationEnd(state, now) {
   const s = state.combat.timerSeconds;
@@ -34,13 +34,12 @@ export function endCombat(state) {
   state.turn = {};
 }
 
-export const TANK_DAMAGE_TAKEN = ROLE_RULES.tank.damageTakenMultiplier;
-
-// Tank heroes take 25% of incoming damage (rounded down, at least 1 for any positive hit).
+// Tank heroes take 1/n of incoming damage (n = role strength), rounded down, at least 1 for any
+// positive hit. Integer division avoids floating-point surprises with ⅓ and ⅕.
 export function reduceIncoming(e, amount) {
   amount = Math.max(0, Math.floor(amount));
-  const mult = roleOf(e)?.damageTakenMultiplier;
-  if (amount > 0 && mult !== undefined) return Math.max(1, Math.floor(amount * mult));
+  const n = roleOf(e)?.damageTakenDivisor;
+  if (amount > 0 && n > 1) return Math.max(1, Math.floor(amount / n));
   return amount;
 }
 
@@ -136,11 +135,11 @@ const consumable = (fx) => ['next_hit', 'until_next_hit', 'until_used', 'next_ma
 // Damage resolution order (each step applies at most once per hit):
 //   1. raw rolled damage (crits already doubled the dice)
 //   2. attacker modifiers: modify_damage_dealt (e.g. Curse of Weakness halves), Hunter's Mark dice
-//   3. attacker role: DPS player characters deal 4× (before any of the target's defenses)
+//   3. attacker role: DPS player characters deal n× (role strength; before the target's defenses)
 //   4. redirection (Intercept): the protector becomes the victim
 //   5. victim protection: absorb_next_hit (negates) or grant_protection (reduces), then
 //      modify_damage_received
-//   6. tank mitigation (25%, min 1)
+//   6. tank mitigation (1/n, min 1)
 //   7. apply: training dummies only record the damage; everyone else goes through applyDamage
 export function dealDamage(ctx, { source = null, target, raw, damageType = null, color = null }) {
   const notes = [];
@@ -160,7 +159,7 @@ export function dealDamage(ctx, { source = null, target, raw, damageType = null,
       removeEffect(target, fx.id);
     }
     const mult = roleOf(source)?.damageDealtMultiplier;
-    if (mult && amount > 0) {
+    if (mult > 1 && amount > 0) {
       amount = Math.floor(amount * mult);
       notes.push(`×${mult} DPS`);
     }
@@ -219,7 +218,7 @@ export function dealDamage(ctx, { source = null, target, raw, damageType = null,
   return { victim, dealt: amount, raw: Math.max(0, Math.floor(raw)), notes, change };
 }
 
-// Healing order: rolled amount → ×4 if the healer is a Heal-role player character → flat bonuses
+// Healing order: rolled amount → ×n if the healer is a Heal-role player character → flat bonuses
 // from the caster (Beacon of Grace; consumed) → clamp to max HP → applyHeal (downed recovery).
 // Dead targets, training dummies and objects can't be healed.
 export function healTarget(ctx, { source = null, target, amount, color = null }) {
@@ -228,7 +227,7 @@ export function healTarget(ctx, { source = null, target, amount, color = null })
   const notes = [];
   let total = Math.max(0, Math.floor(amount));
   const mult = roleOf(source)?.healingDoneMultiplier;
-  if (mult && total > 0) {
+  if (mult > 1 && total > 0) {
     total = Math.floor(total * mult);
     notes.push(`×${mult} Heal`);
   }

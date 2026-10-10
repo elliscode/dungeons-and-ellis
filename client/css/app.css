@@ -288,5 +288,9 @@ details.example pre { background: var(--bg); border: 1px solid var(--line); bord
 .effect-item { display: flex; align-items: center; gap: 6px; font-size: 12px; background: var(--bg3); border-radius: 6px; padding: 3px 6px; }
 .effect-item .grow { flex: 1; }
 .checks-badge { background: #6a4e1a; border-color: var(--gold); }
-.role-card .role-bonus { margin: 6px auto 8px; display: inline-block; font-weight: 800; font-size: 17px; color: #1a1408; background: var(--gold); border-radius: 999px; padding: 4px 14px; letter-spacing: .02em; }
+.role-card .role-bonus, .hero-card .role-bonus { margin: 6px auto 8px; display: inline-block; font-weight: 800; font-size: 17px; color: #1a1408; background: var(--gold); border-radius: 999px; padding: 4px 14px; letter-spacing: .02em; }
 .feed-new { font-size: 12px; opacity: .92; }
+.settings-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 14px; margin: 8px 0 4px; }
+.settings-bar label { color: var(--gold); font-size: 14px; font-weight: 600; }
+.settings-bar .muted { font-size: 12px; }
+.hero-card .role-bonus { align-self: center; margin: 0; font-size: 13px; padding: 2px 12px; }

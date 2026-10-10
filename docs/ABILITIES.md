@@ -98,16 +98,16 @@ Every damage source runs through `dealDamage()` in `server/games/combat.js`: wea
 
 1. Raw damage is rolled. A critical hit doubles the dice, not the modifier.
 2. Attacker modifiers apply: `modify_damage_dealt`, then a Hunter's Mark bonus.
-3. Attacker role: a DPS hero's damage is multiplied ×4 (rounded down). This happens before any of the target's defenses, once per strike.
+3. Attacker role: a DPS hero's damage is multiplied by the role strength n (rounded down). This happens before any of the target's defenses, once per strike.
 4. Redirection: Intercept makes the protector the victim.
 5. Victim protection: `absorb_next_hit` (the hit deals 0), otherwise `grant_protection` (reduced). Then `modify_damage_received`.
-6. Tank mitigation: tank heroes take 25%, rounded down, with a minimum of 1.
+6. Tank mitigation: tank heroes take 1/n, rounded down, with a minimum of 1.
 7. The damage is applied. A Training Dummy records it; everyone else goes through the normal down/dead rules.
 
 Healing runs through `healTarget()` in this order:
 
 1. The heal is rolled.
-2. A Heal-role hero's healing is multiplied ×4.
+2. A Heal-role hero's healing is multiplied by n.
 3. Flat bonuses from the caster are added (Beacon of Grace; consumed).
 4. The result is capped at max HP.
 5. The heal is applied. A downed target gets back up; dead targets can't be healed.
@@ -116,15 +116,23 @@ Healing totems count as their caster's healing.
 
 ### Role bonuses
 
-These are automatic for player characters, based on `role`. They're defined once in `server/games/roles.js`, and the role-selection tiles read them from there.
+These are automatic for player characters, based on `role`, and scaled by one global setting, the **role strength** n. It's one of the presets 1–5 (default 4), chosen on the DM home page and stored in `data/settings.json`. The rules are defined once in `server/games/roles.js`, and the role-selection tiles read them from there.
 
 | Role | Bonus |
 | --- | --- |
-| Tank | Takes ¼ damage (step 6 above) |
-| DPS | Deals 4× damage (step 3 above) |
-| Heal | Heals for 4× (heal step 2) |
+| Tank | Takes 1/n damage (step 6 above) |
+| DPS | Deals n× damage (step 3 above) |
+| Heal | Heals for n× (heal step 2) |
 
-Monsters, NPCs, and the DM's Damage and Heal buttons never get role bonuses. A DPS hero's self-heal (Life Drain, for example) isn't multiplied, because only Heal-role heroes heal for 4×.
+| n | Tank | DPS | Heal |
+| --- | --- | --- | --- |
+| 1 | full damage | 1× | 1× (bonuses off) |
+| 2 | ½ | 2× | 2× |
+| 3 | ⅓ | 3× | 3× |
+| 4 (default) | ¼ | 4× | 4× |
+| 5 | ⅕ | 5× | 5× |
+
+Monsters, NPCs, and the DM's Damage and Heal buttons never get role bonuses. A DPS hero's self-heal (Life Drain, for example) isn't multiplied, because only Heal-role heroes get the healing multiplier.
 
 Attack rolls (`attackRoll()`) include `attackBonus`, one-shot roll bonuses (which are consumed), shaken/poisoned penalties, the Sanctuary penalty, and the target's effective Defense (base, plus `defense_bonus`, minus `defenseReduction`). Serene Focus is consumed by the next attack against its holder.
 

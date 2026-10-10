@@ -25,6 +25,8 @@ Output ONE JSON object that validates against the attached JSON Schema. Output o
 Rules:
 - Mechanics come only from structured fields. `description` is flavor and must accurately
   describe what the effects do. Never describe a mechanic the effects don't implement.
+- Role bonuses (tank damage reduction, DPS/healer multipliers) are applied automatically by
+  the game. Don't mention them, or any multiplier, in descriptions.
 - Use only the effect types and fields defined in the schema. If an idea can't be expressed,
   pick the closest supported effect, or use a "narrative" effect for pure roleplay utility.
 - Match the power level of the example heroes: 2 weapon attacks (usually one melee, one ranged)
@@ -51,10 +53,12 @@ Character request:
 | Weapon damage | 1d8+4 to 1d12+4 | 1d8+4, 1d10+3, 2d6+2 | 1d6+2 to 1d8+3 |
 | Single-target heal | | | 1d8+3 (range 6), 2d8+3 (adjacent) |
 
-Role bonuses are automatic, so don't add abilities for them (the rules live in `server/games/roles.js`):
-- Tanks take ¼ of the damage from every hit (75% less, minimum 1).
-- DPS deal 4× the listed damage.
-- Healers heal for 4× the listed amount, capped at max HP.
+Role bonuses are automatic, so don't add abilities for them or mention them in descriptions (the rules live in `server/games/roles.js`):
+- Tanks take 1/n of the damage from every hit (minimum 1).
+- DPS deal n× the listed damage.
+- Healers heal for n× the listed amount, capped at max HP.
+
+n is the global *role strength* setting (1–5, default 4), chosen on the DM home page.
 
 Keep listed dice at the levels in this table. The multipliers are applied on top.
 

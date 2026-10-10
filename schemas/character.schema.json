@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://dungeons-and-ellis/schemas/character.schema.json",
   "title": "One & Done hero character",
-  "description": "A playable hero for One & Done, a grid-based tabletop game. All combat mechanics come from structured fields; `description` text is flavor shown in the UI and never drives mechanics. Combat: each round has a PLAYER PHASE and a DM PHASE. A hero gets 1 action per player phase plus `movement` squares. On their action they use a weapon attack or an ability (abilities with actionCost 0 are free). Attacks roll `attack` (always 1d20+N) against the target's `defense`; on a hit, roll `damage`. Role bonuses are automatic, so don't add abilities for them: tanks take ¼ of incoming damage (minimum 1), DPS deal 4× damage, and healers heal for 4× (capped at max HP). Write dice at normal values; the multipliers are applied on top. Distances are grid squares (1 = adjacent).",
+  "description": "A playable hero for One & Done, a grid-based tabletop game. All combat mechanics come from structured fields; `description` text is flavor shown in the UI and never drives mechanics. Combat: each round has a PLAYER PHASE and a DM PHASE. A hero gets 1 action per player phase plus `movement` squares. On their action they use a weapon attack or an ability (abilities with actionCost 0 are free). Attacks roll `attack` (always 1d20+N) against the target's `defense`; on a hit, roll `damage`. Role bonuses are automatic, so don't add abilities for them and don't mention them in any description: tanks take reduced damage, DPS deal multiplied damage, and healers heal for more. The multiplier is a game setting (default: tanks ¼, DPS 4×, healers 4×). Write dice at normal values; the multipliers are applied on top. Distances are grid squares (1 = adjacent).",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -34,7 +34,7 @@
         "dps",
         "heal"
       ],
-      "description": "tank: high HP/Defense, protects allies; automatically takes ¼ damage. dps: deals damage; automatically deals 4× damage. heal: restores HP and supports; automatically heals for 4×."
+      "description": "tank: high HP/Defense, protects allies; automatically takes reduced damage. dps: deals damage; automatically deals multiplied damage. heal: restores HP and supports; automatically heals for more. (Multipliers are a game setting, default ¼ / 4× / 4×.)"
     },
     "image": {
       "type": "string",

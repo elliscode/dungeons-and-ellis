@@ -10,6 +10,11 @@
 <body>
   <div class="page">
     <div class="row"><h1 class="grow">One &amp; Done</h1><button id="logout" class="small">Log out</button></div>
+    <div class="settings-bar">
+      <label class="inline" for="role-strength">⚖ Role strength</label>
+      <select id="role-strength" aria-describedby="role-strength-help"></select>
+      <span class="muted" id="role-strength-help">Tanks take 1/n damage, DPS deal n×, healers heal n×. Applies to every game on the next hit.</span>
+    </div>
     <div class="tabs">
       <button data-tab="games" class="active">🎲 Games</button>
       <button data-tab="scenes">🗺️ Scenes</button>
