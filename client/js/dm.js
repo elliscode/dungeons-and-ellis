@@ -403,7 +403,8 @@ function renderInspector() {
     ...(e.kind !== 'pc' ? e.abilities ?? [] : []).map((ab) => h('div.inv-item', {},
       h('span', { title: ab.description ?? '' }, ab.name, ' ', h('span.muted', {}, abilitySummary(ab))),
       h('button.small', {
-        disabled: !!enemyBlock(), title: enemyBlock() ?? ab.description ?? '',
+        disabled: (ab.combatOnly && !c.active) || !!enemyBlock(),
+        title: (ab.combatOnly && !c.active ? 'Combat only' : enemyBlock()) ?? ab.description ?? '',
         onclick: () => startAbility({ caster: view(e), ab, entities: () => sceneEntities().map(view), setMode, send, toast: null }),
       }, 'Use'))),
     e.kind !== 'object' ? h('div.section-title', {}, 'Inventory') : null,

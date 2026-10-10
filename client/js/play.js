@@ -204,10 +204,11 @@ function onSegment(seg, t, e) {
       const free = ab.actionCost === 0;
       const used = (a.t.abilitiesUsed ?? []).filter((x) => x === ab.id).length;
       const capped = a.c.active && ab.usesPerPhase && used >= ab.usesPerPhase;
-      const blocked = a.me.status !== 'active' || a.dmPhase || (!free && !a.actionLeft) || capped;
+      const needsCombat = ab.combatOnly && !a.c.active;
+      const blocked = a.me.status !== 'active' || a.dmPhase || (!free && !a.actionLeft) || capped || needsCombat;
       items.push({
         label: ab.name,
-        sub: [abilitySummary(ab), capped ? 'used this phase' : '', ab.description].filter(Boolean).join(' — '),
+        sub: [needsCombat ? 'combat only' : '', abilitySummary(ab), capped ? 'used this phase' : '', ab.description].filter(Boolean).join(' — '),
         disabled: blocked,
         onClick: () => startAbility({ caster: a.me, ab, entities: () => state.entities, setMode, send, toast: null }),
       });
@@ -272,7 +273,9 @@ function roleScreen() {
       const heroes = content.characters.filter((c) => c.role === r);
       const free = heroes.filter((c) => !taken[c.id]).length;
       return h('div.role-card', { onclick: () => { pickedRole = r; render(); } },
-        h('div.icon', {}, ROLE_ICONS[r]), h('h2', {}, ROLE_LABELS[r]), h('div.muted', {}, `${free} of ${heroes.length} heroes available`));
+        h('div.icon', {}, ROLE_ICONS[r]), h('h2', {}, ROLE_LABELS[r]),
+        content.roles?.[r]?.blurb ? h('div.role-bonus', {}, content.roles[r].blurb) : null,
+        h('div.muted', {}, `${free} of ${heroes.length} heroes available`));
     })));
 }
 

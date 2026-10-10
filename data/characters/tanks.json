@@ -612,5 +612,81 @@
       }
     ],
     "inventory": ["repair-kit", "iron-bolts", "healing-potion"]
+  },
+  {
+    "id": "shellwarden",
+    "name": "Bramble Ironback",
+    "role": "tank",
+    "image": "/static/tokens/token_093.webp",
+    "maxHp": 46,
+    "movement": 4,
+    "defense": 18,
+    "attacks": [
+      {
+        "id": "ironback-shield-bash",
+        "name": "Ironback Shield Bash",
+        "attack": "1d20+6",
+        "damage": "1d8+4",
+        "range": 1
+      },
+      {
+        "id": "ironback-stone-spit",
+        "name": "Stone Spit",
+        "attack": "1d20+4",
+        "damage": "1d6+3",
+        "range": 5
+      }
+    ],
+    "abilities": [
+      {
+        "id": "ironback-shellguard",
+        "name": "Ironback Shellguard",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [
+          {
+            "type": "defense_bonus",
+            "target": "self",
+            "amount": 3,
+            "duration": "next_dm_phase"
+          }
+        ],
+        "description": "Brace behind your armored shell, gaining +3 Defense through the next DM phase."
+      },
+      {
+        "id": "ironback-provocation",
+        "name": "Ironback Provocation",
+        "actionCost": 1,
+        "range": 3,
+        "effects": [
+          {
+            "type": "taunt",
+            "target": "enemy",
+            "duration": "next_dm_phase"
+          }
+        ],
+        "description": "Challenge an enemy within 3 squares, forcing its attacks to target you while you remain a valid target through the next DM phase."
+      },
+      {
+        "id": "ironback-guardian",
+        "name": "Guardian's Carapace",
+        "actionCost": 1,
+        "range": 2,
+        "effects": [
+          {
+            "type": "grant_protection",
+            "target": "ally",
+            "amount": 8,
+            "duration": "next_dm_phase"
+          }
+        ],
+        "description": "Protect an ally within 2 squares, reducing their next incoming hit by 8 damage."
+      }
+    ],
+    "inventory": [
+      "reinforced-shield",
+      "healing-potion",
+      "ironwood-talisman"
+    ]
   }
 ]

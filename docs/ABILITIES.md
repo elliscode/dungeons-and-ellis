@@ -98,15 +98,39 @@ Every damage source runs through `dealDamage()` in `server/games/combat.js`: wea
 
 1. Raw damage is rolled. A critical hit doubles the dice, not the modifier.
 2. Attacker modifiers apply: `modify_damage_dealt`, then a Hunter's Mark bonus.
-3. Redirection: Intercept makes the protector the victim.
-4. Victim protection: `absorb_next_hit` (the hit deals 0), otherwise `grant_protection` (reduced). Then `modify_damage_received`.
-5. Tank mitigation: tank heroes take 25%, rounded down, with a minimum of 1.
-6. The damage is applied. A Training Dummy records it; everyone else goes through the normal down/dead rules.
+3. Attacker role: a DPS hero's damage is multiplied ×4 (rounded down). This happens before any of the target's defenses, once per strike.
+4. Redirection: Intercept makes the protector the victim.
+5. Victim protection: `absorb_next_hit` (the hit deals 0), otherwise `grant_protection` (reduced). Then `modify_damage_received`.
+6. Tank mitigation: tank heroes take 25%, rounded down, with a minimum of 1.
+7. The damage is applied. A Training Dummy records it; everyone else goes through the normal down/dead rules.
+
+Healing runs through `healTarget()` in this order:
+
+1. The heal is rolled.
+2. A Heal-role hero's healing is multiplied ×4.
+3. Flat bonuses from the caster are added (Beacon of Grace; consumed).
+4. The result is capped at max HP.
+5. The heal is applied. A downed target gets back up; dead targets can't be healed.
+
+Healing totems count as their caster's healing.
+
+### Role bonuses
+
+These are automatic for player characters, based on `role`. They're defined once in `server/games/roles.js`, and the role-selection tiles read them from there.
+
+| Role | Bonus |
+| --- | --- |
+| Tank | Takes ¼ damage (step 6 above) |
+| DPS | Deals 4× damage (step 3 above) |
+| Heal | Heals for 4× (heal step 2) |
+
+Monsters, NPCs, and the DM's Damage and Heal buttons never get role bonuses. A DPS hero's self-heal (Life Drain, for example) isn't multiplied, because only Heal-role heroes heal for 4×.
 
 Attack rolls (`attackRoll()`) include `attackBonus`, one-shot roll bonuses (which are consumed), shaken/poisoned penalties, the Sanctuary penalty, and the target's effective Defense (base, plus `defense_bonus`, minus `defenseReduction`). Serene Focus is consumed by the next attack against its holder.
 
 ## Action economy and movement
 
+- Abilities that deal damage (any `attack`, `multi_attack`, `area_attack` or `chain_attack` effect, including ones nested in `onSuccess`/`onFailure`) work only in combat, like weapon attacks. The server refuses them outside combat, and the Act menu greys them out with "combat only". Heals, buffs, debuffs like Hunter's Mark, movement, and narrative abilities still work while exploring.
 - Players get their allowance (default 1 action) each PLAYER PHASE. Monsters and hostile NPCs get theirs each DM PHASE and can only act then. Friendly NPCs and the DM's own tools are unlimited.
 - The allowance is the definition's `actions`, plus granted actions, minus `reduce_actions`. It never goes below 0.
 - Movement is separate from actions. In combat, players and enemies spend movement after modifiers; a snared creature can't move. The DM can **Shift-drag** to force a move past budgets and frightened restrictions.

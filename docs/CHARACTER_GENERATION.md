@@ -51,9 +51,12 @@ Character request:
 | Weapon damage | 1d8+4 to 1d12+4 | 1d8+4, 1d10+3, 2d6+2 | 1d6+2 to 1d8+3 |
 | Single-target heal | | | 1d8+3 (range 6), 2d8+3 (adjacent) |
 
-Tanks also take 25% less damage from every hit automatically.
-DPS perform 4x the listed damage automatically.
-Helaers perform 4x the listed healing automatically.
+Role bonuses are automatic, so don't add abilities for them (the rules live in `server/games/roles.js`):
+- Tanks take ¼ of the damage from every hit (75% less, minimum 1).
+- DPS deal 4× the listed damage.
+- Healers heal for 4× the listed amount, capped at max HP.
+
+Keep listed dice at the levels in this table. The multipliers are applied on top.
 
 ## Keeping the schema in sync
 

@@ -29,10 +29,11 @@ test('player phase: one action, movement separate and limited, range enforced', 
   // move 3 then attack from range
   ok(run(a, { type: 'move', entityId: ea, x: 3, y: 7 }));
   assert.match(run(a, { type: 'attack', entityId: ea, attackId: 'twin-daggers', targetId: gob }).error, /out of range/);
-  rng.push(10, 1, 1); // 10+6 = 16 vs DEF 13: hit, damage 2d4+4 = 6
+  rng.push(10, 1, 1); // 10+6 = 16 vs DEF 13: hit, damage 1d6+4 = 5, ×4 DPS = 20
   const r = ok(run(a, { type: 'attack', entityId: ea, attackId: 'throwing-knife', targetId: gob }));
   assert.equal(r.hit, true);
-  assert.equal(state().entities[gob].hp, 9 - 5);
+  assert.equal(r.damage, 20);
+  assert.equal(state().entities[gob].hp, 0);
   assert.match(run(a, { type: 'attack', entityId: ea, attackId: 'throwing-knife', targetId: gob }).error, /no actions left/);
   ok(run(a, { type: 'move', entityId: ea, x: 7, y: 7 }), 'can still move after attacking');
   assert.match(run(a, { type: 'move', entityId: ea, x: 9, y: 7 }).error, /Not enough movement/);
@@ -74,8 +75,8 @@ test('crit doubles damage dice', () => {
   rng.push(20, 1, 1, 1, 1);
   const r = ok(run(a, { type: 'attack', entityId: ea, attackId: 'twin-daggers', targetId: gob }));
   assert.equal(r.crit, true);
-  assert.equal(r.damage, 4 + 4);
-  assert.equal(state().entities[gob].hp, 1);
+  assert.equal(r.damage, (4 + 4) * 4, 'crit doubles the dice (2d4 → 4d4 = 4, +4), then DPS ×4');
+  assert.equal(state().entities[gob].status, 'dead');
 });
 
 test('down at 0 HP, death when downed creature takes max HP, heal restores', () => {

@@ -491,5 +491,303 @@
       }
     ],
     "inventory": ["dragon-scale", "ember-vial", "healing-potion"]
+  },
+  {
+    "id": "hornbreaker",
+    "name": "Rhazgor Ashhorn",
+    "role": "dps",
+    "image": "/static/tokens/token_141.webp",
+    "maxHp": 34,
+    "movement": 6,
+    "defense": 14,
+    "attacks": [
+      {
+        "id": "ashhorn-gore",
+        "name": "Ashhorn Gore",
+        "attack": "1d20+6",
+        "damage": "1d8+4",
+        "range": 1
+      },
+      {
+        "id": "ashhorn-ember-javelin",
+        "name": "Ember Javelin",
+        "attack": "1d20+5",
+        "damage": "1d6+3",
+        "range": 6
+      }
+    ],
+    "abilities": [
+      {
+        "id": "ashhorn-twin-horns",
+        "name": "Twin-Horn Assault",
+        "actionCost": 1,
+        "range": 1,
+        "effects": [
+          {
+            "type": "multi_attack",
+            "target": "enemy",
+            "count": 2,
+            "attack": "1d20+5",
+            "damage": "1d4+1",
+            "range": 1
+          }
+        ],
+        "description": "Strike an adjacent enemy twice, rolling separately for each attack and each successful strike's damage."
+      },
+      {
+        "id": "ashhorn-crushing-mark",
+        "name": "Crushing Mark",
+        "actionCost": 1,
+        "range": 5,
+        "effects": [
+          {
+            "type": "mark_target",
+            "target": "enemy",
+            "bonus": "1d4",
+            "range": 5,
+            "duration": "until_used"
+          }
+        ],
+        "description": "Mark an enemy within 5 squares; your next hit against it deals an additional 1d4 damage."
+      },
+      {
+        "id": "ashhorn-relentless-pursuit",
+        "name": "Relentless Pursuit",
+        "actionCost": 0,
+        "usesPerPhase": 1,
+        "range": 0,
+        "effects": [
+          {
+            "type": "modify_movement",
+            "target": "self",
+            "amount": 2,
+            "duration": "current_turn"
+          }
+        ],
+        "description": "Once per phase, gain 2 additional movement squares this turn."
+      }
+    ],
+    "inventory": [
+      "horn-polish",
+      "warrior-tonic",
+      "leather-travel-pack"
+    ]
+  },
+  {
+    "id": "starweaver",
+    "name": "Eldrin Voidwhisper",
+    "role": "dps",
+    "image": "/static/tokens/token_013.webp",
+    "maxHp": 32,
+    "movement": 6,
+    "defense": 14,
+    "attacks": [
+      {
+        "id": "voidwhisper-arcane-bolt",
+        "name": "Arcane Bolt",
+        "attack": "1d20+6",
+        "damage": "1d8+4",
+        "range": 8
+      },
+      {
+        "id": "voidwhisper-staff-strike",
+        "name": "Runic Staff",
+        "attack": "1d20+4",
+        "damage": "1d10+3",
+        "range": 1
+      }
+    ],
+    "abilities": [
+      {
+        "id": "voidwhisper-comet",
+        "name": "Falling Star",
+        "actionCost": 1,
+        "range": 8,
+        "effects": [
+          {
+            "type": "area_attack",
+            "target": "enemies_in_area",
+            "center": "target",
+            "radius": 2,
+            "range": 8,
+            "attack": "1d20+5",
+            "damage": "1d8+3",
+            "damageType": "arcane"
+          }
+        ],
+        "description": "Call down a burst of astral energy on a point near an enemy, attacking every enemy within 2 squares of the chosen target."
+      },
+      {
+        "id": "voidwhisper-phase-step",
+        "name": "Phase Step",
+        "actionCost": 1,
+        "range": 5,
+        "effects": [
+          {
+            "type": "teleport",
+            "target": "cell",
+            "distance": 5
+          },
+          {
+            "type": "modify_damage_dealt",
+            "target": "self",
+            "multiplier": 1.5,
+            "duration": "until_used"
+          }
+        ],
+        "description": "Teleport up to 5 squares to an unoccupied square and empower your next hit to deal 50% more damage."
+      }
+    ],
+    "inventory": [
+      "star-map",
+      "enchanted-focus",
+      "healing-potion"
+    ]
+  },
+  {
+    "id": "gazerender",
+    "name": "The Thousandfold Gaze",
+    "role": "dps",
+    "image": "/static/tokens/token_122.webp",
+    "maxHp": 35,
+    "movement": 6,
+    "defense": 13,
+    "attacks": [
+      {
+        "id": "thousandfold-eye-lance",
+        "name": "Eye Lance",
+        "attack": "1d20+5",
+        "damage": "1d10+3",
+        "range": 7
+      },
+      {
+        "id": "thousandfold-maw",
+        "name": "Gnashing Maw",
+        "attack": "1d20+5",
+        "damage": "1d8+4",
+        "range": 1
+      }
+    ],
+    "abilities": [
+      {
+        "id": "thousandfold-volley",
+        "name": "Unblinking Volley",
+        "actionCost": 1,
+        "range": 7,
+        "effects": [
+          {
+            "type": "multi_attack",
+            "target": "enemy",
+            "count": 3,
+            "range": 7,
+            "attack": "1d20+4",
+            "damage": "1d4+1",
+            "damageType": "force"
+          }
+        ],
+        "description": "Unleash three eye-lance strikes against one enemy, rolling each attack and successful hit's damage independently."
+      },
+      {
+        "id": "thousandfold-paralyzing-gaze",
+        "name": "Paralyzing Gaze",
+        "actionCost": 1,
+        "range": 5,
+        "effects": [
+          {
+            "type": "roll_to_apply",
+            "target": "enemy",
+            "roll": "1d20+5",
+            "range": 5,
+            "onSuccess": [
+              {
+                "type": "apply_status",
+                "target": "checked_enemy",
+                "status": "snared",
+                "duration": "next_dm_phase"
+              }
+            ]
+          }
+        ],
+        "description": "Fix an enemy within 5 squares with your unblinking gaze. If your roll meets its Defense, it becomes snared through the next DM phase."
+      }
+    ],
+    "inventory": [
+      "polished-eye-stone",
+      "ichor-vial",
+      "healing-potion"
+    ]
+  },
+  {
+    "id": "thornblade",
+    "name": "Vexira Thornspite",
+    "role": "dps",
+    "image": "/static/tokens/token_104.webp",
+    "maxHp": 30,
+    "movement": 7,
+    "defense": 14,
+    "attacks": [
+      {
+        "id": "thornspite-rapier",
+        "name": "Thornsteel Rapier",
+        "attack": "1d20+6",
+        "damage": "1d8+4",
+        "range": 1
+      },
+      {
+        "id": "thornspite-spine",
+        "name": "Venom Spine",
+        "attack": "1d20+5",
+        "damage": "1d6+3",
+        "range": 5
+      }
+    ],
+    "abilities": [
+      {
+        "id": "thornspite-flurry",
+        "name": "Briarstorm Flurry",
+        "actionCost": 1,
+        "range": 1,
+        "effects": [
+          {
+            "type": "multi_attack",
+            "target": "enemy",
+            "count": 2,
+            "range": 1,
+            "attack": "1d20+5",
+            "damage": "1d6+2"
+          }
+        ],
+        "description": "Unleash two rapid rapier strikes against an adjacent enemy, with independent attack and damage rolls."
+      },
+      {
+        "id": "thornspite-envenom",
+        "name": "Envenomed Opening",
+        "actionCost": 1,
+        "range": 5,
+        "effects": [
+          {
+            "type": "attack",
+            "target": "enemy",
+            "attack": "1d20+5",
+            "damage": "1d6+2",
+            "range": 5,
+            "damageType": "poison"
+          },
+          {
+            "type": "apply_status",
+            "target": "hit_enemies",
+            "status": "poisoned",
+            "duration": "next_dm_phase",
+            "when": "attack_hits"
+          }
+        ],
+        "description": "Launch a venomous spine at an enemy within 5 squares. On a hit, deal damage and poison the target, imposing −2 to hit through the next DM phase."
+      }
+    ],
+    "inventory": [
+      "thornsteel-rapier",
+      "venom-vial",
+      "healing-potion"
+    ]
   }
 ]

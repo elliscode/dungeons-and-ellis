@@ -55,6 +55,7 @@ test('one feed row per ability activation, even with several effects', () => {
   const monk = s.state().players[p.playerId].entityId;
   ok(s.run(DM, { type: 'move', entityId: monk, x: 0, y: 0, force: true }));
   const dummy = ok(s.run(DM, { type: 'entity.spawn', kind: 'monster', defId: 'training-dummy', x: 1, y: 0 })).entityId;
+  ok(s.run(DM, { type: 'combat.start' }));
   const before = s.service.history(s.game.id, 'player').feed.length;
   ok(s.run(p, { type: 'ability', entityId: monk, abilityId: 'flurry-of-blows', targetId: dummy }));
   const after = s.service.history(s.game.id, 'player').feed;

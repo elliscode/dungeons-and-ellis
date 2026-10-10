@@ -36,6 +36,7 @@ function world(heroes = [], { cols = 14, rows = 10 } = {}) {
     feed: (role = 'player') => s.service.history(s.game.id, role).feed,
     last: (role = 'player') => s.service.history(s.game.id, role).feed.at(-1).text,
     fight: () => ok(s.run(DM, { type: 'combat.start' })),
+    extraAction: (key) => ok(s.run(DM, { type: 'entity.grantAction', entityId: h[key].id })),
     next: () => ok(s.run(DM, { type: 'combat.advance' })),
   };
 }
@@ -43,15 +44,19 @@ function world(heroes = [], { cols = 14, rows = 10 } = {}) {
 test('attack: miss on natural 1, hit rolls damage, HP clamps at 0', () => {
   const w = world([['mage', 'x-fire-mage', 0, 0]]);
   const gob = w.spawn('goblin', 3, 0);
+  assert.match(w.use('mage', 'inferno-surge', { targetId: gob }).error, /only available in combat/);
+  w.fight();
   w.rng.push(1);
   ok(w.use('mage', 'inferno-surge', { targetId: gob }));
   assert.equal(w.ent(gob).hp, 9);
   assert.match(w.last(), /Inferno Surge on Goblin: Goblin: MISS/);
-  w.rng.push(15, 8, 8); // 20 vs DEF 13; 2d8+2 = 18 > 9 HP
+  w.extraAction('mage');
+  w.rng.push(15, 8, 8); // 20 vs DEF 13; 2d8+2 = 18, ×4 DPS = 72 > 9 HP
   ok(w.use('mage', 'inferno-surge', { targetId: gob }));
   assert.equal(w.ent(gob).hp, 0);
   assert.equal(w.ent(gob).status, 'dead');
-  assert.match(w.last(), /HIT 18.*Goblin is slain!/);
+  assert.match(w.last(), /HIT 72 \(×4 DPS\).*Goblin is slain!/);
+  w.extraAction('mage');
   assert.match(w.use('mage', 'inferno-surge', { targetId: gob }).error, /is dead/);
 });
 
@@ -70,10 +75,12 @@ test('conditional heal: Life Drain heals the caster only on a hit', () => {
   const w = world([['lock', 'x-void-warlock', 0, 0]]);
   const gob = w.spawn('goblin', 2, 0);
   ok(w.run(DM, { type: 'entity.damage', entityId: w.h.lock.id, amount: 10 }));
+  w.fight();
   w.rng.push(1);
   ok(w.use('lock', 'life-drain', { targetId: gob }));
   assert.equal(w.hero('lock').hp, 20, 'miss: no heal');
-  w.rng.push(15, 8, 6); // hit; 1d8+3 = 11 damage; heal 1d6+2 = 8
+  w.extraAction('lock');
+  w.rng.push(15, 8, 6); // hit; 1d8+3 = 11 (×4 DPS); heal 1d6+2 = 8 (a DPS self-heal is not multiplied)
   ok(w.use('lock', 'life-drain', { targetId: gob }));
   assert.equal(w.hero('lock').hp, 28);
   assert.equal(w.ent(gob).status, 'dead');
@@ -84,14 +91,15 @@ test('Flurry of Blows: four independent attack rolls with separate damage, one a
   const dummy = w.spawn('training-dummy', 1, 0);
   w.fight();
   // strike 1: 15 hit, 2d6 = 6+6; strike 2: natural 1; strike 3: natural 20 crit (4d6 = 1s); strike 4: 15 hit, 1+1
+  // Each successful strike is multiplied ×4 (DPS) on its own: 14→56, 6→24, 4→16.
   w.rng.push(15, 6, 6, 1, 20, 1, 1, 1, 1, 15, 1, 1);
   const r = ok(w.use('monk', 'flurry-of-blows', { targetId: dummy }));
   assert.deepEqual(r.strikes.map((s) => s.hit), [true, false, true, true]);
-  assert.deepEqual(r.strikes.map((s) => s.dealt), [14, 0, 6, 4]);
+  assert.deepEqual(r.strikes.map((s) => s.dealt), [56, 0, 24, 16]);
   assert.equal(r.strikes[2].crit, true);
-  assert.equal(w.ent(dummy).damageTaken, 24);
+  assert.equal(w.ent(dummy).damageTaken, 96);
   assert.equal(w.state().turn[w.h.monk.id].actions, 1, 'the whole flurry costs one action');
-  assert.match(w.last(), /4 strikes on Training Dummy: HIT 14 · MISS · CRIT 6 · HIT 4 — 24 total/);
+  assert.match(w.last(), /4 strikes on Training Dummy: HIT 56 \(×4 DPS\) · MISS · CRIT 24 \(×4 DPS\) · HIT 16 \(×4 DPS\) — 96 total/);
   assert.match(w.use('monk', 'flurry-of-blows', { targetId: dummy }).error, /no actions left/);
 });
 
@@ -100,10 +108,11 @@ test('area attack: every enemy in the radius gets its own roll; others are untou
   const near = w.spawn('goblin', 6, 5);
   const edge = w.spawn('goblin', 7, 7);
   const far = w.spawn('goblin', 9, 5);
+  w.fight();
   w.rng.push(1); // first target (nearest) misses, the next one hits with the fallback 15
   ok(w.use('storm', 'thunderclap'));
   assert.equal(w.ent(near).hp, 9);
-  assert.equal(w.ent(edge).hp, 9 - 4); // 1d8+3
+  assert.equal(w.ent(edge).status, 'dead'); // 1d8+3 = 4, ×4 DPS = 16
   assert.equal(w.ent(far).hp, 9);
   assert.equal(w.feed().filter((f) => f.type === 'ability').length, 1, 'one feed row for the activation');
 });
@@ -111,19 +120,22 @@ test('area attack: every enemy in the radius gets its own roll; others are untou
 test('Chain Lightning and Chain Heal validate picked jumps', () => {
   const w = world([['storm', 'x-stormcaller', 0, 0], ['shaman', 'x-restoration-shaman', 0, 4], ['ranger', 'x-ranger', 1, 4], ['bard', 'x-bard', 2, 4], ['cleric', 'x-cleric', 3, 4]]);
   const g1 = w.spawn('goblin', 5, 0), g2 = w.spawn('goblin', 7, 0), g3 = w.spawn('goblin', 13, 0);
+  w.fight();
   assert.match(w.use('storm', 'chain-lightning', { targetId: g1, picks: [g3] }).error, /too far/);
   assert.match(w.use('storm', 'chain-lightning', { targetId: g1, picks: [g1] }).error, /already in the chain/);
   assert.match(w.use('storm', 'chain-lightning', { targetId: g1, picks: [g2, g3] }).error, /at most 1/);
   ok(w.use('storm', 'chain-lightning', { targetId: g1, picks: [g2] }));
-  assert.equal(w.ent(g1).hp, 6); // 2d8+1 with 1s
-  assert.equal(w.ent(g2).hp, 6);
+  assert.equal(w.ent(g1).status, 'dead'); // 2d8+1 with 1s = 3, ×4 DPS = 12 each
+  assert.equal(w.ent(g2).status, 'dead');
 
   ok(w.run(DM, { type: 'entity.damage', entityId: w.h.ranger.id, amount: 10 }));
   ok(w.run(DM, { type: 'entity.damage', entityId: w.h.cleric.id, amount: 10 }));
   assert.match(w.use('shaman', 'chain-heal', { targetId: w.h.ranger.id, picks: [w.h.bard.id] }).error, /isn't wounded/);
+  assert.equal(w.state().turn[w.h.shaman.id]?.actions ?? 0, 0, 'a rejected ability spends nothing');
+  ok(w.run(DM, { type: 'entity.damage', entityId: w.h.ranger.id, amount: 10 }));
   ok(w.use('shaman', 'chain-heal', { targetId: w.h.ranger.id, picks: [w.h.cleric.id] }));
-  assert.equal(w.hero('ranger').hp, 34 - 10 + 3);
-  assert.equal(w.hero('cleric').hp, 34 - 10 + 3);
+  assert.equal(w.hero('ranger').hp, 34 - 20 + 12, '1d8+2 = 3, ×4 Heal = 12');
+  assert.equal(w.hero('cleric').hp, 34, 'capped at max HP');
 });
 
 test('protection: halve the next hit, absorb the next hit, both consumed once', () => {
@@ -240,15 +252,15 @@ test('teleport validates distance and bounds; once per phase in combat', () => {
 test('movement: snares and slows limit enemy moves; the DM can force', () => {
   const w = world([['beast', 'x-beastmaster', 0, 0], ['ranger', 'x-ranger', 0, 2]]);
   const gob = w.spawn('goblin', 2, 0);
-  const orc = w.spawn('orc', 4, 4);
+  const orc = w.spawn('ogre', 4, 4); // 59 HP: survives the ×4 DPS pinning shot
   ok(w.use('beast', 'snare-trap', { targetId: gob })); // 19 vs DEF 13: snared
   w.fight();
   ok(w.use('ranger', 'pinning-shot', { targetId: orc })); // hit: −2 movement
   w.next();
   assert.match(w.run(DM, { type: 'move', entityId: gob, x: 3, y: 0 }).error, /0 squares left/);
   ok(w.run(DM, { type: 'move', entityId: gob, x: 3, y: 0, force: true }), 'DM override');
-  assert.match(w.run(DM, { type: 'move', entityId: orc, x: 9, y: 4 }).error, /4 squares left/);
-  ok(w.run(DM, { type: 'move', entityId: orc, x: 8, y: 4 }));
+  assert.match(w.run(DM, { type: 'move', entityId: orc, x: 8, y: 4 }).error, /3 squares left/, 'ogre movement 5 − 2');
+  ok(w.run(DM, { type: 'move', entityId: orc, x: 7, y: 4 }));
 });
 
 test('frightened (DM check) and taunt restrict enemies', () => {
@@ -285,19 +297,20 @@ test('downed and dead targets, DM revive', () => {
   assert.match(w.use('cleric', 'healing-word', { targetId: w.h.ranger.id }).error, /is dead/);
   ok(w.run(DM, { type: 'entity.revive', entityId: w.h.ranger.id }));
   ok(w.use('cleric', 'healing-word', { targetId: w.h.ranger.id }));
-  assert.equal(w.hero('ranger').hp, 1 + 4);
+  assert.equal(w.hero('ranger').hp, 1 + 16, '1d8+3 = 4, ×4 Heal');
 });
 
 test('authorization and hidden enemy HP in ability results', () => {
   const w = world([['mage', 'x-fire-mage', 0, 0], ['monk', 'x-wind-monk', 1, 1]]);
-  const gob = w.spawn('goblin', 2, 0);
+  const gob = w.spawn('ogre', 2, 0);
   assert.match(w.run(w.h.mage.actor, { type: 'ability', entityId: w.h.monk.id, abilityId: 'flurry-of-blows', targetId: gob }).error, /not your character/);
-  ok(w.use('mage', 'inferno-surge', { targetId: gob })); // 2d8+2 = 4: goblin 5/9
+  w.fight();
+  ok(w.use('mage', 'inferno-surge', { targetId: gob })); // 2d8+2 = 4, ×4 = 16: ogre 43/59
   const pub = w.last('player'), dm = w.last('dm');
-  assert.doesNotMatch(pub, /5\/9/);
+  assert.doesNotMatch(pub, /43\/59/);
   assert.doesNotMatch(JSON.stringify(w.feed('player')), /"hp"/);
-  assert.match(dm, /Goblin 5\/9/);
-  assert.match(dm, /vs DEF 13/);
+  assert.match(dm, /Ogre 43\/59/);
+  assert.match(dm, /vs DEF 11/);
 });
 
 test('NPC and monster abilities use the same engine and enemy rules', () => {
@@ -318,7 +331,7 @@ test('support effects: roll bonus, mark, curse, sanctuary, beacon, poison/antido
     ['lp', 'x-light-paladin', 4, 0], ['alch', 'x-field-alchemist', 5, 0], ['eng', 'x-ironclad-engineer', 6, 0],
     ['shaman', 'x-restoration-shaman', 7, 0], ['tester', 'x-tester', 8, 0], ['druid', 'x-druid', 9, 0],
   ]);
-  const g1 = w.spawn('goblin', 1, 1), g2 = w.spawn('goblin', 5, 3), g3 = w.spawn('goblin', 9, 3);
+  const g1 = w.spawn('ogre', 1, 1), g2 = w.spawn('goblin', 5, 3), g3 = w.spawn('goblin', 9, 3);
 
   // Inspire: +1d6 (rolls 1) on the ranger's next attack roll, then gone.
   ok(w.use('bard', 'inspire', { targetId: w.h.ranger.id }));
@@ -326,18 +339,18 @@ test('support effects: roll bonus, mark, curse, sanctuary, beacon, poison/antido
   assert.match(w.last(), /\+1 Inspired/);
   assert.equal(w.hero('ranger').effects.length, 0);
   // Hunter's Mark: the ranger's next hit on g1 adds 1d6.
+  w.fight();
   ok(w.use('ranger', 'pinning-shot', { targetId: g1 }));
   assert.match(w.last(), /\+1 Hunter's Mark/);
-  assert.equal(w.ent(g1).hp, 9 - (1 + 3) - 1);
+  assert.equal(w.ent(g1).hp, 59 - (1 + 3 + 1) * 4, '(1d8+3 + 1d6 mark) ×4 DPS');
 
   // Curse of Weakness halves the goblin's next hit.
   ok(w.use('lock', 'curse-of-weakness', { targetId: g2 }));
   // Sanctuary: attacks on the priest take −5.
   ok(w.use('priest', 'sanctuary', { targetId: w.h.priest.id }));
-  w.fight();
   w.next();
   w.rng.push(13); // control: 13+4 = 17 vs the ranger's DEF 14 (no Sanctuary)
-  assert.equal(ok(w.dmAttack(g1, 'scimitar', w.h.ranger.id)).hit, true);
+  assert.equal(ok(w.dmAttack(g1, 'greatclub', w.h.ranger.id)).hit, true);
   ok(w.run(DM, { type: 'move', entityId: g2, x: 3, y: 1, force: true }));
   w.rng.push(15, 6); // 1d6+2 = 8 → halved by the curse = 4
   assert.equal(ok(w.dmAttack(g2, 'scimitar', w.h.lock.id)).damage, 4);
@@ -347,15 +360,17 @@ test('support effects: roll bonus, mark, curse, sanctuary, beacon, poison/antido
   ok(w.run(DM, { type: 'combat.end' }));
 
   // Beacon of Grace: +3 on the light paladin's next heal of that ally.
-  ok(w.run(DM, { type: 'entity.damage', entityId: w.h.alch.id, amount: 20 }));
+  ok(w.run(DM, { type: 'entity.damage', entityId: w.h.alch.id, amount: 30 }));
   ok(w.use('lp', 'beacon-of-grace', { targetId: w.h.alch.id }));
-  ok(w.use('lp', 'flash-of-light', { targetId: w.h.alch.id })); // 1d8+4 = 5, +3
-  assert.equal(w.hero('alch').hp, 31 - 20 + 8);
+  ok(w.use('lp', 'flash-of-light', { targetId: w.h.alch.id })); // 1d8+4 = 5, ×4 Heal = 20, then +3 Beacon
+  assert.equal(w.hero('alch').hp, 31 - 30 + 23);
   assert.match(w.last(), /\+3 Beacon of Grace/);
 
   // Volatile Flask poisons (area around g3); Antidote removes poisoned.
   ok(w.run(DM, { type: 'effect.addStatus', entityId: w.h.druid.id, status: 'poisoned' }));
+  w.fight();
   ok(w.use('alch', 'volatile-flask', { targetId: g3 }));
+  w.extraAction('alch');
   assert.ok(w.ent(g3).effects.some((fx) => fx.status === 'poisoned'));
   ok(w.run(DM, { type: 'move', entityId: w.h.alch.id, x: 9, y: 1, force: true }));
   ok(w.use('alch', 'antidote', { targetId: w.h.druid.id }));
@@ -368,20 +383,19 @@ test('support effects: roll bonus, mark, curse, sanctuary, beacon, poison/antido
   assert.equal(w.ent(g3).hp, hpBefore - 3);
 
   // Deploy Barrier and Healing Totem create temporary objects.
-  w.fight();
   ok(w.use('eng', 'deploy-barrier', { cell: { x: 6, y: 1 } }));
   const barrier = Object.values(w.state().entities).find((e) => e.name === 'Barrier');
   assert.equal(barrier.kind, 'object');
   assert.match(w.dmAttack(g1, 'scimitar', barrier.id).error ?? '', /can't be attacked|DM PHASE/);
-  ok(w.run(DM, { type: 'entity.damage', entityId: w.h.shaman.id, amount: 10 }));
+  ok(w.run(DM, { type: 'entity.damage', entityId: w.h.shaman.id, amount: 20 }));
   ok(w.use('shaman', 'healing-totem', { cell: { x: 7, y: 1 } }));
   w.next();
   w.next(); // player phase: totem pulse (1d4+1 = 2) ; barrier expires (next_dm_phase over)
-  assert.equal(w.hero('shaman').hp, 33 - 10 + 2);
+  assert.equal(w.hero('shaman').hp, 33 - 20 + 8, 'totem pulse 1d4+1 = 2, ×4 Heal (the shaman is a healer)');
   assert.ok(!w.state().entities[barrier.id], 'barrier expired');
   w.next();
   w.next(); // second pulse, then the totem is gone
-  assert.equal(w.hero('shaman').hp, 33 - 10 + 4);
+  assert.equal(w.hero('shaman').hp, 33 - 20 + 16);
   assert.ok(!Object.values(w.state().entities).some((e) => e.name === 'Healing Totem'));
 
   // Narrative: the roll shows in the feed.

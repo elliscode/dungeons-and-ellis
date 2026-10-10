@@ -4,14 +4,15 @@ const time = (ts) => new Date(ts).toLocaleTimeString([], { hour: '2-digit', minu
 
 // The Game Feed: chat messages and server events in one chronological list (ordered by the
 // server-assigned id). Rows are de-duplicated by id, so reconnect history never doubles up.
-// Auto-scrolls only when you were already at the bottom; otherwise shows a "new" pill.
+// Every new entry scrolls the feed to the bottom (after it has rendered). A "Scroll to bottom"
+// button shows whenever you've scrolled up to read older entries.
 export class GameFeed {
   constructor(root, { onSend }) {
     root.classList.add('side-panel');
     this.rows = new Map();
-    this.unseen = 0;
+    this.scrollPending = false;
     this.list = h('div.feed-list', { role: 'log', 'aria-live': 'polite' });
-    this.pill = h('button.feed-new.hidden', { type: 'button', onclick: () => this.toBottom() });
+    this.toBottomBtn = h('button.feed-new.hidden', { type: 'button', onclick: () => this.toBottom() }, 'Scroll to bottom');
     this.input = h('input', { type: 'text', placeholder: 'Message… (/roll 2d6)', maxLength: 500, 'aria-label': 'Chat message' });
     const form = h('form.chat-form', {
       onsubmit: async (e) => {
@@ -22,22 +23,25 @@ export class GameFeed {
         await onSend(text);
       },
     }, this.input, h('button.small', { type: 'submit' }, 'Send'));
-    this.list.addEventListener('scroll', () => { if (this.atBottom()) this.clearUnseen(); });
-    root.append(h('section.panel-section.feed', {}, h('h3', {}, 'Game Feed'), h('div.feed-wrap', {}, this.list, this.pill), form));
+    this.list.addEventListener('scroll', () => this.updateButton(), { passive: true });
+    root.append(h('section.panel-section.feed', {}, h('h3', {}, 'Game Feed'), h('div.feed-wrap', {}, this.list, this.toBottomBtn), form));
   }
 
   atBottom() {
     return this.list.scrollHeight - this.list.scrollTop - this.list.clientHeight < 40;
   }
 
+  updateButton() {
+    this.toBottomBtn.classList.toggle('hidden', this.atBottom());
+  }
+
   setHistory({ feed = [] }) {
     this.rows.clear();
     this.list.replaceChildren();
-    this.add(feed, { history: true });
+    this.add(feed);
   }
 
-  add(rows, { history = false } = {}) {
-    const stick = history || this.atBottom();
+  add(rows) {
     let added = 0;
     for (const r of rows) {
       if (this.rows.has(r.id)) continue;
@@ -52,13 +56,7 @@ export class GameFeed {
       this.rows.delete(Number(this.list.firstChild.dataset.id));
       this.list.firstChild.remove();
     }
-    if (!added) return;
-    if (stick) this.toBottom();
-    else {
-      this.unseen += added;
-      this.pill.textContent = `↓ ${this.unseen} new`;
-      this.pill.classList.remove('hidden');
-    }
+    if (added) this.toBottom();
   }
 
   render(r) {
@@ -72,15 +70,14 @@ export class GameFeed {
     return el;
   }
 
+  // Scroll after the new rows have rendered; a burst of rows coalesces into one scroll.
   toBottom() {
+    if (this.scrollPending) return;
+    this.scrollPending = true;
     requestAnimationFrame(() => {
+      this.scrollPending = false;
       this.list.scrollTop = this.list.scrollHeight;
-      this.clearUnseen();
+      this.updateButton();
     });
-  }
-
-  clearUnseen() {
-    this.unseen = 0;
-    this.pill.classList.add('hidden');
   }
 }

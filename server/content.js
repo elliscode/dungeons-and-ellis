@@ -3,6 +3,7 @@ import { readdirSync, readFileSync, existsSync, writeFileSync, renameSync, unlin
 import { join } from 'node:path';
 import { isValidDice } from './dice.js';
 import { validateAbility } from './games/effects.js';
+import { publicRoles } from './games/roles.js';
 
 // Definition categories. characters/monsters/npcs are folders of *.json files (each an array or
 // a single object); acts is the single file acts.json.
@@ -170,7 +171,7 @@ export function loadContent(dir, { staticDir = null, watchFiles = false, pollMs 
     get acts() { return data.acts; },
     def(kind, id) { return data.maps[kind]?.get(id) ?? null; },
     act(id) { return data.acts.find((a) => a.id === id) ?? null; },
-    publicContent() { return { characters: data.characters, acts: data.acts }; },
+    publicContent() { return { characters: data.characters, acts: data.acts, roles: publicRoles() }; },
     dmContent() { return { characters: data.characters, monsters: data.monsters, npcs: data.npcs, acts: data.acts }; },
 
     // Re-reads everything. Invalid content is rejected and the last good content stays loaded.

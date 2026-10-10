@@ -1,9 +1,9 @@
 import { entitiesInScene, isFriendly, actionAllowance } from './state.js';
 import { movementAllowance } from './status.js';
-import { normalizeAbility, targetingOf } from './effects.js';
+import { normalizeAbility, targetingOf, dealsDamage } from './effects.js';
 
 // Abilities as the client needs them: canonical schema plus the server-computed targeting.
-const abilitiesView = (list) => (list ?? []).map((a) => ({ ...normalizeAbility(a), targeting: targetingOf(a) }));
+const abilitiesView = (list) => (list ?? []).map((a) => ({ ...normalizeAbility(a), targeting: targetingOf(a), combatOnly: dealsDamage(a) }));
 
 // Labels and icons of live effects; magnitudes stay on the server.
 const effectsView = (e) => (e.effects ?? []).map((fx) => ({ id: fx.id, icon: fx.icon, label: fx.label, status: fx.status, source: fx.source?.name ?? null }));

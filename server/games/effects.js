@@ -119,6 +119,14 @@ export function validateAbility(raw, at) {
   return errors;
 }
 
+// Abilities that deal damage are combat-only, like weapon attacks. Debuffs, heals, buffs,
+// movement and narrative abilities stay usable while exploring.
+const DAMAGE_EFFECTS = new Set(['attack', 'multi_attack', 'area_attack', 'chain_attack']);
+export function dealsDamage(raw) {
+  const walk = (effects) => (effects ?? []).some((e) => DAMAGE_EFFECTS.has(e.type) || walk(e.onSuccess) || walk(e.onFailure));
+  return walk(normalizeAbility(raw)?.effects);
+}
+
 const effTarget = (eff) => eff.target ?? SPECS[eff.type]?.target ?? 'self';
 
 // What the client must pick before activating: an enemy, an ally, a cell, or nothing.
@@ -494,6 +502,7 @@ export function activateAbility(ctx) {
   const raw = (e.abilities ?? []).find((a) => a.id === ctx.cmd.abilityId);
   if (!raw) fail('Unknown ability');
   const ab = normalizeAbility(raw);
+  if (!ctx.state.combat.active && dealsDamage(ab)) fail(`${ab.name} deals damage and is only available in combat`);
   const budget = H.budgeted(ctx, e);
   const t = budget ? turnFor(ctx.state, e.id) : null;
   if (t && ab.usesPerPhase && usesThisPhase(t, ab.id) >= ab.usesPerPhase) {

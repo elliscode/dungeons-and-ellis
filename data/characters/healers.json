@@ -474,5 +474,288 @@
       }
     ],
     "inventory": ["ancestor-mask", "spirit-incense", "healing-potion"]
+  },
+  {
+    "id": "dawnstride",
+    "name": "Seraphina Dawnstride",
+    "role": "heal",
+    "image": "/static/tokens/token_140.webp",
+    "maxHp": 32,
+    "movement": 7,
+    "defense": 14,
+    "attacks": [
+      {
+        "id": "dawnstride-hoof-strike",
+        "name": "Dawnstride Hoof Strike",
+        "attack": "1d20+4",
+        "damage": "1d6+2",
+        "range": 1
+      },
+      {
+        "id": "dawnstride-sunbeam",
+        "name": "Sunbeam",
+        "attack": "1d20+4",
+        "damage": "1d6+2",
+        "range": 6
+      }
+    ],
+    "abilities": [
+      {
+        "id": "dawnstride-restoration",
+        "name": "Sunlit Restoration",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [
+          {
+            "type": "heal",
+            "target": "ally",
+            "heal": "1d4+1",
+            "range": 6
+          }
+        ],
+        "description": "Restore four times the rolled 1d4+1 healing amount to an ally within 6 squares."
+      },
+      {
+        "id": "dawnstride-blessing",
+        "name": "Blessing of the First Light",
+        "actionCost": 1,
+        "range": 3,
+        "effects": [
+          {
+            "type": "grant_roll_bonus",
+            "target": "ally",
+            "bonus": 2,
+            "range": 3,
+            "duration": "until_next_player_phase"
+          }
+        ],
+        "description": "Bless an ally within 3 squares, adding +2 to their next attack or check roll."
+      },
+      {
+        "id": "dawnstride-purifying-touch",
+        "name": "Purifying Touch",
+        "actionCost": 1,
+        "range": 2,
+        "effects": [
+          {
+            "type": "remove_status",
+            "target": "ally",
+            "status": "poisoned"
+          }
+        ],
+        "description": "Remove the poisoned status from an ally within 2 squares."
+      }
+    ],
+    "inventory": [
+      "healing-potion",
+      "sunstone-pendant",
+      "herbal-remedies"
+    ]
+  },
+  {
+    "id": "briarwhisper",
+    "name": "Elowen Brambleveil",
+    "role": "heal",
+    "image": "/static/tokens/token_088.webp",
+    "maxHp": 33,
+    "movement": 7,
+    "defense": 14,
+    "attacks": [
+      {
+        "id": "brambleveil-thorn-dart",
+        "name": "Thorn Dart",
+        "attack": "1d20+4",
+        "damage": "1d6+2",
+        "range": 5
+      },
+      {
+        "id": "brambleveil-root-staff",
+        "name": "Rootwood Staff",
+        "attack": "1d20+4",
+        "damage": "1d8+2",
+        "range": 1
+      }
+    ],
+    "abilities": [
+      {
+        "id": "brambleveil-wild-bloom",
+        "name": "Wildbloom Renewal",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [
+          {
+            "type": "heal",
+            "target": "ally",
+            "heal": "1d8+3",
+            "range": 6
+          }
+        ],
+        "description": "Call upon the wilds to restore four times the rolled healing amount to an ally within 6 squares."
+      },
+      {
+        "id": "brambleveil-entangling-vines",
+        "name": "Entangling Vines",
+        "actionCost": 1,
+        "range": 5,
+        "effects": [
+          {
+            "type": "roll_to_apply",
+            "target": "enemy",
+            "roll": "1d20+4",
+            "range": 5,
+            "onSuccess": [
+              {
+                "type": "apply_status",
+                "target": "checked_enemy",
+                "status": "snared",
+                "duration": "next_dm_phase"
+              }
+            ]
+          }
+        ],
+        "description": "Vines lash around an enemy within 5 squares. If your roll meets its Defense, the target is snared through the next DM phase."
+      }
+    ],
+    "inventory": [
+      "healing-potion",
+      "enchanted-acorn",
+      "herbal-poultice"
+    ]
+  },
+  {
+    "id": "plagueward",
+    "name": "Doctor Corvin Blackquill",
+    "role": "heal",
+    "image": "/static/tokens/token_171.webp",
+    "maxHp": 35,
+    "movement": 5,
+    "defense": 16,
+    "attacks": [
+      {
+        "id": "blackquill-cane-strike",
+        "name": "Iron Cane",
+        "attack": "1d20+4",
+        "damage": "1d8+3",
+        "range": 1
+      },
+      {
+        "id": "blackquill-hex-vial",
+        "name": "Hex Vial",
+        "attack": "1d20+5",
+        "damage": "1d6+2",
+        "range": 6
+      }
+    ],
+    "abilities": [
+      {
+        "id": "blackquill-emergency-remedy",
+        "name": "Emergency Remedy",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [
+          {
+            "type": "heal",
+            "target": "ally",
+            "heal": "1d8+3",
+            "range": 6
+          }
+        ],
+        "description": "Administer a potent remedy, restoring four times the rolled healing amount to an ally within 6 squares."
+      },
+      {
+        "id": "blackquill-antitoxin",
+        "name": "Universal Antitoxin",
+        "actionCost": 1,
+        "range": 4,
+        "effects": [
+          {
+            "type": "remove_status",
+            "target": "ally",
+            "status": "poisoned"
+          },
+          {
+            "type": "grant_protection",
+            "target": "ally",
+            "fraction": 0.5,
+            "duration": "next_dm_phase"
+          }
+        ],
+        "description": "Purge poison from an ally within 4 squares and halve the damage of their next incoming hit."
+      }
+    ],
+    "inventory": [
+      "healing-potion",
+      "antitoxin-vial",
+      "field-surgeon-kit"
+    ]
+  },
+  {
+    "id": "sunspire",
+    "name": "Amara Solcrown",
+    "role": "heal",
+    "image": "/static/tokens/token_052.webp",
+    "maxHp": 32,
+    "movement": 6,
+    "defense": 15,
+    "attacks": [
+      {
+        "id": "solcrown-sunlance",
+        "name": "Sunlance",
+        "attack": "1d20+5",
+        "damage": "1d8+3",
+        "range": 6
+      },
+      {
+        "id": "solcrown-golden-fan",
+        "name": "Golden Fan",
+        "attack": "1d20+4",
+        "damage": "1d6+2",
+        "range": 1
+      }
+    ],
+    "abilities": [
+      {
+        "id": "solcrown-radiant-mending",
+        "name": "Radiant Mending",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [
+          {
+            "type": "heal",
+            "target": "ally",
+            "heal": "2d4+2",
+            "range": 6
+          }
+        ],
+        "description": "Channel golden sunlight to restore four times the rolled healing amount to an ally within 6 squares."
+      },
+      {
+        "id": "solcrown-golden-aegis",
+        "name": "Golden Aegis",
+        "actionCost": 1,
+        "range": 4,
+        "effects": [
+          {
+            "type": "grant_protection",
+            "target": "ally",
+            "fraction": 0.5,
+            "duration": "next_dm_phase"
+          },
+          {
+            "type": "grant_roll_bonus",
+            "target": "ally",
+            "bonus": 2,
+            "range": 4,
+            "duration": "until_used"
+          }
+        ],
+        "description": "Surround an ally within 4 squares with radiant protection, halving their next incoming hit and granting +2 to their next attack or check roll."
+      }
+    ],
+    "inventory": [
+      "healing-potion",
+      "sun-circlet",
+      "golden-incense"
+    ]
   }
 ]

@@ -58,6 +58,8 @@ test('Flurry, area and chain attacks all hit it and it stands', () => {
   const storm = s.state().players[p2.playerId].entityId;
   ok(s.run(DM, { type: 'move', entityId: storm, x: 2, y: 1, force: true }));
   const second = ok(s.run(DM, { type: 'entity.spawn', kind: 'monster', defId: 'training-dummy', x: 4, y: 1 })).entityId;
+  ok(s.run(DM, { type: 'combat.start' }));
+  ok(s.run(DM, { type: 'entity.grantAction', entityId: storm }));
   ok(s.run(s.p, { type: 'ability', entityId: s.monk, abilityId: 'flurry-of-blows', targetId: s.dummy }));
   assert.equal(s.d().hits, 4);
   ok(s.run(p2, { type: 'ability', entityId: storm, abilityId: 'thunderclap' })); // both dummies within 2
