@@ -12,39 +12,39 @@
       { "id": "javelin", "name": "Javelin", "attack": "1d20+4", "damage": "1d6+3", "range": 6 }
     ],
     "abilities": [
-  {
-    "id": "divine-smite",
-    "name": "Divine Smite",
-    "actionCost": 1,
-    "range": 1,
-    "effects": [
       {
-        "type": "attack",
-        "target": "enemy",
-        "attack": "1d20+5",
-        "damage": "2d8+3",
+        "id": "divine-smite",
+        "name": "Divine Smite",
+        "actionCost": 1,
         "range": 1,
-        "damageType": "radiant"
-      }
-    ],
-    "description": "Strike an adjacent enemy with holy energy, dealing radiant damage."
-  },
-  {
-    "id": "blessed-aegis",
-    "name": "Blessed Aegis",
-    "actionCost": 1,
-    "range": 1,
-    "effects": [
+        "effects": [
+          {
+            "type": "attack",
+            "target": "enemy",
+            "attack": "1d20+5",
+            "damage": "2d8+3",
+            "range": 1,
+            "damageType": "radiant"
+          }
+        ],
+        "description": "Strike an adjacent enemy with holy energy, dealing radiant damage."
+      },
       {
-        "type": "defense_bonus",
-        "target": "ally_or_self",
-        "amount": 2,
+        "id": "blessed-aegis",
+        "name": "Blessed Aegis",
+        "actionCost": 1,
         "range": 1,
-        "duration": "until_next_player_phase"
+        "effects": [
+          {
+            "type": "defense_bonus",
+            "target": "ally_or_self",
+            "amount": 2,
+            "range": 1,
+            "duration": "until_next_player_phase"
+          }
+        ],
+        "description": "Protect yourself or an adjacent ally with divine energy, granting +2 Defense until the start of your next turn."
       }
-    ],
-    "description": "Protect yourself or an adjacent ally with divine energy, granting +2 Defense until the start of your next turn."
-  }
     ],
     "inventory": ["rope", "healing-potion", "holy-symbol"]
   },
@@ -61,55 +61,48 @@
       { "id": "throwing-axe", "name": "Throwing Axe", "attack": "1d20+4", "damage": "1d6+3", "range": 4 }
     ],
     "abilities": [
-  {
-    "id": "reckless-strike",
-    "name": "Reckless Strike",
-    "actionCost": 1,
-    "range": 1,
-    "effects": [
       {
-        "type": "attack",
-        "target": "enemy",
-        "attack": "1d20+5",
-        "attackBonus": 3,
-        "damage": "1d12+4",
-        "range": 1
+        "id": "reckless-strike",
+        "name": "Reckless Strike",
+        "actionCost": 1,
+        "range": 1,
+        "effects": [
+          {
+            "type": "attack",
+            "target": "enemy",
+            "attack": "1d20+5",
+            "attackBonus": 3,
+            "damage": "1d12+4",
+            "range": 1
+          },
+          { "type": "defense_bonus", "target": "self", "amount": -2, "duration": "until_next_player_phase" }
+        ],
+        "description": "Make a powerful melee attack with +3 to hit, but suffer -2 Defense until your next turn."
       },
       {
-        "type": "defense_bonus",
-        "target": "self",
-        "amount": -2,
-        "duration": "until_next_player_phase"
-      }
-    ],
-    "description": "Make a powerful melee attack with +3 to hit, but suffer -2 Defense until your next turn."
-  },
-  {
-    "id": "intimidating-roar",
-    "name": "Intimidating Roar",
-    "actionCost": 1,
-    "range": 3,
-    "effects": [
-      {
-        "type": "dm_check",
-        "roll": "1d20+4",
-        "target": "enemy",
-        "difficulty": "dm_set",
-        "onSuccess": [
+        "id": "intimidating-roar",
+        "name": "Intimidating Roar",
+        "actionCost": 1,
+        "range": 3,
+        "effects": [
           {
-            "type": "apply_status",
+            "type": "dm_check",
+            "roll": "1d20+4",
             "target": "enemy",
-            "status": "frightened",
-            "duration": "next_dm_phase",
-            "restrictions": [
-              "cannot_move_closer_to_source"
+            "difficulty": "dm_set",
+            "onSuccess": [
+              {
+                "type": "apply_status",
+                "target": "enemy",
+                "status": "frightened",
+                "duration": "next_dm_phase",
+                "restrictions": ["cannot_move_closer_to_source"]
+              }
             ]
           }
-        ]
+        ],
+        "description": "Roar at a nearby enemy. On a successful check against the DM's difficulty, the enemy is frightened and cannot move closer to you on its next turn."
       }
-    ],
-    "description": "Roar at a nearby enemy. On a successful check against the DM's difficulty, the enemy is frightened and cannot move closer to you on its next turn."
-  }
     ],
     "inventory": ["rope", "healing-potion", "greataxe"]
   },
@@ -126,52 +119,45 @@
       { "id": "shield-bash", "name": "Shield Bash", "attack": "1d20+5", "damage": "1d4+4", "range": 1 }
     ],
     "abilities": [
-  {
-    "id": "fortify",
-    "name": "Fortify",
-    "actionCost": 1,
-    "range": 0,
-    "effects": [
       {
-        "type": "defense_bonus",
-        "target": "self",
-        "amount": 3,
-        "duration": "until_next_player_phase"
-      }
-    ],
-    "description": "Brace behind your shield, gaining +3 Defense until the start of your next turn."
-  },
-  {
-    "id": "seismic-slam",
-    "name": "Seismic Slam",
-    "actionCost": 1,
-    "range": 1,
-    "effects": [
-      {
-        "type": "area_attack",
-        "target": "enemies_in_area",
-        "attack": "1d20+5",
-        "damage": "1d8+4",
-        "range": 1,
-        "area": 2
+        "id": "fortify",
+        "name": "Fortify",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [{ "type": "defense_bonus", "target": "self", "amount": 3, "duration": "until_next_player_phase" }],
+        "description": "Brace behind your shield, gaining +3 Defense until the start of your next turn."
       },
       {
-        "type": "dm_check",
-        "target": "hit_enemies",
-        "roll": "1d20",
-        "difficulty": "dm_set",
-        "onFailure": [
+        "id": "seismic-slam",
+        "name": "Seismic Slam",
+        "actionCost": 1,
+        "range": 1,
+        "effects": [
           {
-            "type": "modify_movement",
-            "target": "checked_enemy",
-            "amount": -2,
-            "duration": "next_dm_phase"
+            "type": "area_attack",
+            "target": "enemies_in_area",
+            "center": "self",
+            "radius": 1,
+            "attack": "1d20+5",
+            "damage": "1d8+4"
+          },
+          {
+            "type": "dm_check",
+            "target": "hit_enemies",
+            "roll": "1d20",
+            "difficulty": "dm_set",
+            "onFailure": [
+              {
+                "type": "modify_movement",
+                "target": "checked_enemy",
+                "amount": -2,
+                "duration": "next_dm_phase"
+              }
+            ]
           }
-        ]
+        ],
+        "description": "Smash the ground, damaging adjacent enemies. Enemies hit must pass a DM-set check or lose 2 movement on their next turn."
       }
-    ],
-    "description": "Smash the ground, damaging adjacent enemies. Enemies hit must pass a DM-set check or lose 2 movement on their next turn."
-  }
     ],
     "inventory": ["torch", "healing-potion", "iron-spikes"]
   },
@@ -188,39 +174,32 @@
       { "id": "crossbow", "name": "Crossbow", "attack": "1d20+4", "damage": "1d8+2", "range": 10 }
     ],
     "abilities": [
-  {
-    "id": "parry",
-    "name": "Parry",
-    "actionCost": 1,
-    "range": 0,
-    "effects": [
       {
-        "type": "defense_bonus",
-        "target": "self",
-        "amount": 3,
-        "duration": "until_next_player_phase"
-      }
-    ],
-    "description": "Deflect incoming blows, gaining +3 Defense until the start of your next turn."
-  },
-  {
-    "id": "shieldbreaker",
-    "name": "Shieldbreaker",
-    "actionCost": 1,
-    "range": 1,
-    "effects": [
+        "id": "parry",
+        "name": "Parry",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [{ "type": "defense_bonus", "target": "self", "amount": 3, "duration": "until_next_player_phase" }],
+        "description": "Deflect incoming blows, gaining +3 Defense until the start of your next turn."
+      },
       {
-        "type": "attack",
-        "target": "enemy",
-        "attack": "1d20+6",
-        "damage": "1d8+4",
+        "id": "shieldbreaker",
+        "name": "Shieldbreaker",
+        "actionCost": 1,
         "range": 1,
-        "defenseReduction": 2,
-        "defenseReductionDuration": "this_attack_only"
+        "effects": [
+          {
+            "type": "attack",
+            "target": "enemy",
+            "attack": "1d20+6",
+            "damage": "1d8+4",
+            "range": 1,
+            "defenseReduction": 2,
+            "defenseReductionDuration": "this_attack_only"
+          }
+        ],
+        "description": "Deliver a precise melee strike that ignores 2 points of the target's Defense bonus, if applicable."
       }
-    ],
-    "description": "Deliver a precise melee strike that ignores 2 points of the target's Defense bonus, if applicable."
-  }
     ],
     "inventory": ["rope", "rations", "healing-potion"]
   },
@@ -237,8 +216,25 @@
       { "id": "shield-bash", "name": "Shield Bash", "attack": "1d20+5", "damage": "1d4+4", "range": 1 }
     ],
     "abilities": [
-      { "id": "shield-wall", "name": "Shield Wall", "roll": "1d20+4", "description": "Brace behind your shield; on success, reduce the next hit you take this round." },
-      { "id": "second-wind", "name": "Second Wind", "heal": "1d10+3", "range": 0, "description": "Catch your breath and recover your own health." }
+      {
+        "id": "shield-wall",
+        "name": "Shield Wall",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [
+          { "type": "narrative", "roll": "1d20+4" },
+          { "type": "grant_protection", "target": "self", "fraction": 0.5, "label": "Shield Wall" }
+        ],
+        "description": "Brace behind your shield; on success, reduce the next hit you take this round."
+      },
+      {
+        "id": "second-wind",
+        "name": "Second Wind",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [{ "type": "heal", "target": "self", "heal": "1d10+3" }],
+        "description": "Catch your breath and recover your own health."
+      }
     ],
     "inventory": ["tower-shield", "healing-potion", "field-rations"]
   },
@@ -251,12 +247,44 @@
     "movement": 4,
     "defense": 18,
     "attacks": [
-      { "id": "granite-warhammer", "name": "Granite Warhammer", "attack": "1d20+5", "damage": "1d8+5", "range": 1 },
+      {
+        "id": "granite-warhammer",
+        "name": "Granite Warhammer",
+        "attack": "1d20+5",
+        "damage": "1d8+5",
+        "range": 1
+      },
       { "id": "boulder-toss", "name": "Boulder Toss", "attack": "1d20+4", "damage": "1d8+4", "range": 5 }
     ],
     "abilities": [
-      { "id": "earthshaker", "name": "Earthshaker", "attack": "1d20+4", "damage": "2d6+2", "range": 2, "description": "Smash the ground and stagger foes in the nearby area." },
-      { "id": "stone-skin", "name": "Stone Skin", "roll": "1d20+3", "description": "Harden your body like granite to blunt the next incoming hit." }
+      {
+        "id": "earthshaker",
+        "name": "Earthshaker",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [
+          {
+            "type": "area_attack",
+            "target": "enemies_in_area",
+            "center": "self",
+            "radius": 2,
+            "attack": "1d20+4",
+            "damage": "2d6+2"
+          }
+        ],
+        "description": "Smash the ground and stagger foes in the nearby area."
+      },
+      {
+        "id": "stone-skin",
+        "name": "Stone Skin",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [
+          { "type": "narrative", "roll": "1d20+3" },
+          { "type": "grant_protection", "target": "self", "fraction": 0.5, "label": "Stone Skin" }
+        ],
+        "description": "Harden your body like granite to blunt the next incoming hit."
+      }
     ],
     "inventory": ["granite-charm", "iron-spikes", "healing-potion"]
   },
@@ -273,8 +301,25 @@
       { "id": "thorn-lash", "name": "Thorn Lash", "attack": "1d20+4", "damage": "1d6+3", "range": 3 }
     ],
     "abilities": [
-      { "id": "ironbark", "name": "Ironbark", "roll": "1d20+4", "description": "Wrap yourself in tough bark, reducing damage from the next attack." },
-      { "id": "regrowth", "name": "Regrowth", "heal": "1d8+2", "range": 0, "description": "Call on ancient roots to restore your own health." }
+      {
+        "id": "ironbark",
+        "name": "Ironbark",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [
+          { "type": "narrative", "roll": "1d20+4" },
+          { "type": "grant_protection", "target": "self", "fraction": 0.5, "label": "Ironbark" }
+        ],
+        "description": "Wrap yourself in tough bark, reducing damage from the next attack."
+      },
+      {
+        "id": "regrowth",
+        "name": "Regrowth",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [{ "type": "heal", "target": "self", "heal": "1d8+2" }],
+        "description": "Call on ancient roots to restore your own health."
+      }
     ],
     "inventory": ["druidic-focus", "healing-potion", "wild-herbs"]
   },
@@ -291,8 +336,35 @@
       { "id": "death-coil", "name": "Death Coil", "attack": "1d20+5", "damage": "1d8+3", "range": 6 }
     ],
     "abilities": [
-      { "id": "blood-siphon", "name": "Blood Siphon", "attack": "1d20+5", "damage": "1d8+3", "heal": "1d8+2", "range": 4, "description": "Drain an enemy's life force and recover health from the stolen essence." },
-      { "id": "bone-armor", "name": "Bone Armor", "roll": "1d20+4", "description": "Raise spectral bones around yourself to absorb an incoming blow." }
+      {
+        "id": "blood-siphon",
+        "name": "Blood Siphon",
+        "actionCost": 1,
+        "range": 4,
+        "effects": [
+          {
+            "type": "attack",
+            "target": "enemy",
+            "attack": "1d20+5",
+            "damage": "1d8+3",
+            "range": 4,
+            "damageType": "necrotic"
+          },
+          { "type": "heal", "target": "self", "heal": "1d8+2", "when": "attack_hits" }
+        ],
+        "description": "Drain an enemy's life force and recover health from the stolen essence."
+      },
+      {
+        "id": "bone-armor",
+        "name": "Bone Armor",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [
+          { "type": "narrative", "roll": "1d20+4" },
+          { "type": "absorb_next_hit", "target": "self", "label": "Bone Armor" }
+        ],
+        "description": "Raise spectral bones around yourself to absorb an incoming blow."
+      }
     ],
     "inventory": ["rune-shard", "black-bandages", "healing-potion"]
   },
@@ -309,8 +381,41 @@
       { "id": "handaxe", "name": "Handaxe", "attack": "1d20+4", "damage": "1d6+3", "range": 5 }
     ],
     "abilities": [
-      { "id": "reckless-cleave", "name": "Reckless Cleave", "attack": "1d20+5", "damage": "2d6+2", "range": 1, "description": "Commit to a heavy cleave; you hit harder but leave your guard open." },
-      { "id": "unbreakable-rage", "name": "Unbreakable Rage", "roll": "1d20+3", "description": "Dig in and ignore pain, resisting the next burst of damage." }
+      {
+        "id": "reckless-cleave",
+        "name": "Reckless Cleave",
+        "actionCost": 1,
+        "range": 1,
+        "effects": [
+          {
+            "type": "attack",
+            "target": "enemy",
+            "attack": "1d20+5",
+            "damage": "2d6+2",
+            "range": 1,
+            "damageBonus": 3
+          },
+          {
+            "type": "defense_bonus",
+            "target": "self",
+            "amount": -2,
+            "duration": "until_next_player_phase",
+            "label": "Reckless"
+          }
+        ],
+        "description": "Commit to a heavy cleave; you hit harder but leave your guard open."
+      },
+      {
+        "id": "unbreakable-rage",
+        "name": "Unbreakable Rage",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [
+          { "type": "narrative", "roll": "1d20+3" },
+          { "type": "grant_protection", "target": "self", "fraction": 0.5, "label": "Unbreakable Rage" }
+        ],
+        "description": "Dig in and ignore pain, resisting the next burst of damage."
+      }
     ],
     "inventory": ["whetstone", "two-handaxes", "healing-potion"]
   },
@@ -327,8 +432,41 @@
       { "id": "arcane-bolt", "name": "Arcane Bolt", "attack": "1d20+5", "damage": "1d8+3", "range": 6 }
     ],
     "abilities": [
-      { "id": "spellguard", "name": "Spellguard", "roll": "1d20+4", "description": "Raise a ward that protects an adjacent ally from the next spell or magical strike." },
-      { "id": "silencing-strike", "name": "Silencing Strike", "attack": "1d20+5", "damage": "1d6+3", "range": 1, "description": "Strike a spellcaster and disrupt its concentration." }
+      {
+        "id": "spellguard",
+        "name": "Spellguard",
+        "actionCost": 1,
+        "range": 1,
+        "effects": [
+          { "type": "narrative", "roll": "1d20+4" },
+          {
+            "type": "absorb_next_hit",
+            "target": "ally_or_self",
+            "range": 1,
+            "magicalOnly": true,
+            "label": "Spellguard"
+          }
+        ],
+        "description": "Raise a ward that protects an adjacent ally from the next spell or magical strike."
+      },
+      {
+        "id": "silencing-strike",
+        "name": "Silencing Strike",
+        "actionCost": 1,
+        "range": 1,
+        "effects": [
+          { "type": "attack", "target": "enemy", "attack": "1d20+5", "damage": "1d6+3", "range": 1 },
+          {
+            "type": "reduce_actions",
+            "target": "hit_enemies",
+            "amount": 1,
+            "when": "attack_hits",
+            "label": "Silenced",
+            "duration": "next_dm_phase"
+          }
+        ],
+        "description": "Strike a spellcaster and disrupt its concentration."
+      }
     ],
     "inventory": ["warding-rune", "mana-potion", "chain-shirt"]
   },
@@ -345,8 +483,35 @@
       { "id": "shield-throw", "name": "Shield Throw", "attack": "1d20+4", "damage": "1d6+3", "range": 4 }
     ],
     "abilities": [
-      { "id": "intercept", "name": "Intercept", "roll": "1d20+4", "description": "Rush to an adjacent ally and take the next hit meant for them." },
-      { "id": "radiant-guard", "name": "Radiant Guard", "roll": "1d20+3", "description": "Surround yourself and nearby allies with a brief protective aura." }
+      {
+        "id": "intercept",
+        "name": "Intercept",
+        "actionCost": 1,
+        "range": 1,
+        "effects": [
+          { "type": "narrative", "roll": "1d20+4" },
+          { "type": "redirect_next_hit", "target": "ally", "range": 1, "label": "Intercept" }
+        ],
+        "description": "Rush to an adjacent ally and take the next hit meant for them."
+      },
+      {
+        "id": "radiant-guard",
+        "name": "Radiant Guard",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [
+          { "type": "narrative", "roll": "1d20+3" },
+          {
+            "type": "defense_bonus",
+            "target": "self",
+            "amount": 2,
+            "radius": 2,
+            "duration": "until_next_player_phase",
+            "label": "Radiant Guard"
+          }
+        ],
+        "description": "Surround yourself and nearby allies with a brief protective aura."
+      }
     ],
     "inventory": ["kite-shield", "signal-whistle", "healing-potion"]
   },
@@ -363,8 +528,43 @@
       { "id": "ice-shard", "name": "Ice Shard", "attack": "1d20+4", "damage": "1d6+3", "range": 5 }
     ],
     "abilities": [
-      { "id": "frozen-bulwark", "name": "Frozen Bulwark", "roll": "1d20+4", "description": "Encases yourself in ice armor that absorbs the next hit." },
-      { "id": "glacial-slam", "name": "Glacial Slam", "attack": "1d20+4", "damage": "2d6+2", "range": 1, "description": "Strike the ground with a chilling shockwave that slows nearby foes." }
+      {
+        "id": "frozen-bulwark",
+        "name": "Frozen Bulwark",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [
+          { "type": "narrative", "roll": "1d20+4" },
+          { "type": "absorb_next_hit", "target": "self", "label": "Frozen Bulwark" }
+        ],
+        "description": "Encases yourself in ice armor that absorbs the next hit."
+      },
+      {
+        "id": "glacial-slam",
+        "name": "Glacial Slam",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [
+          {
+            "type": "area_attack",
+            "target": "enemies_in_area",
+            "center": "self",
+            "radius": 1,
+            "attack": "1d20+4",
+            "damage": "2d6+2",
+            "damageType": "cold"
+          },
+          {
+            "type": "modify_movement",
+            "target": "hit_enemies",
+            "amount": -2,
+            "when": "attack_hits",
+            "label": "Chilled",
+            "duration": "next_dm_phase"
+          }
+        ],
+        "description": "Strike the ground with a chilling shockwave that slows nearby foes."
+      }
     ],
     "inventory": ["frost-rune", "winter-cloak", "healing-potion"]
   },
@@ -381,8 +581,39 @@
       { "id": "rivet-launcher", "name": "Rivet Launcher", "attack": "1d20+4", "damage": "1d8+3", "range": 6 }
     ],
     "abilities": [
-      { "id": "deploy-barrier", "name": "Deploy Barrier", "free": true, "description": "Drop a portable barricade to block a lane or give an ally cover." },
-      { "id": "magnetic-taunt", "name": "Magnetic Taunt", "roll": "1d20+3", "description": "Emit a clanging challenge that draws nearby enemies' attention." }
+      {
+        "id": "deploy-barrier",
+        "name": "Deploy Barrier",
+        "actionCost": 0,
+        "range": 2,
+        "usesPerPhase": 1,
+        "effects": [
+          {
+            "type": "create_barrier",
+            "target": "cell",
+            "range": 2,
+            "name": "Barrier",
+            "duration": "next_dm_phase"
+          }
+        ],
+        "description": "Drop a portable barricade to block a lane or give an ally cover."
+      },
+      {
+        "id": "magnetic-taunt",
+        "name": "Magnetic Taunt",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [
+          {
+            "type": "roll_to_apply",
+            "target": "enemies_in_area",
+            "radius": 3,
+            "roll": "1d20+3",
+            "onSuccess": [{ "type": "taunt", "target": "checked_enemy", "duration": "next_dm_phase" }]
+          }
+        ],
+        "description": "Emit a clanging challenge that draws nearby enemies' attention."
+      }
     ],
     "inventory": ["repair-kit", "iron-bolts", "healing-potion"]
   }
