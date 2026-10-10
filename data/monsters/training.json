@@ -3,7 +3,7 @@
     "id": "training-dummy",
     "name": "Training Dummy",
     "immortal": true,
-    "image": "/static/tokens/training-dummy.png",
+    "image": "/static/tokens/token_174.webp",
     "defense": 10,
     "movement": 0,
     "actions": 0,
