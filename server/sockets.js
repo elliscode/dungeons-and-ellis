@@ -1,5 +1,5 @@
 import { safeEqual } from './auth.js';
-import { projectForDm, projectForPlayer, activityForRole } from './games/project.js';
+import { projectForDm, projectForPlayer, feedForRole } from './games/project.js';
 
 const reply = (ack, result) => { if (typeof ack === 'function') ack(result); };
 
@@ -41,12 +41,11 @@ export function attachSockets(io, { service, auth }) {
         continue;
       }
       s.emit('state', stateFor(s));
-      if (payload.activity?.length) {
+      if (payload.feed?.length) {
         const role = s.data.role === 'dm' ? 'dm' : 'player';
-        const rows = payload.activity.map((r) => activityForRole(r, role)).filter((r) => r.text);
-        if (rows.length) s.emit('activity', rows);
+        const rows = payload.feed.map((r) => feedForRole(r, role)).filter(Boolean);
+        if (rows.length) s.emit('feed', rows);
       }
-      if (payload.chat?.length) s.emit('chat', payload.chat);
       if (payload.fx?.length) s.emit('fx', payload.fx);
     }
   });

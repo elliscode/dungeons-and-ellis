@@ -4,17 +4,17 @@ import { transaction } from '../db.js';
 import { handlers } from './commands.js';
 import { GameError, DM_COLOR, newId, createGameState } from './state.js';
 import { ensurePlaced } from './placement.js';
-import { activityForRole } from './project.js';
+import { feedForRole } from './project.js';
 
 const UNDO_LIMIT = 20;
-const HISTORY_LIMIT = 200;
+const HISTORY_LIMIT = 300;
 const CHAT_MAX = 500;
 
 const allowed = (who, actor) =>
   who === actor.role || (who === 'any' && (actor.role === 'dm' || actor.role === 'player'));
 
 // Owns all live games. Every state change goes through dispatch(): validate + mutate, then
-// persist state, activity and undo snapshot in one transaction, then notify listeners.
+// persist state, Game Feed events and undo snapshot in one transaction, then notify listeners.
 export class GameService extends EventEmitter {
   constructor({ db, content, templates, now = Date.now, rng, graceMs = 60_000 }) {
     super();
@@ -59,7 +59,7 @@ export class GameService extends EventEmitter {
 
   deleteGame(id) {
     const changes = transaction(this.db, () => {
-      for (const table of ['chat_messages', 'activity_events', 'undo_snapshots']) {
+      for (const table of ['feed_events', 'undo_snapshots']) {
         this.db.prepare(`DELETE FROM ${table} WHERE game_id = ?`).run(id);
       }
       return this.db.prepare('DELETE FROM games WHERE id = ?').run(id).changes;
@@ -130,7 +130,7 @@ export class GameService extends EventEmitter {
       clearUndo: !!h.clearsUndo,
     });
     this.syncTimer(game);
-    this.emit('change', game.id, { activity: rows, fx: ctx.fxs });
+    this.emit('change', game.id, { feed: rows, fx: ctx.fxs });
     return { ok: true, result };
   }
 
@@ -147,7 +147,10 @@ export class GameService extends EventEmitter {
       log(type, text, opts = {}) {
         const color = opts.color ?? ctx.actorColor;
         const dmText = opts.dmText ?? null;
-        ctx.events.push(opts.dmOnly ? { type, text: '', dmText: dmText ?? text, color } : { type, text, dmText, color });
+        const data = opts.data ?? null;
+        ctx.events.push(opts.dmOnly
+          ? { type, text: '', dmText: dmText ?? text, color, visibility: 'dm', data }
+          : { type, text, dmText, color, visibility: 'all', data });
       },
       fx(f) { ctx.fxs.push(f); },
     };
@@ -159,11 +162,7 @@ export class GameService extends EventEmitter {
     return transaction(this.db, () => {
       this.db.prepare('UPDATE games SET state = ?, name = ?, updated_at = ? WHERE id = ?')
         .run(JSON.stringify(game.state), game.state.name, t, game.id);
-      const ins = this.db.prepare('INSERT INTO activity_events (game_id, type, text, dm_text, color, ts) VALUES (?, ?, ?, ?, ?, ?)');
-      const rows = events.map((e) => {
-        const r = ins.run(game.id, e.type, e.text, e.dmText, e.color, t);
-        return { id: Number(r.lastInsertRowid), ts: t, type: e.type, text: e.text, dmText: e.dmText, color: e.color };
-      });
+      const rows = events.map((e) => this.insertFeed(game.id, { kind: 'event', ts: t, ...e }));
       if (clearUndo) this.db.prepare('DELETE FROM undo_snapshots WHERE game_id = ?').run(game.id);
       if (undo) {
         this.db.prepare('INSERT INTO undo_snapshots (game_id, label, state, ts) VALUES (?, ?, ?, ?)')
@@ -173,6 +172,18 @@ export class GameService extends EventEmitter {
       }
       return rows;
     });
+  }
+
+  // Appends one Game Feed row and returns it (internal shape; see feedForRole for what viewers get).
+  insertFeed(gameId, e) {
+    const row = {
+      kind: e.kind, type: e.type, text: e.text ?? '', dmText: e.dmText ?? null, visibility: e.visibility ?? 'all',
+      color: e.color ?? null, name: e.name ?? null, playerId: e.playerId ?? null, data: e.data ?? null, ts: e.ts ?? this.now(),
+    };
+    const r = this.db.prepare(`INSERT INTO feed_events (game_id, kind, type, text, dm_text, visibility, color, name, player_id, data, ts)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(gameId, row.kind, row.type, row.text, row.dmText, row.visibility, row.color,
+      row.name, row.playerId, row.data ? JSON.stringify(row.data) : null, row.ts);
+    return { id: Number(r.lastInsertRowid), ...row };
   }
 
   undoInfo(gameId) {
@@ -190,11 +201,12 @@ export class GameService extends EventEmitter {
     const s = game.state;
     s.entities = snap.entities;
     s.turn = snap.turn;
+    s.pendingChecks = snap.pendingChecks ?? [];
     s.zCounter = Math.max(s.zCounter, snap.zCounter);
     if (s.activeSceneId) ensurePlaced(s, s.activeSceneId);
     this.db.prepare('DELETE FROM undo_snapshots WHERE id = ?').run(row.id);
     const rows = this.persist(game, [{ type: 'undo', text: `DM undid the last ${row.label}`, dmText: null, color: DM_COLOR }]);
-    this.emit('change', game.id, { activity: rows, fx: [] });
+    this.emit('change', game.id, { feed: rows, fx: [] });
     return { ok: true, result: { undone: row.label } };
   }
 
@@ -237,21 +249,17 @@ export class GameService extends EventEmitter {
       ({ name, color } = p);
       playerId = p.id;
     }
-    const ts = this.now();
-    const r = this.db.prepare('INSERT INTO chat_messages (game_id, player_id, name, color, text, ts) VALUES (?, ?, ?, ?, ?, ?)')
-      .run(gameId, playerId, name, color, msg, ts);
-    const row = { id: Number(r.lastInsertRowid), playerId, name, color, text: msg, ts };
-    this.emit('change', gameId, { chat: [row] });
+    const row = this.insertFeed(gameId, { kind: 'chat', type: 'chat', text: msg, name, color, playerId });
+    this.emit('change', gameId, { feed: [row] });
     return { ok: true };
   }
 
+  // The most recent Game Feed rows, oldest first, filtered for the viewer's role.
   history(gameId, role) {
-    const chat = this.db.prepare(`SELECT * FROM (SELECT id, player_id AS playerId, name, color, text, ts FROM chat_messages
-      WHERE game_id = ? ORDER BY id DESC LIMIT ${HISTORY_LIMIT}) ORDER BY id`).all(gameId).map((r) => ({ ...r }));
-    const activity = this.db.prepare(`SELECT * FROM (SELECT id, type, text, dm_text AS dmText, color, ts FROM activity_events
-      WHERE game_id = ? ORDER BY id DESC LIMIT ${HISTORY_LIMIT}) ORDER BY id`).all(gameId)
-      .map((r) => activityForRole(r, role)).filter((r) => r.text);
-    return { chat, activity };
+    const rows = this.db.prepare(`SELECT * FROM (SELECT id, kind, type, text, dm_text AS dmText, visibility, color, name,
+      player_id AS playerId, data, ts FROM feed_events WHERE game_id = ? ORDER BY id DESC LIMIT ${HISTORY_LIMIT}) ORDER BY id`).all(gameId);
+    const feed = rows.map((r) => feedForRole({ ...r, data: r.data ? JSON.parse(r.data) : null }, role)).filter(Boolean);
+    return { feed };
   }
 
   // ---------- presence (not persisted) ----------

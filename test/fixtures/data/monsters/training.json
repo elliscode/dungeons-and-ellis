@@ -1,0 +1,14 @@
+[
+  {
+    "id": "training-dummy",
+    "name": "Training Dummy",
+    "immortal": true,
+    "image": "/static/tokens/training-dummy.png",
+    "defense": 10,
+    "movement": 0,
+    "actions": 0,
+    "attacks": [],
+    "abilities": [],
+    "description": "A stationary practice target. Takes unlimited damage and never goes down or dies; the DM can reset its damage counter or remove it."
+  }
+]

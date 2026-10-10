@@ -1,7 +1,8 @@
 import { io } from '/socket.io/socket.io.esm.min.js';
 import { $, fill, $$, h, api, toast, sendCmd, popupMenu, closeMenu, combatBar, copyText, PLAYER_COLORS, ROLE_LABELS } from './common.js';
 import { Board } from './board.js';
-import { SidePanel } from './panel.js';
+import { GameFeed } from './panel.js';
+import { startAbility, abilitySummary, distance } from './abilities.js';
 
 const gameId = location.pathname.split('/').pop();
 const me = await api('GET', '/api/me');
@@ -11,21 +12,20 @@ let heroById = new Map(content.characters.map((c) => [c.id, c]));
 
 let state = null;
 let selectedId = null;
-let mode = null; // {type:'place', kind, def, scope} | {type:'target', attacker, attack}
+let mode = null; // {type:'place', kind, def, scope} | {type:'target'|'cell', label, range, origin, ...}
 let spawnScope = 'scene';
 let templates = [];
 
 const socket = io('/dm', { auth: { gameId } });
 const send = (cmd) => sendCmd(socket, cmd);
-const panel = new SidePanel($('#panel'), {
+const panel = new GameFeed($('#panel'), {
   onSend: (text) => new Promise((r) => socket.emit('chat', text, (res) => { if (!res?.ok) toast(res?.error ?? 'Failed', 'error'); r(); })),
 });
 const bar = combatBar($('#combat-bar'));
 
 socket.on('state', (s) => { state = s; render(); });
 socket.on('history', (hist) => panel.setHistory(hist));
-socket.on('chat', (rows) => panel.addChat(rows));
-socket.on('activity', (rows) => panel.addActivity(rows));
+socket.on('feed', (rows) => panel.add(rows));
 socket.on('fx', (list) => { for (const f of list) board.showFx(f.entityId, f.text, f.color, f.kind); });
 // Definitions or art changed (Data/Assets pages): refresh the banks and hero names.
 socket.on('contentChanged', async () => {
@@ -49,20 +49,25 @@ const playerOf = (e) => state.players.find((p) => p.id === e.ownerPlayerId);
 const selected = () => (selectedId ? state.entities[selectedId] : null);
 
 const isEnemy = (e) => e.kind === 'monster' || (e.kind === 'npc' && e.hostile);
-const allowanceOf = (e) => (e.actionsPerPhase ?? 1) + (state.turn[e.id]?.bonus ?? 0);
+// Server-computed allowances (include granted actions, action reductions, slows, snares).
+const allowanceOf = (e) => e.allowance?.actions ?? (e.actionsPerPhase ?? 1);
 // Actions an enemy has left this phase (the server enforces the same budget), or null if none applies.
 function enemyActionsLeft(e) {
   if (!state.combat.active || !isEnemy(e)) return null;
   return Math.max(0, allowanceOf(e) - (state.turn[e.id]?.actions ?? 0));
 }
+// Token view of an entity for the board (positions on the active scene).
+const view = (e) => (e ? { ...e, position: e.positions[state.activeSceneId] } : e);
 
 function tokenFor(e) {
   const p = playerOf(e);
   return {
     id: e.id, kind: e.kind, name: e.name, image: e.image, size: e.size, position: e.positions[state.activeSceneId],
-    z: e.z, hp: e.hp, maxHp: e.maxHp, status: e.status,
-    actionsLeft: state.combat.phase === 'dm' && e.status === 'active' ? enemyActionsLeft(e) : null,
-    color: p ? p.color : e.kind === 'monster' || e.hostile ? '#8a2f2f' : '#d4af37',
+    z: e.z, hp: e.hp, maxHp: e.maxHp, status: e.status, icon: e.icon,
+    immortal: e.immortal, damageTaken: e.damageTaken, hits: e.hits,
+    effects: (e.effects ?? []).map((fx) => ({ icon: fx.icon, label: fx.label, source: fx.source?.name })),
+    actionsLeft: state.combat.phase === 'dm' && e.status === 'active' && !e.immortal ? enemyActionsLeft(e) : null,
+    color: p ? p.color : e.kind === 'object' ? 'transparent' : e.kind === 'monster' || e.hostile ? '#8a2f2f' : '#d4af37',
   };
 }
 
@@ -80,29 +85,31 @@ addEventListener('keydown', (e) => {
 
 const board = new Board($('#board'), {
   canDrag: () => !mode,
-  onTokenDrop: (t, x, y) => send({ type: 'move', entityId: t.id, x, y }),
+  // Shift-drag force-moves (skips movement budgets and frightened restrictions).
+  onTokenDrop: (t, x, y, e) => send({ type: 'move', entityId: t.id, x, y, force: !!e?.shiftKey }),
   onCellClick: (cell, e) => {
     if (mode?.type === 'place') return place(cell, e);
+    if (mode?.type === 'cell') { const m = mode; setMode(null); return m.onCell(cell); }
     if (mode) return;
     select(null);
   },
   onTokenClick: (t, e, stack) => {
     if (mode?.type === 'place') return place(board.cellAt(e.clientX, e.clientY), e);
+    if (mode?.type === 'cell') { const m = mode; setMode(null); return m.onCell(board.cellAt(e.clientX, e.clientY)); }
     if (mode?.type === 'target') {
-      const pick = (target) => {
-        const m = mode;
-        setMode(null);
-        send({ type: 'attack', entityId: m.attacker.id, attackId: m.attack.id, targetId: target.id });
-      };
-      const candidates = stack.filter((s) => s.id !== mode.attacker.id);
+      const m = mode;
+      const origin = view(state.entities[m.origin.id]) ?? m.origin;
+      const candidates = stack.filter((s) => m.filter(s) && distance(origin, s) <= m.range);
+      const pick = (target) => { setMode(null); m.onTarget(target); };
       if (candidates.length > 1) return popupMenu(e.clientX, e.clientY, 'Which target?', candidates.map((s) => ({ label: s.name, onClick: () => pick(s) })));
-      return candidates[0] ? pick(candidates[0]) : null;
+      if (!candidates[0]) return toast('Not a valid target (or out of range)', 'error');
+      return pick(candidates[0]);
     }
     // Stack inspector: tokens underneath the top one are reachable here.
     if (stack.length > 1) {
       return popupMenu(e.clientX, e.clientY, `Stack (${stack.length}) — top first`, stack.map((s) => ({
         label: `${s.id === selectedId ? '● ' : ''}${s.name}`,
-        sub: `${s.kind.toUpperCase()} · ${s.hp ?? '?'}/${s.maxHp ?? '?'} HP${s.status !== 'active' ? ` · ${s.status.toUpperCase()}` : ''}`,
+        sub: `${s.kind.toUpperCase()} · ${s.immortal ? `Σ ${s.damageTaken} dmg` : `${s.hp ?? '?'}/${s.maxHp ?? '?'} HP`}${s.status !== 'active' ? ` · ${s.status.toUpperCase()}` : ''}`,
         onClick: () => select(s.id),
       })));
     }
@@ -125,6 +132,17 @@ function select(id) {
   renderInspector();
 }
 
+function cellsWithin(scene, origin, range) {
+  const cells = [];
+  const pos = origin.positions?.[scene.id] ?? origin.position;
+  if (!pos) return cells;
+  for (let y = 0; y < scene.grid.rows; y++) for (let x = 0; x < scene.grid.cols; x++) {
+    const dx = Math.max(0, x - (pos.x + origin.size.w - 1), pos.x - x), dy = Math.max(0, y - (pos.y + origin.size.h - 1), pos.y - y);
+    if (Math.max(dx, dy) <= range) cells.push({ x, y });
+  }
+  return cells;
+}
+
 function renderBoard() {
   const scene = activeScene();
   if (!scene) {
@@ -133,27 +151,22 @@ function renderBoard() {
   }
   board.showEmpty('');
   board.setScene(scene);
-  const view = { selectedId, showStacks: true };
+  const v = { selectedId, showStacks: true };
   const tokens = sceneEntities().map(tokenFor);
   if (mode?.type === 'target') {
-    view.targetIds = new Set(tokens.filter((t) => t.id !== mode.attacker.id && t.status !== 'dead').map((t) => t.id));
-    const a = state.entities[mode.attacker.id];
-    const pos = a.positions[scene.id];
-    const range = Number(mode.attack.range) || 1;
-    const cells = [];
-    for (let y = 0; y < scene.grid.rows; y++) for (let x = 0; x < scene.grid.cols; x++) {
-      const dx = Math.max(0, x - (pos.x + a.size.w - 1), pos.x - x), dy = Math.max(0, y - (pos.y + a.size.h - 1), pos.y - y);
-      if (Math.max(dx, dy) <= range) cells.push({ x, y });
-    }
-    board.highlight(cells, 'range');
+    const origin = view(state.entities[mode.origin.id]) ?? mode.origin;
+    v.targetIds = new Set(tokens.filter((t) => mode.filter(t) && distance(origin, t) <= mode.range).map((t) => t.id));
+    board.highlight(cellsWithin(scene, origin, mode.range), 'range');
+  } else if (mode?.type === 'cell') {
+    board.highlight(cellsWithin(scene, state.entities[mode.origin.id] ?? mode.origin, mode.range), 'move');
   } else board.highlight([]);
-  board.setTokens(tokens, view);
+  board.setTokens(tokens, v);
   $('.mode-banner')?.remove();
   if (mode) {
-    const label = mode.type === 'place'
-      ? `Click the map to place ${mode.def.name} (${mode.scope} scope). Shift-click to place several.`
-      : `${mode.attacker.name} — ${mode.attack.name}: pick a target`;
-    $('#board').append(h('div.mode-banner', {}, label, h('button.small', { onclick: () => setMode(null) }, 'Cancel (Esc)')));
+    const label = mode.type === 'place' ? `Click the map to place ${mode.def.name} (${mode.scope} scope). Shift-click to place several.` : mode.label;
+    $('#board').append(h('div.mode-banner', {}, label,
+      mode.onDone ? h('button.small.primary', { onclick: () => { const m = mode; setMode(null); m.onDone(); } }, 'Done') : null,
+      h('button.small', { onclick: () => setMode(null) }, 'Cancel (Esc)')));
   }
 }
 
@@ -182,6 +195,7 @@ function renderTop() {
       ? h('button.gold', { onclick: () => send({ type: 'combat.advance' }) }, c.phase === 'player' ? '▶ DM Phase' : '▶ Player Phase')
       : h('button.primary', { onclick: () => send({ type: 'combat.start' }), disabled: !activeScene() }, '⚔️ Start combat'),
     c.active ? h('button.danger', { onclick: () => send({ type: 'combat.end' }) }, 'End combat') : null,
+    state.pendingChecks?.length ? h('button.checks-badge', { onclick: (e) => checksMenu(e), title: 'Abilities waiting for your call' }, `⚖ ${state.pendingChecks.length} check${state.pendingChecks.length > 1 ? 's' : ''}`) : null,
   );
   const u = $('#undo');
   u.disabled = !state.undo;
@@ -194,6 +208,17 @@ $('#game-name').addEventListener('dblclick', () => {
   const name = prompt('Game name', state.name);
   if (name) send({ type: 'dm.renameGame', name });
 });
+// Pending DM checks (e.g. Intimidating Roar): the DM decides success or failure.
+function checksMenu(e) {
+  const items = [];
+  for (const chk of state.pendingChecks) {
+    items.push({ heading: `${chk.casterName} — ${chk.abilityName} vs ${chk.subjectName}: rolled ${chk.total} (${chk.roll})` });
+    items.push({ label: '✓ Success', onClick: () => send({ type: 'check.resolve', checkId: chk.id, success: true }) });
+    items.push({ label: '✗ Failure', onClick: () => send({ type: 'check.resolve', checkId: chk.id, success: false }) });
+  }
+  popupMenu(e.clientX - 200, e.clientY + 16, 'Your call', items);
+}
+
 function undo() {
   if (state?.undo) send({ type: 'undo' }).then((r) => r && toast(`Undid ${r.undone}`));
 }
@@ -281,7 +306,7 @@ function renderBanks() {
   const scopeBtn = (s, label) => h(`button.small${spawnScope === s ? '.active' : ''}`, { onclick: () => { spawnScope = s; renderBanks(); } }, label);
   const bank = (kind, defs) => defs.map((d) => h('div.bank-item', {},
     d.image ? h('img', { src: d.image, alt: '' }) : null,
-    h('span.name', {}, d.name, h('br'), h('span.muted', {}, `${d.maxHp} HP · DEF ${d.defense}${d.size ? ` · ${d.size.w}×${d.size.h}` : ''}`)),
+    h('span.name', {}, d.name, h('br'), h('span.muted', {}, `${d.immortal ? '∞ HP (training dummy)' : `${d.maxHp} HP`} · DEF ${d.defense}${d.size ? ` · ${d.size.w}×${d.size.h}` : ''}`)),
     h('button.small.primary', {
       disabled: !activeScene(),
       onclick: () => setMode({ type: 'place', kind, def: d, scope: spawnScope }),
@@ -294,7 +319,7 @@ function renderBanks() {
     h('div.section-title', {}, 'Monster bank'), ...bank('monster', content.monsters),
     h('div.section-title', {}, 'Live in this scene'),
     ...(live.length ? live.map((e) => h('div.bank-item', { style: { cursor: 'pointer' }, onclick: () => select(e.id) },
-      h('span.name', {}, e.name, ' ', h('span.muted', {}, `${e.hp}/${e.maxHp} ${e.scope === 'game' ? '🧭' : '📍'}${e.status !== 'active' ? ` ${e.status}` : ''}${enemyActionsLeft(e) !== null ? ` ⚡${enemyActionsLeft(e)}` : ''}`)))) : [h('p.muted', {}, 'None')]),
+      h('span.name', {}, e.name, ' ', h('span.muted', {}, `${e.immortal ? `Σ ${e.damageTaken}` : e.kind === 'object' ? e.icon ?? '' : `${e.hp}/${e.maxHp}`} ${e.scope === 'game' ? '🧭' : '📍'}${e.status !== 'active' ? ` ${e.status}` : ''}${enemyActionsLeft(e) !== null ? ` ⚡${enemyActionsLeft(e)}` : ''}`)))) : [h('p.muted', {}, 'None')]),
   );
 }
 
@@ -309,58 +334,85 @@ function renderInspector() {
   }
   root.classList.remove('hidden');
   const id = e.id;
+  const mortal = !e.immortal && e.kind !== 'object';
   const amount = h('input', { type: 'number', min: 0, value: 5 });
   const hpInput = h('input', { type: 'number', min: 0, max: e.maxHp, value: e.hp });
   const maxInput = h('input', { type: 'number', min: 1, value: e.maxHp });
   const itemInput = h('input.grow', { placeholder: 'Add item…', maxLength: 60 });
+  const statusPick = h('select', {}, h('option', { value: '' }, 'Add status…'), ...['poisoned', 'snared', 'shaken', 'slowed'].map((st) => h('option', { value: st }, st)));
+  statusPick.addEventListener('change', () => { if (statusPick.value) send({ type: 'effect.addStatus', entityId: id, status: statusPick.value }); });
   const owner = playerOf(e);
   const c = state.combat;
   const turn = state.turn[id];
-  fill(root, 
+  const enemyBlock = () => (!c.active ? null : e.status !== 'active' ? `${e.name} is ${e.status}`
+    : isEnemy(e) && c.phase !== 'dm' ? 'Enemies act during the DM PHASE'
+      : isEnemy(e) && enemyActionsLeft(e) === 0 ? 'No actions left — use +1 action to override' : null);
+  const stats = e.immortal
+    ? `🎯 Training dummy · 🛡 DEF ${e.defense} · Σ ${e.damageTaken ?? 0} damage over ${e.hits ?? 0} hits`
+    : e.kind === 'object' ? `${e.icon ?? ''} Temporary object` : `❤ ${e.hp}/${e.maxHp} · 🛡 DEF ${e.defense} · 👣 ${e.allowance?.movement ?? e.movement}`;
+  fill(root,
     h('h3', {}, e.name, h('button.small', { title: 'Rename', onclick: () => { const n = prompt('Name', e.name); if (n) send({ type: 'entity.rename', entityId: id, name: n }); } }, '✎'),
       h('span.grow'), h('button.small', { onclick: () => select(null), title: 'Close' }, '✕')),
     h('div.row', {},
-      h('span.tag', {}, e.kind === 'pc' ? 'player' : e.kind),
+      h('span.tag', {}, e.kind === 'pc' ? 'player' : e.immortal ? 'training dummy' : e.kind),
       h('span.tag', {}, e.scope === 'game' ? 'game scope' : 'scene scope'),
       h('span.tag', { style: { color: e.status === 'active' ? 'var(--good)' : 'var(--bad)' } }, e.status),
-      e.kind !== 'pc' ? h('span.tag', {}, e.hostile ? 'hostile' : 'friendly') : null,
+      e.kind === 'npc' || e.kind === 'monster' ? h('span.tag', {}, e.hostile ? 'hostile' : 'friendly') : null,
       owner ? h('span.tag', { style: { color: owner.color } }, owner.name) : null),
-    h('p', {}, `❤ ${e.hp}/${e.maxHp} · 🛡 DEF ${e.defense} · 👣 ${e.movement}`,
-      c.active && (turn || isEnemy(e)) ? h('span.muted', {}, ` · actions ${turn?.actions ?? 0}/${allowanceOf(e)}, moved ${turn?.moved ?? 0}`) : null),
-    c.active && isEnemy(e) ? h('p.muted', { style: { fontSize: '12px', margin: '0 0 6px' } },
-      c.phase === 'dm' ? `⚡ ${enemyActionsLeft(e)} action(s) left this DM phase. Moving is free.` : 'Enemies attack during the DM PHASE.') : null,
-    h('div.row', {}, amount,
+    h('p', {}, stats,
+      c.active && (turn || isEnemy(e)) && !e.immortal ? h('span.muted', {}, ` · actions ${turn?.actions ?? 0}/${allowanceOf(e)}, moved ${turn?.moved ?? 0}`) : null),
+    c.active && isEnemy(e) && !e.immortal && e.status === 'active' ? h('p.muted', { style: { fontSize: '12px', margin: '0 0 6px' } },
+      c.phase === 'dm' ? `⚡ ${enemyActionsLeft(e)} action(s) left this DM phase. Shift-drag to force-move.` : 'Enemies act during the DM PHASE.') : null,
+    e.kind !== 'object' ? h('div.row', {}, amount,
       h('button.small.danger', { onclick: () => send({ type: 'entity.damage', entityId: id, amount: Number(amount.value) }) }, '− Damage'),
-      h('button.small', { onclick: () => send({ type: 'entity.heal', entityId: id, amount: Number(amount.value) }) }, '+ Heal')),
-    h('div.row', { style: { marginTop: '6px' } },
+      mortal ? h('button.small', { onclick: () => send({ type: 'entity.heal', entityId: id, amount: Number(amount.value) }) }, '+ Heal') : null,
+      e.immortal ? h('button.small', { onclick: () => send({ type: 'entity.resetDummy', entityId: id }) }, 'Reset counter') : null) : null,
+    mortal ? h('div.row', { style: { marginTop: '6px' } },
       h('label.inline', {}, 'HP', hpInput), h('button.small', { onclick: () => send({ type: 'entity.setHp', entityId: id, hp: Number(hpInput.value) }) }, 'Set'),
-      h('label.inline', {}, 'Max', maxInput), h('button.small', { onclick: () => send({ type: 'entity.setMaxHp', entityId: id, maxHp: Number(maxInput.value) }) }, 'Set')),
-    h('div.row', { style: { marginTop: '6px' } },
+      h('label.inline', {}, 'Max', maxInput), h('button.small', { onclick: () => send({ type: 'entity.setMaxHp', entityId: id, maxHp: Number(maxInput.value) }) }, 'Set')) : null,
+    mortal ? h('div.row', { style: { marginTop: '6px' } },
       e.status !== 'active' ? h('button.small.primary', { onclick: () => send({ type: 'entity.revive', entityId: id }) }, '✚ Revive') : null,
       e.status !== 'dead' ? h('button.small.danger', { onclick: () => send({ type: 'entity.kill', entityId: id }) }, '☠ Kill') : null,
       e.status === 'active' && e.kind !== 'monster' ? h('button.small', { onclick: () => send({ type: 'entity.setStatus', entityId: id, status: 'down' }) }, 'Set DOWN') : null,
-      c.active ? h('button.small', { onclick: () => send({ type: 'entity.grantAction', entityId: id }) }, '+1 action') : null),
-    e.kind !== 'pc' ? h('div.row', { style: { marginTop: '6px' } },
+      c.active ? h('button.small', { onclick: () => send({ type: 'entity.grantAction', entityId: id }) }, '+1 action') : null) : null,
+    e.kind === 'npc' || e.kind === 'monster' ? h('div.row', { style: { marginTop: '6px' } },
       e.scope === 'scene'
         ? h('button.small', { onclick: () => send({ type: 'entity.setScope', entityId: id, scope: 'game' }), title: 'Promote: follows the party between scenes' }, '🧭 Make game-scoped')
         : h('button.small', { onclick: () => send({ type: 'entity.setScope', entityId: id, scope: 'scene' }), title: 'Demote: stays in this scene' }, '📍 Leave in this scene'),
       e.kind === 'npc' ? h('button.small', { onclick: () => send({ type: 'entity.setHostile', entityId: id, hostile: !e.hostile }) }, e.hostile ? 'Mark friendly' : 'Mark hostile') : null) : null,
+    e.kind !== 'object' ? h('div.section-title', {}, 'Effects') : null,
+    e.kind !== 'object' ? h('div.effect-list', {},
+      ...(e.effects?.length ? e.effects.map((fx) => h('div.effect-item', {}, h('span', {}, fx.icon), h('span.grow', {}, fx.label, fx.source?.name ? h('span.muted', {}, ` · ${fx.source.name}`) : null),
+        h('button.small', { title: 'Remove effect', onclick: () => send({ type: 'effect.remove', entityId: id, effectId: fx.id }) }, '✕'))) : [h('span.muted', {}, 'None')]),
+      statusPick) : null,
     e.attacks.length ? h('div.section-title', {}, c.active ? 'Attack (DM)' : 'Attacks (combat only)') : null,
     ...e.attacks.map((a) => h('div.inv-item', {},
       h('span', {}, a.name, ' ', h('span.muted', {}, `${a.attack} / ${a.damage} · r${a.range ?? 1}`)),
       e.kind !== 'pc' ? (() => {
-        const why = !c.active ? 'Combat only' : e.status !== 'active' ? `${e.name} is ${e.status}`
-          : isEnemy(e) && c.phase !== 'dm' ? 'Enemies attack during the DM PHASE'
-            : isEnemy(e) && enemyActionsLeft(e) === 0 ? 'No actions left — use +1 action to override' : null;
-        return h('button.small', { disabled: !!why, title: why ?? 'Pick a target', onclick: () => setMode({ type: 'target', attacker: e, attack: a }) }, 'Use');
+        const why = !c.active ? 'Combat only' : enemyBlock();
+        return h('button.small', {
+          disabled: !!why, title: why ?? 'Pick a target',
+          onclick: () => setMode({
+            type: 'target', label: `${e.name} — ${a.name}: pick a target`, range: Number(a.range) || 1, origin: e,
+            filter: (t) => t.id !== e.id && t.kind !== 'object' && t.status !== 'dead',
+            onTarget: (t) => send({ type: 'attack', entityId: e.id, attackId: a.id, targetId: t.id }),
+          }),
+        }, 'Use');
       })() : null)),
-    h('div.section-title', {}, 'Inventory'),
-    ...(e.inventory.length ? e.inventory.map((it) => h('div.inv-item', {}, it.name,
+    e.kind !== 'pc' && e.abilities?.length ? h('div.section-title', {}, 'Abilities (DM)') : null,
+    ...(e.kind !== 'pc' ? e.abilities ?? [] : []).map((ab) => h('div.inv-item', {},
+      h('span', { title: ab.description ?? '' }, ab.name, ' ', h('span.muted', {}, abilitySummary(ab))),
+      h('button.small', {
+        disabled: !!enemyBlock(), title: enemyBlock() ?? ab.description ?? '',
+        onclick: () => startAbility({ caster: view(e), ab, entities: () => sceneEntities().map(view), setMode, send, toast: null }),
+      }, 'Use'))),
+    e.kind !== 'object' ? h('div.section-title', {}, 'Inventory') : null,
+    ...(e.kind === 'object' ? [] : e.inventory.length ? e.inventory.map((it) => h('div.inv-item', {}, it.name,
       h('button.small', { title: 'Remove', onclick: () => send({ type: 'item.remove', entityId: id, itemId: it.id }) }, '✕'))) : [h('p.muted', {}, 'Empty')]),
-    h('form.row', {
+    e.kind !== 'object' ? h('form.row', {
       style: { marginTop: '6px' },
       onsubmit: (ev) => { ev.preventDefault(); if (itemInput.value.trim()) send({ type: 'item.add', entityId: id, name: itemInput.value }); },
-    }, itemInput, h('button.small', { type: 'submit' }, 'Add')),
+    }, itemInput, h('button.small', { type: 'submit' }, 'Add')) : null,
     h('div.row', { style: { marginTop: '12px' } },
       e.kind !== 'pc'
         ? h('button.small.danger', { onclick: () => confirm(`Remove ${e.name}?`) && send({ type: 'entity.remove', entityId: id }).then(() => select(null)) }, 'Remove from game')
@@ -379,12 +431,12 @@ function memo(name, key, fn) {
 
 function render() {
   if (selectedId && !state.entities[selectedId]) selectedId = null;
-  if (mode?.type === 'target' && (!state.combat.active || !state.entities[mode.attacker.id])) mode = null;
+  if ((mode?.type === 'target' || mode?.type === 'cell') && !state.entities[mode.origin?.id]) mode = null;
   const ents = Object.values(state.entities);
   renderTop();
   memo('scenes', [state.scenes, state.sceneOrder, state.activeSceneId, templates, ents.map((e) => [e.scope, e.sceneId])], renderScenes);
   memo('players', state.players, renderPlayers);
-  memo('banks', [spawnScope, state.activeSceneId, state.combat, state.turn, ents.filter((e) => e.kind !== 'pc').map((e) => [e.id, e.name, e.hp, e.status, e.scope, e.sceneId])], renderBanks);
+  memo('banks', [spawnScope, state.activeSceneId, state.combat, state.turn, ents.filter((e) => e.kind !== 'pc').map((e) => [e.id, e.name, e.hp, e.status, e.scope, e.sceneId, e.damageTaken])], renderBanks);
   renderBoard();
   const sel = selected();
   memo('inspector', [selectedId, sel, state.combat, state.turn[selectedId], sel && playerOf(sel), state.activeSceneId], renderInspector);

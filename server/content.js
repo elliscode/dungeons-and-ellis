@@ -1,7 +1,8 @@
 import { EventEmitter } from 'node:events';
-import { readdirSync, readFileSync, existsSync, writeFileSync, renameSync, unlinkSync, watch, mkdirSync } from 'node:fs';
+import { readdirSync, readFileSync, existsSync, writeFileSync, renameSync, unlinkSync, watch, mkdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { isValidDice } from './dice.js';
+import { validateAbility } from './games/effects.js';
 
 // Definition categories. characters/monsters/npcs are folders of *.json files (each an array or
 // a single object); acts is the single file acts.json.
@@ -43,9 +44,13 @@ export function validateDefs(category, files, { imageExists } = {}) {
         if (d.roll != null && d.roll !== '' && !isValidDice(d.roll)) err(`roll "${d.roll}" is not valid dice`);
         return;
       }
-      if (!isNum(d.maxHp) || d.maxHp < 1) err('maxHp must be a number ≥ 1');
+      if (d.immortal !== undefined && typeof d.immortal !== 'boolean') err('immortal must be true or false');
+      if (d.immortal === true) {
+        if (category === 'characters') err('heroes cannot be immortal');
+        if (d.maxHp !== undefined && d.maxHp !== null) err('immortal entities (training dummies) have no maxHp; remove it');
+      } else if (!isNum(d.maxHp) || d.maxHp < 1) err('maxHp must be a number ≥ 1');
       for (const k of ['defense', 'movement']) if (d[k] !== undefined && !isNum(d[k])) err(`${k} must be a number`);
-      if (d.actions !== undefined && !(Number.isInteger(d.actions) && d.actions >= 1 && d.actions <= 10)) err('actions must be a whole number from 1 to 10');
+      if (d.actions !== undefined && !(Number.isInteger(d.actions) && d.actions >= 0 && d.actions <= 10)) err('actions must be a whole number from 0 to 10');
       if (category === 'characters' && !ROLES.includes(d.role)) err(`role must be one of ${ROLES.join(', ')}`);
       if (d.size !== undefined) {
         const ok = d.size && Number.isInteger(d.size.w) && Number.isInteger(d.size.h) && d.size.w >= 1 && d.size.h >= 1 && d.size.w <= 10 && d.size.h <= 10;
@@ -71,7 +76,7 @@ export function validateDefs(category, files, { imageExists } = {}) {
         if (typeof a.id !== 'string' || !a.id) err(`${p}.id is required`);
         if (typeof a.name !== 'string' || !a.name) err(`${p}.name is required`);
         for (const k of ['heal', 'roll']) if (a[k] != null && !isValidDice(a[k])) err(`${p}.${k} "${a[k]}" is not valid dice`);
-        if (a.grantsActions !== undefined && !(Number.isInteger(a.grantsActions) && a.grantsActions >= 1)) err(`${p}.grantsActions must be a whole number ≥ 1`);
+        for (const m of validateAbility(a, `${p} (${a.id ?? '?'})`)) err(m);
       });
       if (d.inventory !== undefined && !(Array.isArray(d.inventory) && d.inventory.every((x) => typeof x === 'string' || typeof x?.name === 'string'))) {
         err('inventory must be an array of item names');
@@ -83,11 +88,12 @@ export function validateDefs(category, files, { imageExists } = {}) {
 
 // Reloadable content store. The object identity never changes, so everything holding a reference
 // (GameService, routes) sees new definitions after reload(). Emits 'change' when content changes.
-export function loadContent(dir, { staticDir = null, watchFiles = false } = {}) {
+export function loadContent(dir, { staticDir = null, watchFiles = false, pollMs = 2000 } = {}) {
   const store = new EventEmitter();
   let data = null;
   let snapshot = '';
   const watchers = [];
+  let pollTimer = null;
   const imageExists = staticDir ? (p) => existsSync(join(staticDir, p.slice('/static/'.length))) : null;
 
   const folder = (category) => join(dir, category);
@@ -217,6 +223,7 @@ export function loadContent(dir, { staticDir = null, watchFiles = false } = {}) 
     close() {
       for (const w of watchers) w.close();
       watchers.length = 0;
+      clearInterval(pollTimer);
     },
   }));
 
@@ -246,6 +253,17 @@ export function loadContent(dir, { staticDir = null, watchFiles = false } = {}) 
     };
     for (const c of FOLDER_CATEGORIES) tryWatch(folder(c), (n) => n.endsWith('.json'));
     tryWatch(dir, (n) => n === 'acts.json');
+    // fs.watch can miss events (notably on macOS right after a watch starts), so also compare a
+    // cheap signature of the content files every few seconds.
+    const signature = () => CATEGORIES.flatMap((c) => fileNames(c).map((f) => {
+      try { const st = statSync(pathOf(c, f)); return `${c}/${f}:${st.mtimeMs}:${st.size}`; } catch { return `${c}/${f}`; }
+    })).join('|');
+    let last = signature();
+    pollTimer = setInterval(() => {
+      const now = signature();
+      if (now !== last) { last = now; schedule(); }
+    }, pollMs);
+    pollTimer.unref?.();
   }
   return store;
 }

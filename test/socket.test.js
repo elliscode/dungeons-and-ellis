@@ -81,9 +81,9 @@ test('multiplayer flow over sockets, auth boundaries, and restart recovery', asy
     assert.ok(g && !('hp' in g));
 
     // Chat reaches everyone with the sender's color.
-    const chatSeen = once(dm, 'chat');
+    const chatSeen = new Promise((r) => dm.on('feed', (rows) => { const m = rows.find((x) => x.kind === 'chat'); if (m) r(m); }));
     await emit(p2, 'chat', 'hi all');
-    const [msg] = await chatSeen;
+    const msg = await chatSeen;
     assert.equal(msg.name, 'Bo');
     assert.ok(msg.color);
 
@@ -113,7 +113,7 @@ test('multiplayer flow over sockets, auth boundaries, and restart recovery', asy
     assert.equal(after.me.characterId, 'paladin');
     assert.deepEqual(after.entities.find((e) => e.id === me1.id).position, { x: 3, y: 5 });
     const hist = await histP;
-    assert.ok(hist.chat.some((m) => m.text === 'hi all'));
+    assert.ok(hist.feed.some((m) => m.kind === 'chat' && m.text === 'hi all'));
   } finally {
     for (const s of sockets) s.disconnect();
     await srv?.server.close();

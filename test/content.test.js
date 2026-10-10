@@ -87,10 +87,10 @@ test('edits on disk are picked up by the watcher; bad edits are ignored', async 
   const { dir, cleanup } = tempContent();
   const c = loadContent(dir, { watchFiles: true });
   try {
-    const changed = new Promise((r) => c.once('change', r));
     writeFileSync(join(dir, 'npcs', 'more.json'), JSON.stringify([{ id: 'bard-npc', name: 'Wandering Bard', maxHp: 6 }]));
-    await Promise.race([changed, new Promise((_, rej) => setTimeout(() => rej(new Error('no reload')), 3000))]);
-    assert.ok(c.def('npc', 'bard-npc'));
+    // fs.watch delivery can lag when the machine is busy (tests run in parallel): poll.
+    for (let i = 0; i < 80 && !c.def('npc', 'bard-npc'); i++) await new Promise((r) => setTimeout(r, 100));
+    assert.ok(c.def('npc', 'bard-npc'), 'watcher reloaded the new file');
     writeFileSync(join(dir, 'npcs', 'more.json'), '[{ broken');
     await new Promise((r) => setTimeout(r, 600));
     assert.ok(c.def('npc', 'bard-npc'), 'kept last good content');

@@ -135,8 +135,8 @@ test('player projection hides enemy HP and stats; activity text does not leak it
   assert.equal('attacks' in other, false);
   assert.equal(JSON.stringify(view).includes('seatSecret'), false);
 
-  const playerLog = service.history(game.id, 'player').activity.map((r) => r.text).join('\n');
-  const dmLog = service.history(game.id, 'dm').activity.map((r) => r.text).join('\n');
+  const playerLog = service.history(game.id, 'player').feed.map((r) => r.text).join('\n');
+  const dmLog = service.history(game.id, 'dm').feed.map((r) => r.text).join('\n');
   assert.doesNotMatch(playerLog, /Goblin \d+\/9/);
   assert.doesNotMatch(playerLog, /DEF 13/);
   assert.match(dmLog, /Goblin 3\/9/);

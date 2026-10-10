@@ -66,7 +66,7 @@ test('state survives a restart, and an expired phase advances on load', async ()
     assert.equal(st2.entities[gob].hp, 5);
     assert.equal(st2.combat.phase, 'dm', 'expired phase advanced exactly once');
     assert.ok(st2.combat.phaseEndsAt > Date.now());
-    assert.equal(s2.service.history(game.id, 'player').chat.at(-1).text, 'hello');
+    assert.equal(s2.service.history(game.id, 'player').feed.filter((r) => r.kind === 'chat').at(-1).text, 'hello');
     s2.service.close();
     s2.db.close();
   } finally {

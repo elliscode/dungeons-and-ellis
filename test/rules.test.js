@@ -121,7 +121,7 @@ test('tank reduction applies to attacks and DM damage, and reports the damage de
   const r = ok(s.run(DM, { type: 'attack', entityId: s.gob, attackId: 'scimitar', targetId: s.tank }));
   assert.equal(r.damage, 2);
   assert.equal(s.state().entities[s.tank].hp, hp0 - 4);
-  const log = s.service.history(s.game.id, 'player').activity.map((x) => x.text).join('\n');
+  const log = s.service.history(s.game.id, 'player').feed.map((x) => x.text).join('\n');
   assert.match(log, /takes 2 damage \(10, reduced by Tank\)/);
   assert.match(log, /HIT for 2 \(\[6\]\+2 = 8, reduced by Tank\)/);
   // non-tank takes full damage

@@ -1,0 +1,2419 @@
+[
+ {
+  "id": "x-paladin",
+  "name": "Violet Lightcrest",
+  "role": "tank",
+  "image": null,
+  "maxHp": 42,
+  "movement": 5,
+  "defense": 18,
+  "attacks": [
+   {
+    "id": "holy-hammer",
+    "name": "Holy Hammer",
+    "attack": "1d20+5",
+    "damage": "1d10+3",
+    "range": 1
+   },
+   {
+    "id": "javelin",
+    "name": "Javelin",
+    "attack": "1d20+4",
+    "damage": "1d6+3",
+    "range": 6
+   }
+  ],
+  "abilities": [
+   {
+    "id": "divine-smite",
+    "name": "Divine Smite",
+    "actionCost": 1,
+    "range": 1,
+    "effects": [
+     {
+      "type": "attack",
+      "target": "enemy",
+      "attack": "1d20+5",
+      "damage": "2d8+3",
+      "range": 1,
+      "damageType": "radiant"
+     }
+    ],
+    "description": "Strike an adjacent enemy with holy energy, dealing radiant damage."
+   },
+   {
+    "id": "blessed-aegis",
+    "name": "Blessed Aegis",
+    "actionCost": 1,
+    "range": 1,
+    "effects": [
+     {
+      "type": "defense_bonus",
+      "target": "ally_or_self",
+      "amount": 2,
+      "range": 1,
+      "duration": "until_next_player_phase"
+     }
+    ],
+    "description": "Protect yourself or an adjacent ally with divine energy, granting +2 Defense until the start of your next turn."
+   }
+  ],
+  "inventory": [
+   "rope",
+   "healing-potion",
+   "holy-symbol"
+  ]
+ },
+ {
+  "id": "x-barbarian",
+  "name": "Gristle Stroud",
+  "role": "tank",
+  "image": null,
+  "maxHp": 42,
+  "movement": 5,
+  "defense": 18,
+  "attacks": [
+   {
+    "id": "greataxe",
+    "name": "Greataxe",
+    "attack": "1d20+5",
+    "damage": "1d12+4",
+    "range": 1
+   },
+   {
+    "id": "throwing-axe",
+    "name": "Throwing Axe",
+    "attack": "1d20+4",
+    "damage": "1d6+3",
+    "range": 4
+   }
+  ],
+  "abilities": [
+   {
+    "id": "reckless-strike",
+    "name": "Reckless Strike",
+    "actionCost": 1,
+    "range": 1,
+    "effects": [
+     {
+      "type": "attack",
+      "target": "enemy",
+      "attack": "1d20+5",
+      "attackBonus": 3,
+      "damage": "1d12+4",
+      "range": 1
+     },
+     {
+      "type": "defense_bonus",
+      "target": "self",
+      "amount": -2,
+      "duration": "until_next_player_phase"
+     }
+    ],
+    "description": "Make a powerful melee attack with +3 to hit, but suffer -2 Defense until your next turn."
+   },
+   {
+    "id": "intimidating-roar",
+    "name": "Intimidating Roar",
+    "actionCost": 1,
+    "range": 3,
+    "effects": [
+     {
+      "type": "dm_check",
+      "roll": "1d20+4",
+      "target": "enemy",
+      "difficulty": "dm_set",
+      "onSuccess": [
+       {
+        "type": "apply_status",
+        "target": "enemy",
+        "status": "frightened",
+        "duration": "next_dm_phase",
+        "restrictions": [
+         "cannot_move_closer_to_source"
+        ]
+       }
+      ]
+     }
+    ],
+    "description": "Roar at a nearby enemy. On a successful check against the DM's difficulty, the enemy is frightened and cannot move closer to you on its next turn."
+   }
+  ],
+  "inventory": [
+   "rope",
+   "healing-potion",
+   "greataxe"
+  ]
+ },
+ {
+  "id": "x-stone-warden",
+  "name": "Argon Boulderfist",
+  "role": "tank",
+  "image": null,
+  "maxHp": 48,
+  "movement": 4,
+  "defense": 17,
+  "attacks": [
+   {
+    "id": "warhammer",
+    "name": "Warhammer",
+    "attack": "1d20+5",
+    "damage": "1d8+4",
+    "range": 1
+   },
+   {
+    "id": "shield-bash",
+    "name": "Shield Bash",
+    "attack": "1d20+5",
+    "damage": "1d4+4",
+    "range": 1
+   }
+  ],
+  "abilities": [
+   {
+    "id": "fortify",
+    "name": "Fortify",
+    "actionCost": 1,
+    "range": 0,
+    "effects": [
+     {
+      "type": "defense_bonus",
+      "target": "self",
+      "amount": 3,
+      "duration": "until_next_player_phase"
+     }
+    ],
+    "description": "Brace behind your shield, gaining +3 Defense until the start of your next turn."
+   },
+   {
+    "id": "seismic-slam",
+    "name": "Seismic Slam",
+    "actionCost": 1,
+    "range": 1,
+    "effects": [
+     {
+      "type": "area_attack",
+      "target": "enemies_in_area",
+      "center": "self",
+      "radius": 1,
+      "attack": "1d20+5",
+      "damage": "1d8+4"
+     },
+     {
+      "type": "dm_check",
+      "target": "hit_enemies",
+      "roll": "1d20",
+      "difficulty": "dm_set",
+      "onFailure": [
+       {
+        "type": "modify_movement",
+        "target": "checked_enemy",
+        "amount": -2,
+        "duration": "next_dm_phase"
+       }
+      ]
+     }
+    ],
+    "description": "Smash the ground, damaging adjacent enemies. Enemies hit must pass a DM-set check or lose 2 movement on their next turn."
+   }
+  ],
+  "inventory": [
+   "torch",
+   "healing-potion",
+   "iron-spikes"
+  ]
+ },
+ {
+  "id": "x-iron-knight",
+  "name": "Axel Strokes",
+  "role": "tank",
+  "image": null,
+  "maxHp": 40,
+  "movement": 5,
+  "defense": 17,
+  "attacks": [
+   {
+    "id": "longsword",
+    "name": "Longsword",
+    "attack": "1d20+6",
+    "damage": "1d10+4",
+    "range": 1
+   },
+   {
+    "id": "crossbow",
+    "name": "Crossbow",
+    "attack": "1d20+4",
+    "damage": "1d8+2",
+    "range": 10
+   }
+  ],
+  "abilities": [
+   {
+    "id": "parry",
+    "name": "Parry",
+    "actionCost": 1,
+    "range": 0,
+    "effects": [
+     {
+      "type": "defense_bonus",
+      "target": "self",
+      "amount": 3,
+      "duration": "until_next_player_phase"
+     }
+    ],
+    "description": "Deflect incoming blows, gaining +3 Defense until the start of your next turn."
+   },
+   {
+    "id": "shieldbreaker",
+    "name": "Shieldbreaker",
+    "actionCost": 1,
+    "range": 1,
+    "effects": [
+     {
+      "type": "attack",
+      "target": "enemy",
+      "attack": "1d20+6",
+      "damage": "1d8+4",
+      "range": 1,
+      "defenseReduction": 2,
+      "defenseReductionDuration": "this_attack_only"
+     }
+    ],
+    "description": "Deliver a precise melee strike that ignores 2 points of the target's Defense bonus, if applicable."
+   }
+  ],
+  "inventory": [
+   "rope",
+   "rations",
+   "healing-potion"
+  ]
+ },
+ {
+  "id": "x-shieldmarshal",
+  "name": "Branna Steelward",
+  "role": "tank",
+  "image": null,
+  "maxHp": 44,
+  "movement": 5,
+  "defense": 19,
+  "attacks": [
+   {
+    "id": "longsword",
+    "name": "Longsword",
+    "attack": "1d20+6",
+    "damage": "1d8+4",
+    "range": 1
+   },
+   {
+    "id": "shield-bash",
+    "name": "Shield Bash",
+    "attack": "1d20+5",
+    "damage": "1d4+4",
+    "range": 1
+   }
+  ],
+  "abilities": [
+   {
+    "id": "shield-wall",
+    "name": "Shield Wall",
+    "actionCost": 1,
+    "range": 0,
+    "effects": [
+     {
+      "type": "narrative",
+      "roll": "1d20+4"
+     },
+     {
+      "type": "grant_protection",
+      "target": "self",
+      "fraction": 0.5,
+      "label": "Shield Wall"
+     }
+    ],
+    "description": "Brace behind your shield; on success, reduce the next hit you take this round."
+   },
+   {
+    "id": "second-wind",
+    "name": "Second Wind",
+    "actionCost": 1,
+    "range": 0,
+    "effects": [
+     {
+      "type": "heal",
+      "target": "self",
+      "heal": "1d10+3"
+     }
+    ],
+    "description": "Catch your breath and recover your own health."
+   }
+  ],
+  "inventory": [
+   "tower-shield",
+   "healing-potion",
+   "field-rations"
+  ]
+ },
+ {
+  "id": "x-stone-warden-2",
+  "name": "Durn Granitevein",
+  "role": "tank",
+  "image": null,
+  "maxHp": 48,
+  "movement": 4,
+  "defense": 18,
+  "attacks": [
+   {
+    "id": "granite-warhammer",
+    "name": "Granite Warhammer",
+    "attack": "1d20+5",
+    "damage": "1d8+5",
+    "range": 1
+   },
+   {
+    "id": "boulder-toss",
+    "name": "Boulder Toss",
+    "attack": "1d20+4",
+    "damage": "1d8+4",
+    "range": 5
+   }
+  ],
+  "abilities": [
+   {
+    "id": "earthshaker",
+    "name": "Earthshaker",
+    "actionCost": 1,
+    "range": 0,
+    "effects": [
+     {
+      "type": "area_attack",
+      "target": "enemies_in_area",
+      "center": "self",
+      "radius": 2,
+      "attack": "1d20+4",
+      "damage": "2d6+2"
+     }
+    ],
+    "description": "Smash the ground and stagger foes in the nearby area."
+   },
+   {
+    "id": "stone-skin",
+    "name": "Stone Skin",
+    "actionCost": 1,
+    "range": 0,
+    "effects": [
+     {
+      "type": "narrative",
+      "roll": "1d20+3"
+     },
+     {
+      "type": "grant_protection",
+      "target": "self",
+      "fraction": 0.5,
+      "label": "Stone Skin"
+     }
+    ],
+    "description": "Harden your body like granite to blunt the next incoming hit."
+   }
+  ],
+  "inventory": [
+   "granite-charm",
+   "iron-spikes",
+   "healing-potion"
+  ]
+ },
+ {
+  "id": "x-wildguard",
+  "name": "Fen Mossback",
+  "role": "tank",
+  "image": null,
+  "maxHp": 46,
+  "movement": 5,
+  "defense": 17,
+  "attacks": [
+   {
+    "id": "antler-slam",
+    "name": "Antler Slam",
+    "attack": "1d20+5",
+    "damage": "1d8+4",
+    "range": 1
+   },
+   {
+    "id": "thorn-lash",
+    "name": "Thorn Lash",
+    "attack": "1d20+4",
+    "damage": "1d6+3",
+    "range": 3
+   }
+  ],
+  "abilities": [
+   {
+    "id": "ironbark",
+    "name": "Ironbark",
+    "actionCost": 1,
+    "range": 0,
+    "effects": [
+     {
+      "type": "narrative",
+      "roll": "1d20+4"
+     },
+     {
+      "type": "grant_protection",
+      "target": "self",
+      "fraction": 0.5,
+      "label": "Ironbark"
+     }
+    ],
+    "description": "Wrap yourself in tough bark, reducing damage from the next attack."
+   },
+   {
+    "id": "regrowth",
+    "name": "Regrowth",
+    "actionCost": 1,
+    "range": 0,
+    "effects": [
+     {
+      "type": "heal",
+      "target": "self",
+      "heal": "1d8+2"
+     }
+    ],
+    "description": "Call on ancient roots to restore your own health."
+   }
+  ],
+  "inventory": [
+   "druidic-focus",
+   "healing-potion",
+   "wild-herbs"
+  ]
+ },
+ {
+  "id": "x-blood-knight",
+  "name": "Sable Dreadmoor",
+  "role": "tank",
+  "image": null,
+  "maxHp": 45,
+  "movement": 5,
+  "defense": 18,
+  "attacks": [
+   {
+    "id": "runeblade",
+    "name": "Runeblade",
+    "attack": "1d20+6",
+    "damage": "1d10+4",
+    "range": 1
+   },
+   {
+    "id": "death-coil",
+    "name": "Death Coil",
+    "attack": "1d20+5",
+    "damage": "1d8+3",
+    "range": 6
+   }
+  ],
+  "abilities": [
+   {
+    "id": "blood-siphon",
+    "name": "Blood Siphon",
+    "actionCost": 1,
+    "range": 4,
+    "effects": [
+     {
+      "type": "attack",
+      "target": "enemy",
+      "attack": "1d20+5",
+      "damage": "1d8+3",
+      "range": 4,
+      "damageType": "necrotic"
+     },
+     {
+      "type": "heal",
+      "target": "self",
+      "heal": "1d8+2",
+      "when": "attack_hits"
+     }
+    ],
+    "description": "Drain an enemy's life force and recover health from the stolen essence."
+   },
+   {
+    "id": "bone-armor",
+    "name": "Bone Armor",
+    "actionCost": 1,
+    "range": 0,
+    "effects": [
+     {
+      "type": "narrative",
+      "roll": "1d20+4"
+     },
+     {
+      "type": "absorb_next_hit",
+      "target": "self",
+      "label": "Bone Armor"
+     }
+    ],
+    "description": "Raise spectral bones around yourself to absorb an incoming blow."
+   }
+  ],
+  "inventory": [
+   "rune-shard",
+   "black-bandages",
+   "healing-potion"
+  ]
+ },
+ {
+  "id": "x-warbringer",
+  "name": "Ragna Axebreaker",
+  "role": "tank",
+  "image": null,
+  "maxHp": 46,
+  "movement": 5,
+  "defense": 16,
+  "attacks": [
+   {
+    "id": "greataxe",
+    "name": "Greataxe",
+    "attack": "1d20+5",
+    "damage": "1d12+4",
+    "range": 1
+   },
+   {
+    "id": "handaxe",
+    "name": "Handaxe",
+    "attack": "1d20+4",
+    "damage": "1d6+3",
+    "range": 5
+   }
+  ],
+  "abilities": [
+   {
+    "id": "reckless-cleave",
+    "name": "Reckless Cleave",
+    "actionCost": 1,
+    "range": 1,
+    "effects": [
+     {
+      "type": "attack",
+      "target": "enemy",
+      "attack": "1d20+5",
+      "damage": "2d6+2",
+      "range": 1,
+      "damageBonus": 3
+     },
+     {
+      "type": "defense_bonus",
+      "target": "self",
+      "amount": -2,
+      "duration": "until_next_player_phase",
+      "label": "Reckless"
+     }
+    ],
+    "description": "Commit to a heavy cleave; you hit harder but leave your guard open."
+   },
+   {
+    "id": "unbreakable-rage",
+    "name": "Unbreakable Rage",
+    "actionCost": 1,
+    "range": 0,
+    "effects": [
+     {
+      "type": "narrative",
+      "roll": "1d20+3"
+     },
+     {
+      "type": "grant_protection",
+      "target": "self",
+      "fraction": 0.5,
+      "label": "Unbreakable Rage"
+     }
+    ],
+    "description": "Dig in and ignore pain, resisting the next burst of damage."
+   }
+  ],
+  "inventory": [
+   "whetstone",
+   "two-handaxes",
+   "healing-potion"
+  ]
+ },
+ {
+  "id": "x-spellbreaker",
+  "name": "Tovin Spellguard",
+  "role": "tank",
+  "image": null,
+  "maxHp": 40,
+  "movement": 5,
+  "defense": 18,
+  "attacks": [
+   {
+    "id": "glaive",
+    "name": "Spellbreaker Glaive",
+    "attack": "1d20+5",
+    "damage": "1d10+4",
+    "range": 1
+   },
+   {
+    "id": "arcane-bolt",
+    "name": "Arcane Bolt",
+    "attack": "1d20+5",
+    "damage": "1d8+3",
+    "range": 6
+   }
+  ],
+  "abilities": [
+   {
+    "id": "spellguard",
+    "name": "Spellguard",
+    "actionCost": 1,
+    "range": 1,
+    "effects": [
+     {
+      "type": "narrative",
+      "roll": "1d20+4"
+     },
+     {
+      "type": "absorb_next_hit",
+      "target": "ally_or_self",
+      "range": 1,
+      "magicalOnly": true,
+      "label": "Spellguard"
+     }
+    ],
+    "description": "Raise a ward that protects an adjacent ally from the next spell or magical strike."
+   },
+   {
+    "id": "silencing-strike",
+    "name": "Silencing Strike",
+    "actionCost": 1,
+    "range": 1,
+    "effects": [
+     {
+      "type": "attack",
+      "target": "enemy",
+      "attack": "1d20+5",
+      "damage": "1d6+3",
+      "range": 1
+     },
+     {
+      "type": "reduce_actions",
+      "target": "hit_enemies",
+      "amount": 1,
+      "when": "attack_hits",
+      "label": "Silenced",
+      "duration": "next_dm_phase"
+     }
+    ],
+    "description": "Strike a spellcaster and disrupt its concentration."
+   }
+  ],
+  "inventory": [
+   "warding-rune",
+   "mana-potion",
+   "chain-shirt"
+  ]
+ },
+ {
+  "id": "x-dawn-sentinel",
+  "name": "Kora Dawnshield",
+  "role": "tank",
+  "image": null,
+  "maxHp": 44,
+  "movement": 5,
+  "defense": 19,
+  "attacks": [
+   {
+    "id": "spear-thrust",
+    "name": "Spear Thrust",
+    "attack": "1d20+5",
+    "damage": "1d8+3",
+    "range": 1
+   },
+   {
+    "id": "shield-throw",
+    "name": "Shield Throw",
+    "attack": "1d20+4",
+    "damage": "1d6+3",
+    "range": 4
+   }
+  ],
+  "abilities": [
+   {
+    "id": "intercept",
+    "name": "Intercept",
+    "actionCost": 1,
+    "range": 1,
+    "effects": [
+     {
+      "type": "narrative",
+      "roll": "1d20+4"
+     },
+     {
+      "type": "redirect_next_hit",
+      "target": "ally",
+      "range": 1,
+      "label": "Intercept"
+     }
+    ],
+    "description": "Rush to an adjacent ally and take the next hit meant for them."
+   },
+   {
+    "id": "radiant-guard",
+    "name": "Radiant Guard",
+    "actionCost": 1,
+    "range": 0,
+    "effects": [
+     {
+      "type": "narrative",
+      "roll": "1d20+3"
+     },
+     {
+      "type": "defense_bonus",
+      "target": "self",
+      "amount": 2,
+      "radius": 2,
+      "duration": "until_next_player_phase",
+      "label": "Radiant Guard"
+     }
+    ],
+    "description": "Surround yourself and nearby allies with a brief protective aura."
+   }
+  ],
+  "inventory": [
+   "kite-shield",
+   "signal-whistle",
+   "healing-potion"
+  ]
+ },
+ {
+  "id": "x-frost-defender",
+  "name": "Haldra Winterforge",
+  "role": "tank",
+  "image": null,
+  "maxHp": 43,
+  "movement": 4,
+  "defense": 18,
+  "attacks": [
+   {
+    "id": "frost-hammer",
+    "name": "Frost Hammer",
+    "attack": "1d20+5",
+    "damage": "1d8+4",
+    "range": 1
+   },
+   {
+    "id": "ice-shard",
+    "name": "Ice Shard",
+    "attack": "1d20+4",
+    "damage": "1d6+3",
+    "range": 5
+   }
+  ],
+  "abilities": [
+   {
+    "id": "frozen-bulwark",
+    "name": "Frozen Bulwark",
+    "actionCost": 1,
+    "range": 0,
+    "effects": [
+     {
+      "type": "narrative",
+      "roll": "1d20+4"
+     },
+     {
+      "type": "absorb_next_hit",
+      "target": "self",
+      "label": "Frozen Bulwark"
+     }
+    ],
+    "description": "Encases yourself in ice armor that absorbs the next hit."
+   },
+   {
+    "id": "glacial-slam",
+    "name": "Glacial Slam",
+    "actionCost": 1,
+    "range": 0,
+    "effects": [
+     {
+      "type": "area_attack",
+      "target": "enemies_in_area",
+      "center": "self",
+      "radius": 1,
+      "attack": "1d20+4",
+      "damage": "2d6+2",
+      "damageType": "cold"
+     },
+     {
+      "type": "modify_movement",
+      "target": "hit_enemies",
+      "amount": -2,
+      "when": "attack_hits",
+      "label": "Chilled",
+      "duration": "next_dm_phase"
+     }
+    ],
+    "description": "Strike the ground with a chilling shockwave that slows nearby foes."
+   }
+  ],
+  "inventory": [
+   "frost-rune",
+   "winter-cloak",
+   "healing-potion"
+  ]
+ },
+ {
+  "id": "x-ironclad-engineer",
+  "name": "Brik Geargrind",
+  "role": "tank",
+  "image": null,
+  "maxHp": 48,
+  "movement": 4,
+  "defense": 18,
+  "attacks": [
+   {
+    "id": "piston-maul",
+    "name": "Piston Maul",
+    "attack": "1d20+5",
+    "damage": "1d10+4",
+    "range": 1
+   },
+   {
+    "id": "rivet-launcher",
+    "name": "Rivet Launcher",
+    "attack": "1d20+4",
+    "damage": "1d8+3",
+    "range": 6
+   }
+  ],
+  "abilities": [
+   {
+    "id": "deploy-barrier",
+    "name": "Deploy Barrier",
+    "actionCost": 0,
+    "range": 2,
+    "usesPerPhase": 1,
+    "effects": [
+     {
+      "type": "create_barrier",
+      "target": "cell",
+      "range": 2,
+      "name": "Barrier",
+      "duration": "next_dm_phase"
+     }
+    ],
+    "description": "Drop a portable barricade to block a lane or give an ally cover."
+   },
+   {
+    "id": "magnetic-taunt",
+    "name": "Magnetic Taunt",
+    "actionCost": 1,
+    "range": 0,
+    "effects": [
+     {
+      "type": "roll_to_apply",
+      "target": "enemies_in_area",
+      "radius": 3,
+      "roll": "1d20+3",
+      "onSuccess": [
+       {
+        "type": "taunt",
+        "target": "checked_enemy",
+        "duration": "next_dm_phase"
+       }
+      ]
+     }
+    ],
+    "description": "Emit a clanging challenge that draws nearby enemies' attention."
+   }
+  ],
+  "inventory": [
+   "repair-kit",
+   "iron-bolts",
+   "healing-potion"
+  ]
+ },
+ {
+  "id": "x-fire-mage",
+  "name": "Tabasco Habanero",
+  "role": "dps",
+  "image": null,
+  "maxHp": 30,
+  "movement": 6,
+  "defense": 13,
+  "attacks": [
+   {
+    "id": "fire-bolt",
+    "name": "Fire Bolt",
+    "attack": "1d20+5",
+    "damage": "1d10+3",
+    "range": 8
+   },
+   {
+    "id": "flame-burst",
+    "name": "Flame Burst",
+    "attack": "1d20+4",
+    "damage": "2d6+2",
+    "range": 4
+   }
+  ],
+  "abilities": [
+   {
+    "id": "inferno-surge",
+    "name": "Inferno Surge",
+    "actionCost": 1,
+    "range": 6,
+    "effects": [
+     {
+      "type": "attack",
+      "target": "enemy",
+      "attack": "1d20+5",
+      "damage": "2d8+2",
+      "range": 6,
+      "damageType": "fire"
+     }
+    ],
+    "description": "Unleash a concentrated blast of fire at one target."
+   },
+   {
+    "id": "light",
+    "name": "Light",
+    "actionCost": 0,
+    "range": 0,
+    "effects": [
+     {
+      "type": "narrative"
+     }
+    ],
+    "description": "Make a small object glow with magical light."
+   }
+  ],
+  "inventory": [
+   "spellbook",
+   "healing-potion",
+   "candle"
+  ]
+ },
+ {
+  "id": "x-shadow-rogue",
+  "name": "Sneaks Enstabbs",
+  "role": "dps",
+  "image": null,
+  "maxHp": 32,
+  "movement": 7,
+  "defense": 15,
+  "attacks": [
+   {
+    "id": "twin-daggers",
+    "name": "Twin Daggers",
+    "attack": "1d20+6",
+    "damage": "2d4+4",
+    "range": 1
+   },
+   {
+    "id": "throwing-knife",
+    "name": "Throwing Knife",
+    "attack": "1d20+6",
+    "damage": "1d6+4",
+    "range": 6
+   }
+  ],
+  "abilities": [
+   {
+    "id": "cunning-action",
+    "name": "Cunning Action",
+    "actionCost": 0,
+    "range": 0,
+    "usesPerPhase": 1,
+    "effects": [
+     {
+      "type": "grant_actions",
+      "target": "self",
+      "amount": 1
+     }
+    ],
+    "description": "Gain one extra action this phase; once per phase."
+   },
+   {
+    "id": "backstab",
+    "name": "Backstab",
+    "actionCost": 1,
+    "range": 1,
+    "effects": [
+     {
+      "type": "attack",
+      "target": "enemy",
+      "attack": "1d20+6",
+      "damage": "2d6+4",
+      "range": 1
+     }
+    ],
+    "description": "Exploit a distracted enemy for a precise, punishing strike."
+   }
+  ],
+  "inventory": [
+   "thieves-tools",
+   "smoke-bomb",
+   "healing-potion"
+  ]
+ },
+ {
+  "id": "x-ranger",
+  "name": "Tessa Winmer",
+  "role": "dps",
+  "image": null,
+  "maxHp": 34,
+  "movement": 6,
+  "defense": 14,
+  "attacks": [
+   {
+    "id": "longbow",
+    "name": "Longbow",
+    "attack": "1d20+6",
+    "damage": "1d8+4",
+    "range": 12
+   },
+   {
+    "id": "shortsword",
+    "name": "Shortsword",
+    "attack": "1d20+5",
+    "damage": "1d6+3",
+    "range": 1
+   }
+  ],
+  "abilities": [
+   {
+    "id": "hunters-mark",
+    "name": "Hunter's Mark",
+    "actionCost": 1,
+    "range": 10,
+    "effects": [
+     {
+      "type": "roll_to_apply",
+      "target": "enemy",
+      "roll": "1d20+5",
+      "range": 10,
+      "onSuccess": [
+       {
+        "type": "mark_target",
+        "target": "checked_enemy",
+        "bonus": "1d6",
+        "label": "Hunter's Mark"
+       }
+      ]
+     }
+    ],
+    "description": "Mark a visible target; your next hit against it deals extra damage."
+   },
+   {
+    "id": "pinning-shot",
+    "name": "Pinning Shot",
+    "actionCost": 1,
+    "range": 10,
+    "effects": [
+     {
+      "type": "attack",
+      "target": "enemy",
+      "attack": "1d20+5",
+      "damage": "1d8+3",
+      "range": 10
+     },
+     {
+      "type": "modify_movement",
+      "target": "hit_enemies",
+      "amount": -2,
+      "when": "attack_hits",
+      "label": "Pinned",
+      "duration": "next_dm_phase"
+     }
+    ],
+    "description": "A careful shot that can pin a target's clothing or slow its movement."
+   }
+  ],
+  "inventory": [
+   "rope",
+   "hunting-trap",
+   "healing-potion"
+  ]
+ },
+ {
+  "id": "x-frost-sorcerer",
+  "name": "Ilyra Snowspell",
+  "role": "dps",
+  "image": null,
+  "maxHp": 29,
+  "movement": 6,
+  "defense": 13,
+  "attacks": [
+   {
+    "id": "frostbolt",
+    "name": "Frostbolt",
+    "attack": "1d20+5",
+    "damage": "1d10+3",
+    "range": 8
+   },
+   {
+    "id": "ice-lance",
+    "name": "Ice Lance",
+    "attack": "1d20+5",
+    "damage": "1d8+4",
+    "range": 6
+   }
+  ],
+  "abilities": [
+   {
+    "id": "cone-of-cold",
+    "name": "Cone of Cold",
+    "actionCost": 1,
+    "range": 3,
+    "effects": [
+     {
+      "type": "area_attack",
+      "target": "enemies_in_area",
+      "center": "target",
+      "radius": 1,
+      "range": 3,
+      "attack": "1d20+4",
+      "damage": "2d6+3",
+      "damageType": "cold"
+     }
+    ],
+    "description": "Blast a short cone of freezing air, threatening several nearby foes."
+   },
+   {
+    "id": "blink-step",
+    "name": "Blink Step",
+    "actionCost": 0,
+    "range": 4,
+    "usesPerPhase": 1,
+    "effects": [
+     {
+      "type": "teleport",
+      "target": "cell",
+      "distance": 4
+     }
+    ],
+    "description": "Teleport a short distance to escape an enemy or gain a better firing angle."
+   }
+  ],
+  "inventory": [
+   "crystal-focus",
+   "mana-potion",
+   "fur-lined-robe"
+  ]
+ },
+ {
+  "id": "x-stormcaller",
+  "name": "Rurik Stormvein",
+  "role": "dps",
+  "image": null,
+  "maxHp": 32,
+  "movement": 6,
+  "defense": 14,
+  "attacks": [
+   {
+    "id": "storm-staff",
+    "name": "Storm Staff",
+    "attack": "1d20+4",
+    "damage": "1d6+2",
+    "range": 1
+   },
+   {
+    "id": "lightning-spear",
+    "name": "Lightning Spear",
+    "attack": "1d20+5",
+    "damage": "1d10+3",
+    "range": 8
+   }
+  ],
+  "abilities": [
+   {
+    "id": "chain-lightning",
+    "name": "Chain Lightning",
+    "actionCost": 1,
+    "range": 8,
+    "effects": [
+     {
+      "type": "chain_attack",
+      "target": "enemy",
+      "attack": "1d20+5",
+      "damage": "2d8+1",
+      "range": 8,
+      "jumps": 1,
+      "jumpRange": 3,
+      "damageType": "lightning"
+     }
+    ],
+    "description": "Lightning leaps from the first target to another nearby enemy."
+   },
+   {
+    "id": "thunderclap",
+    "name": "Thunderclap",
+    "actionCost": 1,
+    "range": 0,
+    "effects": [
+     {
+      "type": "area_attack",
+      "target": "enemies_in_area",
+      "center": "self",
+      "radius": 2,
+      "attack": "1d20+4",
+      "damage": "1d8+3",
+      "damageType": "thunder"
+     }
+    ],
+    "description": "Release a close-range burst of thunder that can stagger nearby foes."
+   }
+  ],
+  "inventory": [
+   "storm-totem",
+   "mana-potion",
+   "copper-wire"
+  ]
+ },
+ {
+  "id": "x-void-warlock",
+  "name": "Nyx Ashwhisper",
+  "role": "dps",
+  "image": null,
+  "maxHp": 30,
+  "movement": 6,
+  "defense": 13,
+  "attacks": [
+   {
+    "id": "eldritch-blast",
+    "name": "Eldritch Blast",
+    "attack": "1d20+6",
+    "damage": "1d10+4",
+    "range": 10
+   },
+   {
+    "id": "shadow-dagger",
+    "name": "Shadow Dagger",
+    "attack": "1d20+4",
+    "damage": "1d6+2",
+    "range": 1
+   }
+  ],
+  "abilities": [
+   {
+    "id": "life-drain",
+    "name": "Life Drain",
+    "actionCost": 1,
+    "range": 6,
+    "effects": [
+     {
+      "type": "attack",
+      "target": "enemy",
+      "attack": "1d20+5",
+      "damage": "1d8+3",
+      "range": 6,
+      "damageType": "necrotic"
+     },
+     {
+      "type": "heal",
+      "target": "self",
+      "heal": "1d6+2",
+      "when": "attack_hits"
+     }
+    ],
+    "description": "Pull vitality from an enemy to mend your own wounds."
+   },
+   {
+    "id": "curse-of-weakness",
+    "name": "Curse of Weakness",
+    "actionCost": 1,
+    "range": 6,
+    "effects": [
+     {
+      "type": "roll_to_apply",
+      "target": "enemy",
+      "roll": "1d20+5",
+      "range": 6,
+      "onSuccess": [
+       {
+        "type": "modify_damage_dealt",
+        "target": "checked_enemy",
+        "multiplier": 0.5,
+        "label": "Curse of Weakness",
+        "trigger": "next_hit",
+        "duration": "next_dm_phase"
+       }
+      ]
+     }
+    ],
+    "description": "Curse a target, weakening its next attack."
+   }
+  ],
+  "inventory": [
+   "grimoire",
+   "soul-crystal",
+   "mana-potion"
+  ]
+ },
+ {
+  "id": "x-wind-monk",
+  "name": "Juno Quickstep",
+  "role": "dps",
+  "image": null,
+  "maxHp": 33,
+  "movement": 7,
+  "defense": 15,
+  "attacks": [
+   {
+    "id": "bo-staff",
+    "name": "Bo Staff",
+    "attack": "1d20+5",
+    "damage": "1d8+3",
+    "range": 1
+   },
+   {
+    "id": "rapid-strikes",
+    "name": "Rapid Strikes",
+    "attack": "1d20+5",
+    "damage": "2d4+3",
+    "range": 1
+   }
+  ],
+  "abilities": [
+   {
+    "id": "flurry-of-blows",
+    "name": "Flurry of Blows",
+    "actionCost": 1,
+    "range": 1,
+    "effects": [
+     {
+      "type": "multi_attack",
+      "target": "enemy",
+      "count": 4,
+      "attack": "1d20+5",
+      "damage": "2d6+2",
+      "range": 1,
+      "independentRolls": true
+     }
+    ],
+    "description": "Spend your momentum on a flurry of fast unarmed strikes."
+   },
+   {
+    "id": "chi-dash",
+    "name": "Chi Dash",
+    "actionCost": 0,
+    "range": 0,
+    "usesPerPhase": 1,
+    "effects": [
+     {
+      "type": "modify_movement",
+      "target": "self",
+      "amount": 3,
+      "duration": "current_turn",
+      "label": "Chi Dash"
+     }
+    ],
+    "description": "Burst forward with ki, repositioning without giving up your attack."
+   }
+  ],
+  "inventory": [
+   "prayer-beads",
+   "traveler-tea",
+   "healing-potion"
+  ]
+ },
+ {
+  "id": "x-beastmaster",
+  "name": "Corin Wolfmark",
+  "role": "dps",
+  "image": null,
+  "maxHp": 35,
+  "movement": 6,
+  "defense": 14,
+  "attacks": [
+   {
+    "id": "longbow",
+    "name": "Longbow",
+    "attack": "1d20+6",
+    "damage": "1d8+4",
+    "range": 10
+   },
+   {
+    "id": "hunting-spear",
+    "name": "Hunting Spear",
+    "attack": "1d20+4",
+    "damage": "1d6+3",
+    "range": 1
+   }
+  ],
+  "abilities": [
+   {
+    "id": "companion-strike",
+    "name": "Companion Strike",
+    "actionCost": 1,
+    "range": 4,
+    "effects": [
+     {
+      "type": "attack",
+      "target": "enemy",
+      "attack": "1d20+5",
+      "damage": "1d8+3",
+      "range": 4
+     }
+    ],
+    "description": "Command your loyal beast to lunge at a nearby enemy."
+   },
+   {
+    "id": "snare-trap",
+    "name": "Snare Trap",
+    "actionCost": 1,
+    "range": 4,
+    "effects": [
+     {
+      "type": "roll_to_apply",
+      "target": "enemy",
+      "roll": "1d20+4",
+      "range": 4,
+      "onSuccess": [
+       {
+        "type": "apply_status",
+        "target": "checked_enemy",
+        "status": "snared",
+        "duration": "next_dm_phase"
+       }
+      ]
+     }
+    ],
+    "description": "Set or trigger a snare that can hinder an enemy crossing its space."
+   }
+  ],
+  "inventory": [
+   "animal-whistle",
+   "snare-wire",
+   "healing-potion"
+  ]
+ },
+ {
+  "id": "x-gunslinger",
+  "name": "Pip Coppershot",
+  "role": "dps",
+  "image": null,
+  "maxHp": 31,
+  "movement": 6,
+  "defense": 14,
+  "attacks": [
+   {
+    "id": "hand-crossbow",
+    "name": "Hand Crossbow",
+    "attack": "1d20+6",
+    "damage": "1d8+4",
+    "range": 8
+   },
+   {
+    "id": "powder-bomb",
+    "name": "Powder Bomb",
+    "attack": "1d20+4",
+    "damage": "2d6+2",
+    "range": 4
+   }
+  ],
+  "abilities": [
+   {
+    "id": "quick-reload",
+    "name": "Quick Reload",
+    "actionCost": 0,
+    "range": 0,
+    "usesPerPhase": 1,
+    "effects": [
+     {
+      "type": "grant_actions",
+      "target": "self",
+      "amount": 1
+     }
+    ],
+    "description": "Reload and fire in one smooth motion; once per phase."
+   },
+   {
+    "id": "trick-shot",
+    "name": "Trick Shot",
+    "actionCost": 1,
+    "range": 8,
+    "effects": [
+     {
+      "type": "attack",
+      "target": "enemy",
+      "attack": "1d20+5",
+      "damage": "1d10+3",
+      "range": 8,
+      "defenseReduction": 2
+     }
+    ],
+    "description": "Bank a shot around cover or aim for a weapon held by the target."
+   }
+  ],
+  "inventory": [
+   "powder-horn",
+   "spare-bolts",
+   "healing-potion"
+  ]
+ },
+ {
+  "id": "x-dragon-spellblade",
+  "name": "Kael Embercrest",
+  "role": "dps",
+  "image": null,
+  "maxHp": 36,
+  "movement": 6,
+  "defense": 15,
+  "attacks": [
+   {
+    "id": "dragonfang-sword",
+    "name": "Dragonfang Sword",
+    "attack": "1d20+6",
+    "damage": "1d8+4",
+    "range": 1
+   },
+   {
+    "id": "searing-breath",
+    "name": "Searing Breath",
+    "attack": "1d20+5",
+    "damage": "2d6+3",
+    "range": 4
+   }
+  ],
+  "abilities": [
+   {
+    "id": "flame-lunge",
+    "name": "Flame Lunge",
+    "actionCost": 1,
+    "range": 2,
+    "effects": [
+     {
+      "type": "attack",
+      "target": "enemy",
+      "attack": "1d20+5",
+      "damage": "1d10+4",
+      "range": 2,
+      "damageType": "fire"
+     }
+    ],
+    "description": "Dash into melee with a flaming blade strike."
+   },
+   {
+    "id": "draconic-roar",
+    "name": "Draconic Roar",
+    "actionCost": 1,
+    "range": 0,
+    "effects": [
+     {
+      "type": "roll_to_apply",
+      "target": "enemies_in_area",
+      "radius": 3,
+      "roll": "1d20+4",
+      "onSuccess": [
+       {
+        "type": "apply_status",
+        "target": "checked_enemy",
+        "status": "shaken",
+        "duration": "next_dm_phase"
+       }
+      ]
+     }
+    ],
+    "description": "Unleash a fierce roar that can shake the resolve of nearby enemies."
+   }
+  ],
+  "inventory": [
+   "dragon-scale",
+   "ember-vial",
+   "healing-potion"
+  ]
+ },
+ {
+  "id": "x-cleric",
+  "name": "Helga Christenlight",
+  "role": "heal",
+  "image": null,
+  "maxHp": 34,
+  "movement": 5,
+  "defense": 16,
+  "attacks": [
+   {
+    "id": "mace",
+    "name": "Mace",
+    "attack": "1d20+4",
+    "damage": "1d6+3",
+    "range": 1
+   },
+   {
+    "id": "sacred-flame",
+    "name": "Sacred Flame",
+    "attack": "1d20+5",
+    "damage": "1d8+2",
+    "range": 6
+   }
+  ],
+  "abilities": [
+   {
+    "id": "healing-word",
+    "name": "Healing Word",
+    "actionCost": 1,
+    "range": 6,
+    "effects": [
+     {
+      "type": "heal",
+      "target": "ally_or_self",
+      "heal": "1d8+3",
+      "range": 6
+     }
+    ],
+    "description": "Heal an ally within 6 squares with a quick prayer."
+   },
+   {
+    "id": "cure-wounds",
+    "name": "Cure Wounds",
+    "actionCost": 1,
+    "range": 1,
+    "effects": [
+     {
+      "type": "heal",
+      "target": "ally_or_self",
+      "heal": "2d8+3",
+      "range": 1
+     }
+    ],
+    "description": "Deliver a stronger heal to yourself or an adjacent ally."
+   }
+  ],
+  "inventory": [
+   "holy-water",
+   "healing-potion",
+   "bandages"
+  ]
+ },
+ {
+  "id": "x-druid",
+  "name": "Daisy Sunbeam",
+  "role": "heal",
+  "image": null,
+  "maxHp": 32,
+  "movement": 6,
+  "defense": 14,
+  "attacks": [
+   {
+    "id": "thorn-whip",
+    "name": "Thorn Whip",
+    "attack": "1d20+5",
+    "damage": "1d6+3",
+    "range": 3
+   },
+   {
+    "id": "quarterstaff",
+    "name": "Quarterstaff",
+    "attack": "1d20+3",
+    "damage": "1d6+2",
+    "range": 1
+   }
+  ],
+  "abilities": [
+   {
+    "id": "goodberry",
+    "name": "Goodberry",
+    "actionCost": 1,
+    "range": 1,
+    "effects": [
+     {
+      "type": "heal",
+      "target": "ally_or_self",
+      "heal": "1d6+4",
+      "range": 1
+     }
+    ],
+    "description": "Feed an adjacent ally a nourishing magic berry."
+   },
+   {
+    "id": "natures-mend",
+    "name": "Nature's Mend",
+    "actionCost": 1,
+    "range": 4,
+    "effects": [
+     {
+      "type": "heal",
+      "target": "ally_or_self",
+      "heal": "1d8+2",
+      "range": 4
+     }
+    ],
+    "description": "Send restorative roots and green light to a wounded ally."
+   },
+   {
+    "id": "speak-with-animals",
+    "name": "Speak with Animals",
+    "actionCost": 1,
+    "range": 0,
+    "effects": [
+     {
+      "type": "narrative",
+      "roll": "1d20+4"
+     }
+    ],
+    "description": "Communicate with nearby beasts and learn what they have seen."
+   }
+  ],
+  "inventory": [
+   "herbs",
+   "healing-potion",
+   "rope"
+  ]
+ },
+ {
+  "id": "x-bard",
+  "name": "Luten Tuter",
+  "role": "heal",
+  "image": null,
+  "maxHp": 30,
+  "movement": 6,
+  "defense": 14,
+  "attacks": [
+   {
+    "id": "rapier",
+    "name": "Rapier",
+    "attack": "1d20+5",
+    "damage": "1d8+3",
+    "range": 1
+   },
+   {
+    "id": "vicious-mockery",
+    "name": "Vicious Mockery",
+    "attack": "1d20+5",
+    "damage": "1d6+2",
+    "range": 8
+   }
+  ],
+  "abilities": [
+   {
+    "id": "song-of-rest",
+    "name": "Song of Rest",
+    "actionCost": 1,
+    "range": 4,
+    "effects": [
+     {
+      "type": "heal",
+      "target": "ally_or_self",
+      "heal": "1d8+2",
+      "range": 4
+     }
+    ],
+    "description": "Play a restorative melody that heals an ally within 4 squares."
+   },
+   {
+    "id": "inspire",
+    "name": "Inspire",
+    "actionCost": 1,
+    "range": 6,
+    "effects": [
+     {
+      "type": "grant_roll_bonus",
+      "target": "ally",
+      "bonus": "1d6",
+      "range": 6,
+      "label": "Inspired"
+     }
+    ],
+    "description": "Give an ally an inspiration die to add to a future roll."
+   }
+  ],
+  "inventory": [
+   "lute",
+   "healing-potion",
+   "disguise-kit"
+  ]
+ },
+ {
+  "id": "x-holy-priest",
+  "name": "Mira Dawnweave",
+  "role": "heal",
+  "image": null,
+  "maxHp": 30,
+  "movement": 5,
+  "defense": 14,
+  "attacks": [
+   {
+    "id": "sunstaff",
+    "name": "Sunstaff",
+    "attack": "1d20+4",
+    "damage": "1d6+2",
+    "range": 1
+   },
+   {
+    "id": "holy-smite",
+    "name": "Holy Smite",
+    "attack": "1d20+5",
+    "damage": "1d8+3",
+    "range": 6
+   }
+  ],
+  "abilities": [
+   {
+    "id": "prayer-of-mending",
+    "name": "Prayer of Mending",
+    "actionCost": 1,
+    "range": 6,
+    "effects": [
+     {
+      "type": "heal",
+      "target": "ally_or_self",
+      "heal": "1d8+3",
+      "range": 6
+     }
+    ],
+    "description": "Send a pulse of light to restore an ally at range."
+   },
+   {
+    "id": "sanctuary",
+    "name": "Sanctuary",
+    "actionCost": 1,
+    "range": 6,
+    "effects": [
+     {
+      "type": "narrative",
+      "roll": "1d20+4"
+     },
+     {
+      "type": "discourage_attacks",
+      "target": "ally_or_self",
+      "penalty": 5,
+      "range": 6,
+      "label": "Sanctuary",
+      "duration": "next_dm_phase"
+     }
+    ],
+    "description": "Wrap an ally in a protective blessing that discourages attacks against them."
+   }
+  ],
+  "inventory": [
+   "sun-charm",
+   "holy-water",
+   "mana-potion"
+  ]
+ },
+ {
+  "id": "x-restoration-shaman",
+  "name": "Orla Raincaller",
+  "role": "heal",
+  "image": null,
+  "maxHp": 33,
+  "movement": 6,
+  "defense": 14,
+  "attacks": [
+   {
+    "id": "storm-rod",
+    "name": "Storm Rod",
+    "attack": "1d20+5",
+    "damage": "1d8+3",
+    "range": 6
+   },
+   {
+    "id": "spirit-maul",
+    "name": "Spirit Maul",
+    "attack": "1d20+4",
+    "damage": "1d6+2",
+    "range": 1
+   }
+  ],
+  "abilities": [
+   {
+    "id": "healing-surge",
+    "name": "Healing Surge",
+    "actionCost": 1,
+    "range": 6,
+    "effects": [
+     {
+      "type": "heal",
+      "target": "ally_or_self",
+      "heal": "1d10+3",
+      "range": 6
+     }
+    ],
+    "description": "Call a rush of restorative water into a wounded ally."
+   },
+   {
+    "id": "chain-heal",
+    "name": "Chain Heal",
+    "actionCost": 1,
+    "range": 6,
+    "effects": [
+     {
+      "type": "chain_heal",
+      "target": "ally_or_self",
+      "heal": "1d8+2",
+      "range": 6,
+      "jumps": 1,
+      "jumpRange": 3
+     }
+    ],
+    "description": "Heal one ally; the spell may leap to another nearby wounded ally."
+   },
+   {
+    "id": "healing-totem",
+    "name": "Healing Totem",
+    "actionCost": 1,
+    "range": 2,
+    "effects": [
+     {
+      "type": "narrative",
+      "roll": "1d20+3"
+     },
+     {
+      "type": "healing_aura",
+      "target": "cell",
+      "range": 2,
+      "heal": "1d4+1",
+      "radius": 2,
+      "pulses": 2,
+      "name": "Healing Totem"
+     }
+    ],
+    "description": "Plant a spirit totem that supports nearby allies with steady healing."
+   }
+  ],
+  "inventory": [
+   "carved-totem",
+   "rain-stone",
+   "healing-potion"
+  ]
+ },
+ {
+  "id": "x-mistweaver",
+  "name": "Bao Lotusstep",
+  "role": "heal",
+  "image": null,
+  "maxHp": 34,
+  "movement": 7,
+  "defense": 15,
+  "attacks": [
+   {
+    "id": "bamboo-staff",
+    "name": "Bamboo Staff",
+    "attack": "1d20+4",
+    "damage": "1d8+2",
+    "range": 1
+   },
+   {
+    "id": "healing-palm",
+    "name": "Healing Palm",
+    "attack": "1d20+5",
+    "damage": "1d6+3",
+    "range": 1
+   }
+  ],
+  "abilities": [
+   {
+    "id": "soothing-mist",
+    "name": "Soothing Mist",
+    "actionCost": 1,
+    "range": 4,
+    "effects": [
+     {
+      "type": "heal",
+      "target": "ally_or_self",
+      "heal": "1d8+3",
+      "range": 4
+     }
+    ],
+    "description": "Guide a ribbon of mist to soothe and heal an ally."
+   },
+   {
+    "id": "renewing-wave",
+    "name": "Renewing Wave",
+    "actionCost": 1,
+    "range": 6,
+    "effects": [
+     {
+      "type": "heal",
+      "target": "ally_or_self",
+      "heal": "1d6+3",
+      "range": 6
+     }
+    ],
+    "description": "Send a quick wave of chi to a distant ally."
+   },
+   {
+    "id": "serene-focus",
+    "name": "Serene Focus",
+    "actionCost": 1,
+    "range": 0,
+    "effects": [
+     {
+      "type": "narrative",
+      "roll": "1d20+4"
+     },
+     {
+      "type": "defense_bonus",
+      "target": "self",
+      "amount": 3,
+      "trigger": "next_attack_against_self",
+      "duration": "next_dm_phase",
+      "label": "Serene Focus"
+     }
+    ],
+    "description": "Center your breathing and improve your defense against the next attack."
+   }
+  ],
+  "inventory": [
+   "prayer-beads",
+   "herbal-tea",
+   "healing-potion"
+  ]
+ },
+ {
+  "id": "x-light-paladin",
+  "name": "Seraphine Goldvein",
+  "role": "heal",
+  "image": null,
+  "maxHp": 36,
+  "movement": 5,
+  "defense": 17,
+  "attacks": [
+   {
+    "id": "warhammer",
+    "name": "Warhammer",
+    "attack": "1d20+5",
+    "damage": "1d8+3",
+    "range": 1
+   },
+   {
+    "id": "radiant-javelin",
+    "name": "Radiant Javelin",
+    "attack": "1d20+4",
+    "damage": "1d6+2",
+    "range": 5
+   }
+  ],
+  "abilities": [
+   {
+    "id": "flash-of-light",
+    "name": "Flash of Light",
+    "actionCost": 1,
+    "range": 6,
+    "effects": [
+     {
+      "type": "heal",
+      "target": "ally_or_self",
+      "heal": "1d8+4",
+      "range": 6
+     }
+    ],
+    "description": "Quickly restore an ally with a burst of holy light."
+   },
+   {
+    "id": "beacon-of-grace",
+    "name": "Beacon of Grace",
+    "actionCost": 0,
+    "range": 6,
+    "effects": [
+     {
+      "type": "modify_healing",
+      "target": "ally_or_self",
+      "amount": 3,
+      "range": 6,
+      "label": "Beacon of Grace"
+     }
+    ],
+    "description": "Bless an ally; your next healing ability on them restores a little extra health."
+   }
+  ],
+  "inventory": [
+   "holy-symbol",
+   "healing-potion",
+   "silver-shield"
+  ]
+ },
+ {
+  "id": "x-field-alchemist",
+  "name": "Mallow Brassleaf",
+  "role": "heal",
+  "image": null,
+  "maxHp": 31,
+  "movement": 6,
+  "defense": 13,
+  "attacks": [
+   {
+    "id": "acid-vial",
+    "name": "Acid Vial",
+    "attack": "1d20+4",
+    "damage": "1d6+3",
+    "range": 6
+   },
+   {
+    "id": "reinforced-cane",
+    "name": "Reinforced Cane",
+    "attack": "1d20+3",
+    "damage": "1d6+2",
+    "range": 1
+   }
+  ],
+  "abilities": [
+   {
+    "id": "restorative-draught",
+    "name": "Restorative Draught",
+    "actionCost": 1,
+    "range": 4,
+    "effects": [
+     {
+      "type": "heal",
+      "target": "ally_or_self",
+      "heal": "2d6+2",
+      "range": 4
+     }
+    ],
+    "description": "Toss an ally a potent healing mixture."
+   },
+   {
+    "id": "antidote",
+    "name": "Antidote",
+    "actionCost": 1,
+    "range": 1,
+    "effects": [
+     {
+      "type": "heal",
+      "target": "ally_or_self",
+      "heal": "1d6+3",
+      "range": 1
+     },
+     {
+      "type": "remove_status",
+      "target": "ally_or_self",
+      "status": "poisoned"
+     }
+    ],
+    "description": "Treat an adjacent ally with an antidote and medicinal salve."
+   },
+   {
+    "id": "volatile-flask",
+    "name": "Volatile Flask",
+    "actionCost": 1,
+    "range": 5,
+    "effects": [
+     {
+      "type": "area_attack",
+      "target": "enemies_in_area",
+      "center": "target",
+      "radius": 1,
+      "range": 5,
+      "attack": "1d20+4",
+      "damage": "1d8+3",
+      "damageType": "poison"
+     },
+     {
+      "type": "apply_status",
+      "target": "hit_enemies",
+      "status": "poisoned",
+      "when": "attack_hits",
+      "duration": "next_dm_phase"
+     }
+    ],
+    "description": "Hurl a flask that bursts in a cloud of stinging alchemical fumes."
+   }
+  ],
+  "inventory": [
+   "alchemists-kit",
+   "restorative-draught",
+   "antitoxin"
+  ]
+ },
+ {
+  "id": "x-star-oracle",
+  "name": "Ysra Starbloom",
+  "role": "heal",
+  "image": null,
+  "maxHp": 31,
+  "movement": 6,
+  "defense": 14,
+  "attacks": [
+   {
+    "id": "starfire-bolt",
+    "name": "Starfire Bolt",
+    "attack": "1d20+5",
+    "damage": "1d8+3",
+    "range": 8
+   },
+   {
+    "id": "crescent-staff",
+    "name": "Crescent Staff",
+    "attack": "1d20+3",
+    "damage": "1d6+2",
+    "range": 1
+   }
+  ],
+  "abilities": [
+   {
+    "id": "celestial-balm",
+    "name": "Celestial Balm",
+    "actionCost": 1,
+    "range": 6,
+    "effects": [
+     {
+      "type": "heal",
+      "target": "ally_or_self",
+      "heal": "1d8+3",
+      "range": 6
+     }
+    ],
+    "description": "Call down a gentle starbeam to restore an ally."
+   },
+   {
+    "id": "warding-rune",
+    "name": "Warding Rune",
+    "actionCost": 1,
+    "range": 4,
+    "effects": [
+     {
+      "type": "narrative",
+      "roll": "1d20+4"
+     },
+     {
+      "type": "absorb_next_hit",
+      "target": "ally_or_self",
+      "range": 4,
+      "label": "Warding Rune"
+     }
+    ],
+    "description": "Place a glowing rune that shields an ally from the next harmful strike."
+   },
+   {
+    "id": "foresight",
+    "name": "Foresight",
+    "actionCost": 1,
+    "range": 6,
+    "effects": [
+     {
+      "type": "grant_roll_bonus",
+      "target": "ally_or_self",
+      "bonus": "1d6",
+      "range": 6,
+      "label": "Foresight"
+     }
+    ],
+    "description": "Read a flicker of possible futures and grant an ally a bonus on their next roll."
+   }
+  ],
+  "inventory": [
+   "astral-focus",
+   "chalk-runes",
+   "mana-potion"
+  ]
+ },
+ {
+  "id": "x-spirit-weaver",
+  "name": "Nima Veilwhisper",
+  "role": "heal",
+  "image": null,
+  "maxHp": 32,
+  "movement": 6,
+  "defense": 14,
+  "attacks": [
+   {
+    "id": "spirit-fan",
+    "name": "Spirit Fan",
+    "attack": "1d20+4",
+    "damage": "1d6+3",
+    "range": 1
+   },
+   {
+    "id": "ghost-lantern",
+    "name": "Ghost Lantern",
+    "attack": "1d20+5",
+    "damage": "1d8+2",
+    "range": 6
+   }
+  ],
+  "abilities": [
+   {
+    "id": "ancestral-call",
+    "name": "Ancestral Call",
+    "actionCost": 1,
+    "range": 5,
+    "effects": [
+     {
+      "type": "heal",
+      "target": "ally_or_self",
+      "heal": "1d8+3",
+      "range": 5
+     }
+    ],
+    "description": "Ask a friendly ancestor spirit to mend a distant ally."
+   },
+   {
+    "id": "spirit-tether",
+    "name": "Spirit Tether",
+    "actionCost": 1,
+    "range": 4,
+    "effects": [
+     {
+      "type": "heal",
+      "target": "ally_or_self",
+      "heal": "1d6+3",
+      "range": 4
+     }
+    ],
+    "description": "Link your spirit to an ally, sharing a little vitality with them."
+   },
+   {
+    "id": "veil-step",
+    "name": "Veil Step",
+    "actionCost": 0,
+    "range": 3,
+    "usesPerPhase": 1,
+    "effects": [
+     {
+      "type": "teleport",
+      "target": "cell",
+      "distance": 3
+     },
+     {
+      "type": "defense_bonus",
+      "target": "self",
+      "amount": 2,
+      "duration": "next_dm_phase",
+      "label": "Veil Step"
+     }
+    ],
+    "description": "Slip briefly through the spirit veil to reposition safely."
+   }
+  ],
+  "inventory": [
+   "ancestor-mask",
+   "spirit-incense",
+   "healing-potion"
+  ]
+ },
+ {
+  "id": "x-tester",
+  "name": "Tester",
+  "role": "dps",
+  "maxHp": 30,
+  "movement": 6,
+  "defense": 12,
+  "attacks": [
+   {
+    "id": "poke",
+    "name": "Poke",
+    "attack": "1d20+5",
+    "damage": "1d4",
+    "range": 1
+   }
+  ],
+  "abilities": [
+   {
+    "id": "brittle",
+    "name": "Brittle",
+    "actionCost": 1,
+    "range": 6,
+    "effects": [
+     {
+      "type": "modify_damage_received",
+      "target": "enemy",
+      "amount": 2,
+      "range": 6,
+      "label": "Brittle"
+     }
+    ],
+    "description": "Test: target takes +2 damage from hits."
+   }
+  ],
+  "inventory": []
+ }
+]

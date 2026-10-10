@@ -34,7 +34,9 @@ npm test                  # unit + socket integration tests
 - **HP:** at 0 HP a player character or NPC goes DOWN, and their only option is a d20 roll. If a DOWN character takes damage ≥ their max HP, they die. Monsters die at 0 HP. The DM can always revive or override.
 - **Hidden info:** the server strips HP and stats for monsters and hostile NPCs from everything it sends to players, including activity log text. The DM sees everything.
 - **Undo** covers moves, damage/heal/HP changes, attacks, spawns and removals, scope changes, items, acts, and abilities, up to the last 20. Structural actions (scene changes, hero selection or release, combat start, end, and phase changes) clear the undo history.
-- **Chat:** `/roll 2d6+1` in chat makes a server roll that shows in the activity log.
+- **Game Feed:** chat and game events (attacks, abilities, phases, joins, and so on) appear in one chronological feed on the right. The server orders and stores it, so a reconnect or restart reloads the same history with no duplicates. DM-only rows are marked **DM** and never reach players. If you've scrolled up to read, new rows show a "↓ N new" pill instead of jumping you to the bottom. `/roll 2d6+1` in chat makes a server roll.
+- **Abilities** run through one server-side effect engine: attacks, multi-attacks (Flurry of Blows makes 4 independent strikes), areas, chains, heals, shields, redirects, marks, taunts, slows, teleports, totems, and DM checks. Effects show as icons on tokens and persist across phases and restarts. Pending DM checks appear as **⚖** in the DM top bar. See [docs/ABILITIES.md](docs/ABILITIES.md).
+- **Training Dummy** (Monster bank): a practice target that takes unlimited damage and never goes down or dies. Its token shows the running total (Σ). The DM can reset the counter or remove it.
 
 ## Content
 
@@ -52,7 +54,7 @@ Changes go live immediately. Open DM and player pages refresh their banks, hero 
 | `data/acts.json` | Generic actions in the Act menu (optional `roll`) |
 | `static/backgrounds`, `static/tokens`, `static/images` | Art, referenced as `/static/...` |
 
-Definitions can also set `actions` (actions per combat phase, default 1). Attack fields: `attack` (to-hit dice), `damage`, `range` (squares). Ability fields: `heal` + `range` (targets an ally and applies the healing), `roll` (narrative roll), `grantsActions`, `free`. Dice notation: `NdX±M` with d4/d6/d8/d10/d12/d20, and terms can be chained (`1d8+1d6+2`). A natural 20 is a crit (damage dice doubled). A natural 1 always misses.
+Definitions can also set `actions` (actions per combat phase, default 1), and `"immortal": true` for training dummies. Attack fields: `attack` (to-hit dice), `damage`, `range` (squares), and optional `damageType`. Abilities use the effect schema described in [docs/ABILITIES.md](docs/ABILITIES.md). Older `heal`/`roll`/`free`/`grantsActions` fields still load. Dice notation: `NdX±M` with d4/d6/d8/d10/d12/d20, and terms can be chained (`1d8+1d6+2`). A natural 20 is a crit (damage dice doubled). A natural 1 always misses.
 
 The included art is generated placeholder art (`npm run placeholders`). Replace the SVG/PNG files, or point definitions at new files. Running the generator never overwrites existing files unless you pass `--force`.
 
@@ -89,7 +91,10 @@ server/
   games/
     service.js    game cache, dispatch → persist → broadcast, undo, timers, presence
     commands.js   every game command (validation + rules)
-    combat.js     phases, damage/heal/down/death, attack resolution
+    effects.js    ability effect engine: schema, handlers, targeting, phase lifecycle
+    status.js     live effects on entities (timing, expiry, movement allowance)
+    combat.js     phases, attack rolls, the shared damage/heal pipeline, down/death
+    helpers.js    shared validation helpers
     placement.js  spawn + placement of entities in scenes
     project.js    per-viewer state (hides enemy HP from players)
     state.js      state shape and helpers
@@ -97,4 +102,4 @@ client/           vanilla JS pages (home, editor, DM game, player)
 test/             node:test suites
 ```
 
-Every state change goes through `GameService.dispatch()`. It validates the command, applies it to the in-memory game, writes the new state, activity entries, and undo snapshot in one SQLite transaction, then sends each connected client its own filtered view. A failed command rolls back to the previous state.
+Every state change goes through `GameService.dispatch()`. It validates the command, applies it to the in-memory game, writes the new state, Game Feed rows, and undo snapshot in one SQLite transaction, then sends each connected client its own filtered view. A failed command rolls back to the previous state.

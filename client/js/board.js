@@ -225,11 +225,15 @@ export class Board {
       const big = t.size.w > 1 || t.size.h > 1;
       const body = h(`div.token-body${big ? '.big' : ''}`);
       if (t.image) body.append(h('img', { src: t.image, alt: t.name, draggable: false }));
-      else body.append(h('div.token-fallback', {}, (t.name || '?').slice(0, 2)));
+      else body.append(h('div.token-fallback', {}, t.icon ?? (t.name || '?').slice(0, 2)));
       if (t.status === 'down') body.append(h('div.token-badge.down', {}, 'DOWN'));
       if (t.status === 'dead') body.append(h('div.token-badge.dead', {}, '☠'));
       el.append(body);
       const stack = stacks.get(`${t.position.x},${t.position.y}`);
+      if (t.effects?.length) {
+        el.append(h('div.effect-icons', {}, ...t.effects.slice(0, 5).map((fx) => h('span', { title: `${fx.label}${fx.source ? ` (from ${fx.source})` : ''}` }, fx.icon || '✦'))));
+      }
+      if (t.immortal) el.append(h('div.dummy-badge', { title: `Training dummy: ${t.damageTaken ?? 0} damage over ${t.hits ?? 0} hits` }, `Σ ${t.damageTaken ?? 0}`));
       if (t.actionsLeft !== null && t.actionsLeft !== undefined) {
         el.append(h(`div.action-badge${t.actionsLeft ? '' : '.spent'}`, { title: `${t.actionsLeft} action(s) left this phase` }, `⚡${t.actionsLeft}`));
       }
@@ -294,7 +298,7 @@ export class Board {
         const y = t.position.y + Math.round((e.clientY - d.startY) / c);
         this.suppressClick = true;
         setTimeout(() => { this.suppressClick = false; });
-        if (x !== t.position.x || y !== t.position.y) this.opts.onTokenDrop?.(t, x, y);
+        if (x !== t.position.x || y !== t.position.y) this.opts.onTokenDrop?.(t, x, y, e);
       } else if (!cancelled) {
         const cell = this.cellAt(e.clientX, e.clientY) ?? t.position;
         this.opts.onTokenClick?.(t, e, this.stackAt(cell));

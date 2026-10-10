@@ -1,13 +1,16 @@
-import { rollDice, isValidDice } from '../dice.js';
+import { isValidDice } from '../dice.js';
 import { randomToken } from '../auth.js';
 import {
-  PLAYER_COLORS, fail, newId, entityFromDef, entitiesInScene, isFriendly, footprintDistance,
-  makeItem, turnFor, actionAllowance,
+  PLAYER_COLORS, fail, newId, entityFromDef, entitiesInScene, isFriendly, makeItem, turnFor, areEnemies,
 } from './state.js';
 import { inBounds, ensurePlaced } from './placement.js';
+import { startCombat, advancePhase, endCombat, applyHeal, setHp, revive, kill, dealDamage } from './combat.js';
+import { addEffect, removeEffect, effectsOf, movementAllowance } from './status.js';
+import { activateAbility, strike, checkTaunt, resolveCheck, onPhaseTransition, STATUSES } from './effects.js';
 import {
-  startCombat, advancePhase, endCombat, applyDamage, applyHeal, setHp, revive, kill, resolveAttack, reduceIncoming,
-} from './combat.js';
+  str, int, hpTexts, statusSuffix, getEntity, onActiveScene, controlled, requireStatus, requirePlayerWindow,
+  requireActionWindow, budgeted, checkAction, spendAction, rollOrFail, distanceBetween,
+} from './helpers.js';
 
 // Handler options:
 //   who:        'dm' | 'player' | 'any' (dm or player) | 'join' | 'system'
@@ -16,115 +19,10 @@ import {
 export const handlers = {};
 const def = (type, opts, run) => { handlers[type] = { ...opts, run }; };
 
-// ---------- helpers ----------
-
-const str = (v, max, label) => {
-  const s = typeof v === 'string' ? v.trim() : '';
-  if (!s) fail(`${label} is required`);
-  return s.slice(0, max);
-};
-const int = (v, label, min = -Infinity, max = Infinity) => {
-  const n = Number(v);
-  if (!Number.isInteger(n) || n < min || n > max) fail(`${label} must be a whole number${min > -Infinity ? ` from ${min} to ${max}` : ''}`);
-  return n;
-};
-
-function hpNote(e) {
-  return `${e.name} ${e.hp}/${e.maxHp}${e.status !== 'active' ? ` ${e.status.toUpperCase()}` : ''}`;
-}
-// Public log text only reveals HP for friendly entities; the DM text always does.
-function hpTexts(e) {
-  const dm = ` (${hpNote(e)})`;
-  return { pub: isFriendly(e) ? dm : '', dm };
-}
-
-function statusSuffix(e, change) {
-  if (!change || change.before === change.after) return '';
-  if (change.after === 'down') return ` ${e.name} is DOWN!`;
-  if (change.after === 'dead') return e.kind === 'monster' ? ` ${e.name} is slain!` : ` ${e.name} has DIED!`;
-  if (change.after === 'active' && change.before === 'down') return ` ${e.name} is back on their feet!`;
-  return '';
-}
-
-function getEntity(ctx, id) {
-  const e = ctx.state.entities[id];
-  if (!e) fail('That token no longer exists');
-  return e;
-}
-
-function activeScene(ctx) {
-  const id = ctx.state.activeSceneId;
-  if (!id) fail('No active scene');
-  return ctx.state.scenes[id];
-}
-
-function onActiveScene(ctx, e) {
-  const scene = activeScene(ctx);
-  if (e.scope !== 'game' && e.sceneId !== scene.id) fail(`${e.name} is not in this scene`);
-  return scene;
-}
-
-// The entity the acting player controls (DM may act through any entity).
-function controlled(ctx, entityId) {
-  const e = getEntity(ctx, entityId);
-  if (ctx.actor.role === 'player' && e.ownerPlayerId !== ctx.actor.playerId) fail('That is not your character');
-  return e;
-}
-
-function requireStatus(e, verb) {
-  if (e.status === 'dead') fail(`${e.name} is dead`);
-  if (e.status === 'down') fail(`${e.name} is down and can only roll a d20`);
-  if (verb && e.status !== 'active') fail(`${e.name} cannot ${verb}`);
-}
-
-// Players may act freely outside combat; in combat only during PLAYER PHASE.
-function requirePlayerWindow(ctx) {
-  if (ctx.actor.role !== 'player') return;
-  const c = ctx.state.combat;
-  if (c.active && c.phase !== 'player') fail('Wait for the PLAYER PHASE');
-}
-
-// Enemies (monsters and hostile NPCs) act only during the DM PHASE.
-function requireActionWindow(ctx, e) {
-  requirePlayerWindow(ctx);
-  const c = ctx.state.combat;
-  if (ctx.actor.role === 'dm' && c.active && !isFriendly(e) && c.phase !== 'dm') fail('Enemies act during the DM PHASE');
-}
-
-// Who pays from the per-phase action budget in combat: players always, and the DM when acting
-// through an enemy. Friendly NPCs and the DM's own tools (damage, HP, kill...) are unlimited.
-function budgeted(ctx, e) {
-  if (!ctx.state.combat.active) return false;
-  if (ctx.actor.role === 'player') return true;
-  return ctx.actor.role === 'dm' && !isFriendly(e);
-}
-
-function checkAction(ctx, e) {
-  if (!budgeted(ctx, e)) return;
-  const t = turnFor(ctx.state, e.id);
-  if (t.actions < actionAllowance(e, t)) return;
-  if (ctx.actor.role === 'player') fail('You have no actions left this phase');
-  fail(`${e.name} has no actions left this phase (use +1 action to override)`);
-}
-
-// Consumes one action in combat when the actor pays (see budgeted()).
-function spendAction(ctx, e) {
-  if (!budgeted(ctx, e)) return;
-  checkAction(ctx, e);
-  turnFor(ctx.state, e.id).actions += 1;
-}
-
-function rollOrFail(expr, ctx, opts) {
-  try { return rollDice(expr, { rng: ctx.rng, ...opts }); } catch (err) { fail(err.message); }
-}
-
-// The single damage path for attacks and DM damage. Tank reduction is applied here, once, and
-// everything reported (floating text, log) uses the damage actually dealt.
-function damageEntity(ctx, target, raw, color) {
-  const dealt = reduceIncoming(target, raw);
-  const change = applyDamage(target, dealt);
-  ctx.fx({ kind: 'damage', entityId: target.id, text: `-${dealt}`, color });
-  return { dealt, raw, reduced: dealt !== raw, change, suffix: statusSuffix(target, change), t: hpTexts(target) };
+// Training dummies and objects have no HP to set, heal or kill.
+function requireMortal(e) {
+  if (e.immortal) fail(`${e.name} is a training dummy and can't die — use Remove`);
+  if (e.kind === 'object') fail(`${e.name} is an object and has no HP`);
 }
 
 // ---------- players & identity ----------
@@ -346,15 +244,20 @@ def('entity.rename', { who: 'dm' }, (ctx) => {
 
 def('entity.damage', { who: 'dm', undoable: 'damage' }, (ctx) => {
   const e = getEntity(ctx, ctx.cmd.entityId);
-  const amount = int(ctx.cmd.amount, 'Damage', 0, 10000);
-  const d = damageEntity(ctx, e, amount, ctx.actorColor);
-  const text = `${e.name} takes ${d.dealt} damage${d.reduced ? ` (${d.raw}, reduced by Tank)` : ''}.${d.suffix}`;
-  ctx.log('damage', text + d.t.pub, { dmText: text + d.t.dm });
+  const amount = int(ctx.cmd.amount, 'Damage', 0, 1_000_000);
+  if (e.kind === 'object') fail(`${e.name} is an object and can't take damage`);
+  const d = dealDamage(ctx, { target: e, raw: amount, color: ctx.actorColor });
+  const notes = d.notes.length ? ` (${d.raw}, ${d.notes.join(', ')})` : '';
+  const v = d.victim;
+  const text = `${v.name} takes ${d.dealt} damage${notes}.${statusSuffix(v, d.change)}`;
+  const t = hpTexts(v);
+  ctx.log('damage', text + t.pub, { dmText: text + t.dm, data: { targetId: v.id, dealt: d.dealt } });
 });
 
 def('entity.heal', { who: 'dm', undoable: 'heal' }, (ctx) => {
   const e = getEntity(ctx, ctx.cmd.entityId);
   const amount = int(ctx.cmd.amount, 'Healing', 0, 10000);
+  requireMortal(e);
   if (e.status === 'dead') fail(`${e.name} is dead — revive them first`);
   const change = applyHeal(e, amount);
   ctx.fx({ kind: 'heal', entityId: e.id, text: `+${change.healed}`, color: ctx.actorColor });
@@ -365,6 +268,7 @@ def('entity.heal', { who: 'dm', undoable: 'heal' }, (ctx) => {
 
 def('entity.setHp', { who: 'dm', undoable: 'set HP' }, (ctx) => {
   const e = getEntity(ctx, ctx.cmd.entityId);
+  requireMortal(e);
   const before = e.status;
   setHp(e, int(ctx.cmd.hp, 'HP', 0, 100000));
   const t = hpTexts(e);
@@ -374,18 +278,21 @@ def('entity.setHp', { who: 'dm', undoable: 'set HP' }, (ctx) => {
 
 def('entity.setMaxHp', { who: 'dm', undoable: 'set max HP' }, (ctx) => {
   const e = getEntity(ctx, ctx.cmd.entityId);
+  requireMortal(e);
   e.maxHp = int(ctx.cmd.maxHp, 'Max HP', 1, 100000);
   e.hp = Math.min(e.hp, e.maxHp);
 });
 
 def('entity.kill', { who: 'dm', undoable: 'kill' }, (ctx) => {
   const e = getEntity(ctx, ctx.cmd.entityId);
+  requireMortal(e);
   kill(e);
   ctx.log('death', e.kind === 'monster' ? `${e.name} is slain!` : `${e.name} has DIED!`);
 });
 
 def('entity.revive', { who: 'dm', undoable: 'revive' }, (ctx) => {
   const e = getEntity(ctx, ctx.cmd.entityId);
+  requireMortal(e);
   if (e.status === 'active') fail(`${e.name} is not down or dead`);
   revive(e);
   const t = hpTexts(e);
@@ -396,6 +303,7 @@ def('entity.setStatus', { who: 'dm', undoable: 'status override' }, (ctx) => {
   const e = getEntity(ctx, ctx.cmd.entityId);
   const status = ctx.cmd.status;
   if (!['active', 'down', 'dead'].includes(status)) fail('Unknown status');
+  requireMortal(e);
   e.status = status;
   if (status === 'active') e.hp = Math.max(1, e.hp);
   else e.hp = 0;
@@ -406,6 +314,36 @@ def('entity.grantAction', { who: 'dm' }, (ctx) => {
   const e = getEntity(ctx, ctx.cmd.entityId);
   turnFor(ctx.state, e.id).bonus += 1;
   ctx.log('action', `DM grants ${e.name} an extra action`);
+});
+
+// DM overrides for live effects and checks.
+def('effect.remove', { who: 'dm', undoable: 'remove effect' }, (ctx) => {
+  const e = getEntity(ctx, ctx.cmd.entityId);
+  const fx = removeEffect(e, ctx.cmd.effectId);
+  if (!fx) fail('That effect already ended');
+  ctx.log('effect', `${fx.label} on ${e.name} ends`, { dmText: `DM removed ${fx.label} from ${e.name}` });
+});
+
+def('effect.addStatus', { who: 'dm', undoable: 'add status' }, (ctx) => {
+  const e = getEntity(ctx, ctx.cmd.entityId);
+  const st = STATUSES[ctx.cmd.status];
+  if (!st || ctx.cmd.status === 'frightened') fail('Pick poisoned, snared, shaken or slowed');
+  if (e.kind === 'object') fail('Objects have no statuses');
+  addEffect(ctx.state, e, {
+    type: ctx.cmd.status === 'slowed' ? 'modify_movement' : 'apply_status', status: ctx.cmd.status, label: st.label, icon: st.icon,
+    source: { entityId: null, name: 'DM' }, params: ctx.cmd.status === 'slowed' ? { amount: -2 } : {}, duration: 'next_dm_phase',
+  });
+  ctx.log('effect', `${e.name} is ${st.label.toLowerCase()}`);
+});
+
+def('check.resolve', { who: 'dm', undoable: 'check' }, (ctx) => resolveCheck(ctx, ctx.cmd.checkId, !!ctx.cmd.success));
+
+def('entity.resetDummy', { who: 'dm' }, (ctx) => {
+  const e = getEntity(ctx, ctx.cmd.entityId);
+  if (!e.immortal) fail('Only training dummies keep a damage counter');
+  e.damageTaken = 0;
+  e.hits = 0;
+  ctx.log('dummy', `${e.name}'s damage counter was reset`);
 });
 
 def('item.add', { who: 'dm', undoable: 'add item' }, (ctx) => {
@@ -431,25 +369,45 @@ def('move', { who: 'any', undoable: 'move' }, (ctx) => {
   const x = Number(ctx.cmd.x), y = Number(ctx.cmd.y);
   if (!inBounds(scene, x, y, e.size)) fail('You cannot move there');
   const from = e.positions[scene.id];
+  const c = ctx.state.combat;
+  // DM "force" moves skip every restriction (override). Otherwise players, and enemies moved by
+  // the DM in combat, spend movement (after slows/snares) and respect frightened.
+  const force = ctx.actor.role === 'dm' && ctx.cmd.force === true;
   if (ctx.actor.role === 'player') {
     requireStatus(e, 'move');
     requirePlayerWindow(ctx);
-    if (ctx.state.combat.active && from) {
+  }
+  if (!force && from) {
+    const paying = c.active && (ctx.actor.role === 'player' || !isFriendly(e));
+    if (paying) {
       const dist = Math.max(Math.abs(x - from.x), Math.abs(y - from.y));
       const t = turnFor(ctx.state, e.id);
-      if (t.moved + dist > e.movement) fail(`Not enough movement (${e.movement - t.moved} squares left)`);
+      const allowance = movementAllowance(e);
+      if (t.moved + dist > allowance) {
+        fail(`${ctx.actor.role === 'dm' ? `${e.name} has` : 'Not enough movement:'} ${Math.max(0, allowance - t.moved)} squares left${ctx.actor.role === 'dm' ? ' (Shift-drag to force)' : ''}`);
+      }
       t.moved += dist;
+    }
+    for (const fx of e.effects ?? []) {
+      if (fx.status !== 'frightened') continue;
+      const src = ctx.state.entities[fx.params.sourceId];
+      if (!src?.positions[scene.id]) continue;
+      const before = distanceBetween(ctx, e, src);
+      const sp = src.positions[scene.id];
+      const dx = Math.max(0, sp.x - (x + e.size.w - 1), x - (sp.x + src.size.w - 1));
+      const dy = Math.max(0, sp.y - (y + e.size.h - 1), y - (sp.y + src.size.h - 1));
+      if (Math.max(dx, dy) < before) fail(`${e.name} is frightened of ${src.name} and can't move closer${ctx.actor.role === 'dm' ? ' (Shift-drag to force)' : ''}`);
     }
   }
   if (from && from.x === x && from.y === y) return;
   e.positions[scene.id] = { x, y };
   e.z = ++ctx.state.zCounter;
-  ctx.log('move', `${e.name} moves`, { quiet: true });
+  ctx.log('move', `${e.name} ${force ? 'is moved' : 'moves'}`);
 });
 
 def('attack', { who: 'any', undoable: 'attack' }, (ctx) => {
   const e = controlled(ctx, ctx.cmd.entityId);
-  const scene = onActiveScene(ctx, e);
+  onActiveScene(ctx, e);
   const c = ctx.state.combat;
   if (!c.active) fail('Attacks are only available in combat');
   requireStatus(e, 'attack');
@@ -459,26 +417,29 @@ def('attack', { who: 'any', undoable: 'attack' }, (ctx) => {
   if (!attack) fail('Unknown attack');
   const target = getEntity(ctx, ctx.cmd.targetId);
   if (target.id === e.id) fail('You cannot attack yourself');
+  if (target.kind === 'object') fail(`${target.name} can't be attacked`);
   onActiveScene(ctx, target);
   if (target.status === 'dead') fail(`${target.name} is already dead`);
-  const pa = e.positions[scene.id], pb = target.positions[scene.id];
   const range = Number(attack.range) || 1;
-  const dist = footprintDistance(pa, e.size, pb, target.size);
+  const dist = distanceBetween(ctx, e, target);
   if (dist > range) fail(`${target.name} is out of range (${dist} > ${range})`);
+  checkTaunt(ctx, e, target);
   spendAction(ctx, e);
 
-  const r = resolveAttack(attack, target, ctx.rng);
-  const head = `${e.name} uses ${attack.name} on ${target.name}: ${r.attackRoll.text}`;
-  if (!r.hit) {
-    ctx.fx({ kind: 'miss', entityId: target.id, text: 'MISS', color: ctx.actorColor });
-    ctx.log('attack', `${head} — MISS`, { dmText: `${head} vs DEF ${target.defense} — MISS` });
+  const s = strike(ctx, { attacker: e, target, attack, color: ctx.actorColor });
+  const head = `${e.name} uses ${attack.name} on ${target.name}: ${s.roll.text}`;
+  const data = { strikes: [{ targetId: target.id, victimId: s.victim.id, hit: s.hit, crit: s.crit, dealt: s.dealt }] };
+  if (!s.hit) {
+    ctx.log('attack', `${head} — MISS`, { dmText: `${head} vs DEF ${s.roll.defense} — MISS`, data });
     return { hit: false };
   }
-  if (r.crit) ctx.fx({ kind: 'crit', entityId: target.id, text: 'CRIT', color: ctx.actorColor });
-  const d = damageEntity(ctx, target, r.damage, ctx.actorColor);
-  const tail = `${r.crit ? 'CRITICAL HIT' : 'HIT'} for ${d.dealt} (${r.damageRoll.text}${d.reduced ? ', reduced by Tank' : ''}).${d.suffix}`;
-  ctx.log('attack', `${head} — ${tail}${d.t.pub}`, { dmText: `${head} vs DEF ${target.defense} — ${tail}${d.t.dm}` });
-  return { hit: true, crit: r.crit, damage: d.dealt };
+  const v = s.victim;
+  const via = v !== target ? ` (${s.notes.find((n) => n.startsWith('intercepted')) ?? `hits ${v.name}`})` : '';
+  const notes = s.notes.filter((n) => !n.startsWith('intercepted'));
+  const tail = `${s.crit ? 'CRITICAL HIT' : 'HIT'} for ${s.dealt} (${s.dmg.text}${notes.length ? `, ${notes.join(', ')}` : ''})${via}.${s.suffix}`;
+  const t = hpTexts(v);
+  ctx.log('attack', `${head} — ${tail}${t.pub}`, { dmText: `${head} vs DEF ${s.roll.defense} — ${tail}${t.dm}`, data });
+  return { hit: true, crit: s.crit, damage: s.dealt };
 });
 
 def('act', { who: 'any', undoable: 'act' }, (ctx) => {
@@ -504,49 +465,8 @@ def('act', { who: 'any', undoable: 'act' }, (ctx) => {
   ctx.log('act', `${e.name}: ${name}${on}${r ? ` — rolls ${roll}: ${r.text}` : ''}`);
 });
 
-def('ability', { who: 'any', undoable: 'ability' }, (ctx) => {
-  const e = controlled(ctx, ctx.cmd.entityId);
-  const scene = onActiveScene(ctx, e);
-  requireStatus(e, 'use abilities');
-  requireActionWindow(ctx, e);
-  const ab = e.abilities.find((a) => a.id === ctx.cmd.abilityId);
-  if (!ab) fail('Unknown ability');
-  const t = budgeted(ctx, e) ? turnFor(ctx.state, e.id) : null;
-  if (t && ab.grantsActions) {
-    if (t.abilitiesUsed.includes(ab.id)) fail(`${ab.name} can only be used once per phase`);
-  } else if (!ab.free) {
-    checkAction(ctx, e);
-  }
-
-  let target = null;
-  if (ab.heal) {
-    target = getEntity(ctx, ctx.cmd.targetId ?? e.id);
-    onActiveScene(ctx, target);
-    if (target.status === 'dead') fail(`${target.name} is dead`);
-    const dist = footprintDistance(e.positions[scene.id], e.size, target.positions[scene.id], target.size);
-    if (dist > (Number(ab.range) || 1)) fail(`${target.name} is out of range`);
-  }
-
-  if (t && ab.grantsActions) {
-    t.abilitiesUsed.push(ab.id);
-    t.bonus += Number(ab.grantsActions);
-  } else if (!ab.free) {
-    spendAction(ctx, e);
-  }
-
-  if (ab.heal) {
-    const r = rollOrFail(ab.heal, ctx);
-    const change = applyHeal(target, r.total);
-    ctx.fx({ kind: 'heal', entityId: target.id, text: `+${change.healed}`, color: ctx.actorColor });
-    const ht = hpTexts(target);
-    const text = `${e.name} uses ${ab.name} on ${target.name}: ${r.text} healed.${statusSuffix(target, change)}`;
-    ctx.log('heal', text + ht.pub, { dmText: text + ht.dm });
-    return;
-  }
-  const r = ab.roll ? rollOrFail(ab.roll, ctx) : null;
-  const extra = ab.grantsActions && t ? ` (+${ab.grantsActions} action)` : '';
-  ctx.log('ability', `${e.name} uses ${ab.name}${extra}${r ? ` — rolls ${ab.roll}: ${r.text}` : ''}`);
-});
+// All abilities (heroes, NPCs, monsters) run through the shared effect engine.
+def('ability', { who: 'any', undoable: 'ability' }, (ctx) => activateAbility(ctx));
 
 def('item.use', { who: 'player', undoable: 'use item' }, (ctx) => {
   const e = controlled(ctx, ctx.cmd.entityId);
@@ -584,12 +504,14 @@ def('combat.start', { who: 'dm', clearsUndo: true }, (ctx) => {
   if (ctx.state.combat.active) fail('Combat is already running');
   startCombat(ctx.state, ctx.now);
   ctx.log('combat', '⚔️ COMBAT BEGINS — PLAYER PHASE (round 1)');
+  onPhaseTransition(ctx, 'start');
 });
 
 def('combat.end', { who: 'dm', clearsUndo: true }, (ctx) => {
   if (!ctx.state.combat.active) fail('Combat is not running');
   endCombat(ctx.state);
   ctx.log('combat', 'Combat ends');
+  onPhaseTransition(ctx, 'end');
 });
 
 function logPhase(ctx, prefix = '') {
@@ -601,6 +523,7 @@ def('combat.advance', { who: 'dm', clearsUndo: true }, (ctx) => {
   if (!ctx.state.combat.active) fail('Combat is not running');
   advancePhase(ctx.state, ctx.now);
   logPhase(ctx);
+  onPhaseTransition(ctx, 'advance');
 });
 
 def('combat.timerExpired', { who: 'system', clearsUndo: true }, (ctx) => {
@@ -608,6 +531,7 @@ def('combat.timerExpired', { who: 'system', clearsUndo: true }, (ctx) => {
   if (!c.active || !c.phaseEndsAt || c.phaseEndsAt !== ctx.cmd.phaseEndsAt) fail('stale timer');
   advancePhase(ctx.state, ctx.now);
   logPhase(ctx, "⏰ Time's up! ");
+  onPhaseTransition(ctx, 'advance');
 });
 
 def('combat.setTimer', { who: 'dm' }, (ctx) => {

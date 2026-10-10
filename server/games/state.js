@@ -45,6 +45,15 @@ export function isFriendly(entity) {
   return entity.kind === 'pc' || (entity.kind === 'npc' && !entity.hostile);
 }
 
+// Sides for targeting: the party (PCs and friendly NPCs) versus foes (monsters, hostile NPCs).
+// Objects (barriers, totems) belong to no side and are never targets.
+export function sideOf(e) {
+  if (!e || e.kind === 'object') return null;
+  return isFriendly(e) ? 'party' : 'foe';
+}
+export const areEnemies = (a, b) => !!sideOf(a) && !!sideOf(b) && sideOf(a) !== sideOf(b);
+export const areAllies = (a, b) => !!sideOf(a) && sideOf(a) === sideOf(b);
+
 // Chebyshev distance between two rectangular footprints (0 = overlapping/adjacent cells share space).
 export function footprintDistance(a, sa, b, sb) {
   const dx = Math.max(0, b.x - (a.x + sa.w - 1), a.x - (b.x + sb.w - 1));
@@ -63,7 +72,9 @@ export function makeItem(name) {
 // Builds a live entity instance from a bank/character definition. The definition is
 // deep-copied so instance changes never touch the reusable definition.
 export function entityFromDef(def, kind, extra = {}) {
-  const maxHp = Math.max(1, Number(def.maxHp) || 10);
+  // Training dummies (immortal) have no HP at all: damage is recorded, never subtracted.
+  const immortal = def.immortal === true;
+  const maxHp = immortal ? null : Math.max(1, Number(def.maxHp) || 10);
   return {
     id: newId('e'),
     kind,
@@ -74,13 +85,15 @@ export function entityFromDef(def, kind, extra = {}) {
     size: { w: def.size?.w ?? 1, h: def.size?.h ?? 1 },
     maxHp,
     hp: maxHp,
-    defense: Number(def.defense) || 10,
-    movement: Number(def.movement) || 6,
+    defense: Number.isFinite(def.defense) ? def.defense : 10,
+    movement: Number.isFinite(def.movement) ? def.movement : 6,
     attacks: structuredClone(def.attacks ?? []),
     abilities: structuredClone(def.abilities ?? []),
     inventory: (def.inventory ?? []).map((i) => makeItem(typeof i === 'string' ? prettyItemName(i) : i.name)),
     // Actions per combat phase (movement is separate). Definitions may set "actions".
-    actionsPerPhase: Number.isInteger(def.actions) && def.actions >= 1 ? def.actions : 1,
+    actionsPerPhase: Number.isInteger(def.actions) && def.actions >= 0 ? def.actions : 1,
+    ...(immortal ? { immortal: true, damageTaken: 0, hits: 0 } : {}),
+    effects: [],
     status: 'active',
     hostile: kind === 'monster' ? def.hostile !== false : kind === 'npc' ? !!def.hostile : false,
     scope: 'scene',
@@ -94,7 +107,8 @@ export function entityFromDef(def, kind, extra = {}) {
 
 // Actions available this phase: the entity's allowance plus any granted extras.
 export function actionAllowance(entity, turn) {
-  return (entity.actionsPerPhase ?? 1) + (turn?.bonus ?? 0);
+  const reduced = (entity.effects ?? []).filter((fx) => fx.type === 'reduce_actions').reduce((s, fx) => s + (fx.params.amount ?? 1), 0);
+  return Math.max(0, (entity.actionsPerPhase ?? 1) + (turn?.bonus ?? 0) - reduced);
 }
 
 export function turnFor(state, entityId) {

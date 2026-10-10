@@ -18,26 +18,23 @@ CREATE TABLE IF NOT EXISTS games (
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
 );
-CREATE TABLE IF NOT EXISTS chat_messages (
+-- The Game Feed: chat messages and game events in one chronological table. The autoincrement id
+-- is the stable, server-assigned ordering; clients never supply timestamps or order.
+CREATE TABLE IF NOT EXISTS feed_events (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   game_id TEXT NOT NULL,
+  kind TEXT NOT NULL,            -- 'chat' | 'event'
+  type TEXT NOT NULL,            -- chat, attack, ability, phase, ...
+  text TEXT NOT NULL,            -- what players see ('' for DM-only events)
+  dm_text TEXT,                  -- DM version when it differs (includes hidden HP)
+  visibility TEXT NOT NULL,      -- 'all' | 'dm'
+  color TEXT,
+  name TEXT,                     -- chat sender name
   player_id TEXT,
-  name TEXT NOT NULL,
-  color TEXT,
-  text TEXT NOT NULL,
+  data TEXT,                     -- JSON with public-safe structured details
   ts INTEGER NOT NULL
 );
-CREATE INDEX IF NOT EXISTS chat_game ON chat_messages(game_id, id);
-CREATE TABLE IF NOT EXISTS activity_events (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  game_id TEXT NOT NULL,
-  type TEXT NOT NULL,
-  text TEXT NOT NULL,
-  dm_text TEXT,
-  color TEXT,
-  ts INTEGER NOT NULL
-);
-CREATE INDEX IF NOT EXISTS activity_game ON activity_events(game_id, id);
+CREATE INDEX IF NOT EXISTS feed_game ON feed_events(game_id, id);
 CREATE TABLE IF NOT EXISTS undo_snapshots (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   game_id TEXT NOT NULL,
@@ -53,6 +50,7 @@ export function openDb(file) {
   const db = new DatabaseSync(file);
   if (file !== ':memory:') db.exec('PRAGMA journal_mode = WAL;');
   db.exec(SCHEMA);
+  migrate(db);
   return db;
 }
 
@@ -65,5 +63,33 @@ export function transaction(db, fn) {
   } catch (err) {
     db.exec('ROLLBACK');
     throw err;
+  }
+}
+
+const tableExists = (db, name) => !!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?").get(name);
+
+// Schema migrations, tracked with PRAGMA user_version.
+//   2: merge chat_messages + activity_events into feed_events (ordered by time, then source id).
+function migrate(db) {
+  const version = db.prepare('PRAGMA user_version').get().user_version;
+  if (version < 2) {
+    transaction(db, () => {
+      if (tableExists(db, 'chat_messages') && tableExists(db, 'activity_events')) {
+        db.exec(`
+          INSERT INTO feed_events (game_id, kind, type, text, dm_text, visibility, color, name, player_id, data, ts)
+          SELECT game_id, kind, type, text, dm_text, visibility, color, name, player_id, NULL, ts FROM (
+            SELECT game_id, 'event' AS kind, type, text, dm_text,
+                   CASE WHEN text = '' THEN 'dm' ELSE 'all' END AS visibility, color, NULL AS name, NULL AS player_id, ts, id, 0 AS src
+              FROM activity_events
+            UNION ALL
+            SELECT game_id, 'chat', 'chat', text, NULL, 'all', color, name, player_id, ts, id, 1
+              FROM chat_messages
+          ) ORDER BY ts, src, id;
+          DROP TABLE chat_messages;
+          DROP TABLE activity_events;
+        `);
+      }
+      db.exec('PRAGMA user_version = 2');
+    });
   }
 }

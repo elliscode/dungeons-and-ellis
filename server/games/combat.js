@@ -1,4 +1,5 @@
 import { rollDice } from '../dice.js';
+import { effectsOf, removeEffect } from './status.js';
 
 export function phaseDurationEnd(state, now) {
   const s = state.combat.timerSeconds;
@@ -9,6 +10,7 @@ export function startCombat(state, now) {
   state.combat.active = true;
   state.combat.phase = 'player';
   state.combat.round = 1;
+  state.combat.phaseSeq = 1;
   state.combat.phaseEndsAt = phaseDurationEnd(state, now);
   state.turn = {};
 }
@@ -21,12 +23,13 @@ export function advancePhase(state, now) {
     c.phase = 'player';
     c.round += 1;
   }
+  c.phaseSeq = (c.phaseSeq ?? 1) + 1;
   c.phaseEndsAt = phaseDurationEnd(state, now);
   state.turn = {};
 }
 
 export function endCombat(state) {
-  Object.assign(state.combat, { active: false, phase: null, round: 0, phaseEndsAt: null });
+  Object.assign(state.combat, { active: false, phase: null, round: 0, phaseSeq: 0, phaseEndsAt: null });
   state.turn = {};
 }
 
@@ -80,12 +83,149 @@ export function kill(e) {
   e.hp = 0;
 }
 
-// Natural 20 = critical hit (damage dice doubled); natural 1 = automatic miss.
-export function resolveAttack(attack, target, rng) {
-  const attackRoll = rollDice(attack.attack || '1d20', { rng });
-  const nat = attackRoll.natural;
+// ---------- shared attack / damage / heal pipeline ----------
+// Every damage source (weapon attacks, abilities, area/chain/multi attacks, enemy attacks, the
+// DM's Damage button) goes through dealDamage(); every heal goes through healTarget().
+
+const MAGICAL_TYPES = new Set(['fire', 'cold', 'frost', 'lightning', 'thunder', 'radiant', 'holy', 'necrotic', 'shadow', 'arcane', 'force', 'psychic', 'poison', 'acid', 'nature']);
+export const isMagical = (damageType) => !!damageType && MAGICAL_TYPES.has(String(damageType).toLowerCase());
+
+// To-hit penalties from statuses on the attacker.
+const STATUS_TO_HIT = { shaken: -2, poisoned: -2 };
+
+export function effectiveDefense(target, defenseReduction = 0) {
+  const bonus = effectsOf(target, 'defense_bonus').reduce((s, fx) => s + (fx.params.amount ?? 0), 0);
+  return Math.max(0, (target.defense ?? 10) + bonus - Math.max(0, defenseReduction));
+}
+
+const signed = (n) => (n >= 0 ? `+${n}` : `${n}`);
+
+// Rolls `expr` against the target's effective Defense with every modifier applied once:
+// flat attackBonus, the attacker's one-shot roll bonuses (Inspire, Foresight; consumed), status
+// penalties (shaken, poisoned), the target's discourage_attacks penalty (Sanctuary), and the
+// target's "next attack against self" Defense bonus (Serene Focus; consumed).
+// Natural 20 always hits (crit); natural 1 always misses.
+export function attackRoll(ctx, { source, target, expr, attackBonus = 0, defenseReduction = 0 }) {
+  const mods = [];
+  if (attackBonus) mods.push({ label: 'bonus', value: attackBonus });
+  if (source) {
+    for (const fx of effectsOf(source, 'grant_roll_bonus')) {
+      const b = /d/i.test(String(fx.params.bonus)) ? rollDice(String(fx.params.bonus), { rng: ctx.rng }).total : Number(fx.params.bonus) || 0;
+      mods.push({ label: fx.label, value: b });
+      removeEffect(source, fx.id);
+    }
+    for (const fx of source.effects ?? []) if (STATUS_TO_HIT[fx.status]) mods.push({ label: fx.label, value: STATUS_TO_HIT[fx.status] });
+  }
+  for (const fx of effectsOf(target, 'discourage_attacks')) mods.push({ label: fx.label, value: -(fx.params.penalty ?? 5) });
+  const defense = effectiveDefense(target, defenseReduction);
+  const roll = rollDice(expr || '1d20', { rng: ctx.rng });
+  const total = roll.total + mods.reduce((s, m) => s + m.value, 0);
+  const nat = roll.natural;
   const crit = nat === 20;
-  const hit = crit || (nat !== 1 && attackRoll.total >= target.defense);
-  const damageRoll = hit ? rollDice(attack.damage || '1d4', { rng, critical: crit }) : null;
-  return { attackRoll, hit, crit, damageRoll, damage: damageRoll ? Math.max(0, damageRoll.total) : 0 };
+  const hit = crit || (nat !== 1 && total >= defense);
+  for (const fx of effectsOf(target, 'defense_bonus')) if (fx.trigger === 'next_attack_against_self') removeEffect(target, fx.id);
+  const text = mods.length ? `${roll.text} ${mods.map((m) => `${signed(m.value)} ${m.label}`).join(' ')} → ${total}` : roll.text;
+  return { roll, total, mods, defense, hit, crit, nat, text };
+}
+
+const consumable = (fx) => ['next_hit', 'until_next_hit', 'until_used', 'next_magical_hit'].includes(fx.trigger);
+
+// Damage resolution order (each step applies at most once per hit):
+//   1. raw rolled damage (crits already doubled the dice)
+//   2. attacker modifiers: modify_damage_dealt (e.g. Curse of Weakness halves), Hunter's Mark dice
+//   3. redirection (Intercept): the protector becomes the victim
+//   4. victim protection: absorb_next_hit (negates) or grant_protection (reduces), then
+//      modify_damage_received
+//   5. tank mitigation (25%, min 1)
+//   6. apply: training dummies only record the damage; everyone else goes through applyDamage
+export function dealDamage(ctx, { source = null, target, raw, damageType = null, color = null }) {
+  const notes = [];
+  let amount = Math.max(0, Math.floor(raw));
+  if (source && amount > 0) {
+    for (const fx of effectsOf(source, 'modify_damage_dealt')) {
+      if (fx.params.multiplier !== undefined) amount = Math.floor(amount * fx.params.multiplier);
+      if (fx.params.amount) amount = Math.max(0, amount + fx.params.amount);
+      notes.push(fx.label);
+      if (consumable(fx)) removeEffect(source, fx.id);
+    }
+    for (const fx of effectsOf(target, 'mark_target')) {
+      if (fx.source?.entityId !== source.id) continue;
+      const bonus = rollDice(String(fx.params.bonus ?? '1d6'), { rng: ctx.rng }).total;
+      amount += bonus;
+      notes.push(`+${bonus} ${fx.label}`);
+      removeEffect(target, fx.id);
+    }
+  }
+  let victim = target;
+  const redirect = effectsOf(target, 'redirect_next_hit')[0];
+  if (redirect && amount > 0) {
+    removeEffect(target, redirect.id);
+    const protector = ctx.state.entities[redirect.params.protectorId];
+    const sid = ctx.state.activeSceneId;
+    if (protector && protector.status === 'active' && (protector.scope === 'game' || protector.sceneId === sid)) {
+      victim = protector;
+      notes.push(`intercepted by ${protector.name}`);
+    }
+  }
+  const magical = isMagical(damageType);
+  if (amount > 0) {
+    const absorb = effectsOf(victim, 'absorb_next_hit').find((fx) => !fx.params.magicalOnly || magical);
+    if (absorb) {
+      amount = 0;
+      notes.push(`absorbed by ${absorb.label}`);
+      removeEffect(victim, absorb.id);
+    } else {
+      const shield = effectsOf(victim, 'grant_protection').find((fx) => !fx.params.magicalOnly || magical);
+      if (shield) {
+        amount = shield.params.amount
+          ? Math.max(0, amount - shield.params.amount)
+          : Math.floor(amount * (1 - (shield.params.fraction ?? 0.5)));
+        notes.push(`reduced by ${shield.label}`);
+        removeEffect(victim, shield.id);
+      }
+    }
+  }
+  if (amount > 0) {
+    for (const fx of effectsOf(victim, 'modify_damage_received')) {
+      if (fx.params.multiplier !== undefined) amount = Math.floor(amount * fx.params.multiplier);
+      if (fx.params.amount) amount = Math.max(0, amount + fx.params.amount);
+      notes.push(fx.label);
+      if (consumable(fx)) removeEffect(victim, fx.id);
+    }
+  }
+  const preTank = amount;
+  amount = reduceIncoming(victim, amount);
+  if (amount !== preTank) notes.push('reduced by Tank');
+
+  let change;
+  if (victim.immortal) {
+    victim.damageTaken = (victim.damageTaken ?? 0) + amount;
+    victim.hits = (victim.hits ?? 0) + 1;
+    change = { before: victim.status, after: victim.status };
+  } else {
+    change = applyDamage(victim, amount);
+  }
+  const blocked = amount === 0 && raw > 0;
+  ctx.fx({ kind: blocked ? 'miss' : 'damage', entityId: victim.id, text: blocked ? 'BLOCKED' : `-${amount}`, color });
+  return { victim, dealt: amount, raw: Math.max(0, Math.floor(raw)), notes, change };
+}
+
+// Healing: + the caster's healing bonus on the target (Beacon of Grace; consumed), clamped to
+// max HP. Dead targets, training dummies and objects can't be healed.
+export function healTarget(ctx, { source = null, target, amount, color = null }) {
+  if (target.immortal || target.kind === 'object' || target.maxHp === null) return { healed: 0, skipped: `${target.name} can't be healed` };
+  if (target.status === 'dead') return { healed: 0, skipped: `${target.name} is dead` };
+  const notes = [];
+  let total = Math.max(0, Math.floor(amount));
+  if (source) {
+    for (const fx of effectsOf(target, 'modify_healing')) {
+      if (fx.source?.entityId !== source.id) continue;
+      total += fx.params.amount ?? 0;
+      notes.push(`+${fx.params.amount ?? 0} ${fx.label}`);
+      removeEffect(target, fx.id);
+    }
+  }
+  const change = applyHeal(target, total);
+  ctx.fx({ kind: 'heal', entityId: target.id, text: `+${change.healed}`, color });
+  return { healed: change.healed, change, notes };
 }

@@ -1,7 +1,8 @@
 import { io } from '/socket.io/socket.io.esm.min.js';
 import { $, fill, h, toast, sendCmd, popupMenu, closeMenu, combatBar, ROLE_LABELS, ROLE_ICONS, PLAYER_COLORS } from './common.js';
 import { Board } from './board.js';
-import { SidePanel } from './panel.js';
+import { GameFeed } from './panel.js';
+import { startAbility, abilitySummary, distance } from './abilities.js';
 
 const token = decodeURIComponent(location.pathname.split('/').pop());
 const SEAT_KEY = `dne:seat:${token}`;
@@ -23,15 +24,14 @@ let mode = null; // null | {type:'move'} | {type:'target', ...}
 let fatal = null;
 
 const socket = io('/play', { auth: { joinToken: token, playerId: seat?.playerId, seatSecret: seat?.seatSecret } });
-const panel = new SidePanel($('#panel'), {
+const panel = new GameFeed($('#panel'), {
   onSend: (text) => new Promise((r) => socket.emit('chat', text, (res) => { if (!res?.ok) toast(res?.error ?? 'Failed', 'error'); r(); })),
 });
 const bar = combatBar($('#combat-bar'));
 
 socket.on('state', (s) => { state = s; render(); });
 socket.on('history', (hist) => panel.setHistory(hist));
-socket.on('chat', (rows) => panel.addChat(rows));
-socket.on('activity', (rows) => panel.addActivity(rows));
+socket.on('feed', (rows) => panel.add(rows));
 socket.on('fx', (list) => { for (const f of list) board.showFx(f.entityId, f.text, f.color, f.kind); });
 socket.on('seatInvalid', () => {
   store.del(SEAT_KEY);
@@ -73,12 +73,14 @@ const dist = (a, sa, b, sb) => {
 function availability() {
   const me = myEntity();
   const c = state.combat;
-  const t = state.turn ?? { actions: 0, bonus: 0, moved: 0 };
-  const actionsLeft = Math.max(0, (me.actionsPerPhase ?? 1) + t.bonus - t.actions);
+  const t = state.turn ?? { actions: 0, bonus: 0, moved: 0, abilitiesUsed: [] };
+  // Allowances come from the server (they include granted actions, slows, snares...).
+  const allowance = me.allowance ?? { actions: (me.actionsPerPhase ?? 1) + (t.bonus ?? 0), movement: me.movement };
+  const actionsLeft = Math.max(0, allowance.actions - t.actions);
   const actionLeft = !c.active || actionsLeft > 0;
   const dmPhase = c.active && c.phase !== 'player';
-  const moveLeft = c.active ? Math.max(0, me.movement - t.moved) : Infinity;
-  return { me, c, t, actionLeft, actionsLeft, dmPhase, moveLeft, canAct: me.status === 'active' && !dmPhase && actionLeft };
+  const moveLeft = c.active ? Math.max(0, allowance.movement - t.moved) : Infinity;
+  return { me, c, t, allowance, actionLeft, actionsLeft, dmPhase, moveLeft, canAct: me.status === 'active' && !dmPhase && actionLeft };
 }
 
 function cellsWithin(origin, size, range) {
@@ -103,9 +105,11 @@ function renderBoard() {
     view.donut = { forId: me.id, disabled, onSegment, onRoll: () => send({ type: 'downRoll', entityId: me.id }) };
   }
   if (mode?.type === 'target') {
-    view.targetIds = new Set(state.entities.filter((e) => mode.filter(e) && e.status !== 'dead'
-      && dist(me.position, me.size, e.position, e.size) <= mode.range).map((e) => e.id));
-    board.highlight(cellsWithin(me.position, me.size, mode.range), 'range');
+    const origin = mode.origin ? state.entities.find((e) => e.id === mode.origin.id) ?? mode.origin : me;
+    view.targetIds = new Set(state.entities.filter((e) => mode.filter(e) && e.status !== 'dead' && distance(origin, e) <= mode.range).map((e) => e.id));
+    board.highlight(cellsWithin(origin.position, origin.size, mode.range), 'range');
+  } else if (mode?.type === 'cell') {
+    board.highlight(cellsWithin(me.position, me.size, mode.range), 'move');
   } else if (mode?.type === 'move') {
     const a = availability();
     board.highlight(a.c.active ? cellsWithin(me.position, me.size, a.moveLeft) : [], 'move');
@@ -119,7 +123,9 @@ function renderBoard() {
 function renderModeBanner() {
   $('.mode-banner')?.remove();
   if (!mode) return;
-  $('#board').append(h('div.mode-banner', {}, mode.label, h('button.small', { onclick: cancelMode }, 'Cancel (Esc)')));
+  $('#board').append(h('div.mode-banner', {}, mode.label,
+    mode.onDone ? h('button.small.primary', { onclick: () => { const m = mode; cancelMode(); m.onDone(); } }, 'Done') : null,
+    h('button.small', { onclick: cancelMode }, 'Cancel (Esc)')));
 }
 
 function setMode(m) {
@@ -135,27 +141,31 @@ function onCellClick(cell) {
   if (mode?.type === 'move') {
     send({ type: 'move', entityId: me.id, x: cell.x, y: cell.y }).then((ok) => { if (ok) cancelMode(); });
   }
+  if (mode?.type === 'cell') {
+    const m = mode;
+    cancelMode();
+    m.onCell(cell);
+  }
 }
 
 function onTokenClick(t, e, stack) {
   if (mode?.type === 'target') {
     const target = stack.find((s) => mode.filter(s) && s.status !== 'dead') ?? t;
-    const me = myEntity();
+    const origin = mode.origin ?? myEntity();
     if (!mode.filter(target) || target.status === 'dead') return toast('Not a valid target', 'error');
-    if (dist(me.position, me.size, target.position, target.size) > mode.range) return toast(`${target.name} is out of range`, 'error');
+    if (distance(state.entities.find((x) => x.id === origin.id) ?? origin, target) > mode.range) return toast(`${target.name} is out of range`, 'error');
     const m = mode;
     cancelMode();
     m.onTarget(target);
     return;
   }
-  if (mode?.type === 'move') return onCellClick(board.cellAt(e.clientX, e.clientY));
+  if (mode?.type === 'move' || mode?.type === 'cell') return onCellClick(board.cellAt(e.clientX, e.clientY));
   if (stack.length > 1) {
     popupMenu(e.clientX, e.clientY, 'Here', stack.map((s) => ({ label: s.name, sub: s.status !== 'active' ? s.status.toUpperCase() : s.kind === 'pc' ? 'hero' : '' })));
   }
 }
 
-const isFoe = (me) => (e) => e.id !== me.id;
-const isFriend = (e) => e.kind === 'pc' || (e.kind === 'npc' && !e.hostile);
+const isFoe = (me) => (e) => e.id !== me.id && e.kind !== 'object';
 
 function onSegment(seg, t, e) {
   const a = availability();
@@ -191,22 +201,15 @@ function onSegment(seg, t, e) {
     const items = [];
     if (a.me.abilities.length) items.push({ heading: 'Abilities' });
     for (const ab of a.me.abilities) {
-      const free = ab.free || ab.grantsActions;
-      const used = ab.grantsActions && a.t.abilitiesUsed?.includes(ab.id);
-      const blocked = a.me.status !== 'active' || a.dmPhase || (!free && !a.actionLeft) || used;
+      const free = ab.actionCost === 0;
+      const used = (a.t.abilitiesUsed ?? []).filter((x) => x === ab.id).length;
+      const capped = a.c.active && ab.usesPerPhase && used >= ab.usesPerPhase;
+      const blocked = a.me.status !== 'active' || a.dmPhase || (!free && !a.actionLeft) || capped;
       items.push({
         label: ab.name,
-        sub: [ab.description, ab.heal ? `heals ${ab.heal}, range ${ab.range || 1}` : ab.roll ? `roll ${ab.roll}` : '', free && a.c.active ? 'free' : ''].filter(Boolean).join(' · '),
+        sub: [abilitySummary(ab), capped ? 'used this phase' : '', ab.description].filter(Boolean).join(' — '),
         disabled: blocked,
-        onClick: () => {
-          if (ab.heal) {
-            return setMode({
-              type: 'target', label: `${ab.name}: choose an ally`, range: Number(ab.range) || 1, filter: (x) => isFriend(x),
-              onTarget: (target) => send({ type: 'ability', entityId: a.me.id, abilityId: ab.id, targetId: target.id }),
-            });
-          }
-          send({ type: 'ability', entityId: a.me.id, abilityId: ab.id });
-        },
+        onClick: () => startAbility({ caster: a.me, ab, entities: () => state.entities, setMode, send, toast: null }),
       });
     }
     items.push({ heading: 'Actions' });
@@ -338,7 +341,7 @@ function gameScreen() {
   if (me && state.combat.active) {
     const a = availability();
     info.textContent = me.status !== 'active' ? me.status.toUpperCase()
-      : `Actions: ${a.actionsLeft}/${(me.actionsPerPhase ?? 1) + (a.t.bonus ?? 0)} · Move: ${a.moveLeft}/${me.movement}`;
+      : `Actions: ${a.actionsLeft}/${a.allowance.actions} · Move: ${a.moveLeft}/${a.allowance.movement}`;
   } else info.textContent = me?.status && me.status !== 'active' ? me.status.toUpperCase() : '';
   // Cancel a pending mode if it no longer makes sense (e.g. phase changed).
   if (mode && (!me || me.status !== 'active' || (state.combat.active && state.combat.phase !== 'player'))) mode = null;
