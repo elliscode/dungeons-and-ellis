@@ -854,5 +854,519 @@
       }
     ],
     "description": "An ancient tomb guardian wrapped in stained linen, wielding curses and grasping bandages to halt intruders."
+  },
+  {
+    "id": "banshee",
+    "name": "Banshee",
+    "image": "/static/tokens/monster_021.webp",
+    "maxHp": 38,
+    "defense": 14,
+    "movement": 7,
+    "attacks": [
+      {
+        "id": "spectral-touch",
+        "name": "Spectral Touch",
+        "attack": "1d20+6",
+        "damage": "1d8+4",
+        "range": 1,
+        "damageType": "necrotic"
+      }
+    ],
+    "abilities": [
+      {
+        "id": "wailing-scream",
+        "name": "Wailing Scream",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [
+          {
+            "type": "area_attack",
+            "target": "enemies_in_area",
+            "center": "self",
+            "radius": 2,
+            "attack": "1d20+5",
+            "damage": "2d6+3",
+            "damageType": "psychic"
+          }
+        ],
+        "description": "The banshee releases a piercing supernatural scream, attacking every enemy within two squares."
+      }
+    ],
+    "description": "A tormented spirit whose ghostly form drifts through ancient ruins. Its unearthly wail can devastate groups of adventurers."
+  },
+  {
+    "id": "restless-spirit",
+    "name": "Restless Spirit",
+    "image": "/static/tokens/monster_022.webp",
+    "maxHp": 18,
+    "defense": 13,
+    "movement": 7,
+    "attacks": [
+      {
+        "id": "ghostly-grasp",
+        "name": "Ghostly Grasp",
+        "attack": "1d20+4",
+        "damage": "1d6+2",
+        "range": 1,
+        "damageType": "necrotic"
+      }
+    ],
+    "abilities": [
+      {
+        "id": "haunting-chill",
+        "name": "Haunting Chill",
+        "actionCost": 1,
+        "range": 4,
+        "effects": [
+          {
+            "type": "attack",
+            "target": "enemy",
+            "range": 4,
+            "attack": "1d20+4",
+            "damage": "1d8+2",
+            "damageType": "cold"
+          },
+          {
+            "type": "apply_status",
+            "target": "enemy",
+            "status": "frightened",
+            "duration": "next_dm_phase",
+            "when": "attack_hits"
+          }
+        ],
+        "description": "The spirit sends a wave of supernatural cold toward a distant foe, frightening it on a hit."
+      }
+    ],
+    "description": "A pale, translucent apparition that haunts forgotten chambers and drains warmth from the living."
+  },
+  {
+    "id": "vampire-noble",
+    "name": "Vampire Noble",
+    "image": "/static/tokens/monster_023.webp",
+    "maxHp": 55,
+    "defense": 17,
+    "movement": 7,
+    "attacks": [
+      {
+        "id": "blood-draining-bite",
+        "name": "Blood-Draining Bite",
+        "attack": "1d20+7",
+        "damage": "1d10+4",
+        "range": 1,
+        "damageType": "necrotic"
+      },
+      {
+        "id": "crimson-rapier",
+        "name": "Crimson Rapier",
+        "attack": "1d20+7",
+        "damage": "1d8+4",
+        "range": 1,
+        "damageType": "piercing"
+      }
+    ],
+    "abilities": [
+      {
+        "id": "mesmerizing-gaze",
+        "name": "Mesmerizing Gaze",
+        "actionCost": 1,
+        "range": 4,
+        "effects": [
+          {
+            "type": "roll_to_apply",
+            "target": "enemy",
+            "roll": "1d20+5",
+            "onSuccess": [
+              {
+                "type": "apply_status",
+                "target": "checked_enemy",
+                "status": "shaken",
+                "duration": "next_dm_phase"
+              }
+            ]
+          }
+        ],
+        "description": "The vampire fixes its gaze on a nearby foe, forcing it to resist a supernatural compulsion or become shaken."
+      }
+    ],
+    "description": "An aristocratic vampire dressed in fine crimson and black clothing. The noble combines elegant swordplay with dark supernatural influence."
+  },
+  {
+    "id": "dryad-guardian",
+    "name": "Dryad Guardian",
+    "image": "/static/tokens/monster_024.webp",
+    "maxHp": 28,
+    "defense": 14,
+    "movement": 6,
+    "attacks": [
+      {
+        "id": "thorned-branch",
+        "name": "Thorned Branch",
+        "attack": "1d20+5",
+        "damage": "1d8+3",
+        "range": 2,
+        "damageType": "nature"
+      }
+    ],
+    "abilities": [
+      {
+        "id": "entangling-vines",
+        "name": "Entangling Vines",
+        "actionCost": 1,
+        "range": 4,
+        "effects": [
+          {
+            "type": "attack",
+            "target": "enemy",
+            "range": 4,
+            "attack": "1d20+5",
+            "damage": "1d6+2",
+            "damageType": "nature"
+          },
+          {
+            "type": "apply_status",
+            "target": "enemy",
+            "status": "snared",
+            "duration": "next_dm_phase",
+            "when": "attack_hits"
+          }
+        ],
+        "description": "The dryad commands vines to lash a target, dealing nature damage and snaring it on a hit."
+      }
+    ],
+    "description": "A forest spirit with leafy hair and bark-like armor that protects sacred groves from intruders."
+  },
+  {
+    "id": "satyr-trickster",
+    "name": "Satyr Trickster",
+    "image": "/static/tokens/monster_025.webp",
+    "maxHp": 24,
+    "defense": 14,
+    "movement": 8,
+    "attacks": [
+      {
+        "id": "horn-gore",
+        "name": "Horn Gore",
+        "attack": "1d20+5",
+        "damage": "1d8+3",
+        "range": 1,
+        "damageType": "piercing"
+      },
+      {
+        "id": "enchanted-flute",
+        "name": "Enchanted Flute",
+        "attack": "1d20+4",
+        "damage": "1d6+2",
+        "range": 5,
+        "damageType": "psychic"
+      }
+    ],
+    "abilities": [
+      {
+        "id": "bewildering-melody",
+        "name": "Bewildering Melody",
+        "actionCost": 1,
+        "range": 4,
+        "effects": [
+          {
+            "type": "roll_to_apply",
+            "target": "enemy",
+            "roll": "1d20+5",
+            "onSuccess": [
+              {
+                "type": "apply_status",
+                "target": "checked_enemy",
+                "status": "shaken",
+                "duration": "next_dm_phase"
+              }
+            ]
+          }
+        ],
+        "description": "The satyr plays an unsettling melody that leaves a nearby foe shaken if it fails to resist."
+      }
+    ],
+    "description": "A mischievous horned wanderer who combines swift charges, enchanted music, and deceptive tricks."
+  },
+  {
+    "id": "lizardfolk-veteran",
+    "name": "Lizardfolk Veteran",
+    "image": "/static/tokens/monster_026.webp",
+    "maxHp": 30,
+    "defense": 15,
+    "movement": 6,
+    "attacks": [
+      {
+        "id": "barbed-spear",
+        "name": "Barbed Spear",
+        "attack": "1d20+6",
+        "damage": "1d8+4",
+        "range": 2,
+        "damageType": "piercing"
+      },
+      {
+        "id": "tail-sweep",
+        "name": "Tail Sweep",
+        "attack": "1d20+5",
+        "damage": "1d6+3",
+        "range": 1,
+        "damageType": "bludgeoning"
+      }
+    ],
+    "abilities": [
+      {
+        "id": "shielded-advance",
+        "name": "Shielded Advance",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [
+          {
+            "type": "defense_bonus",
+            "target": "self",
+            "amount": 3,
+            "duration": "next_dm_phase"
+          },
+          {
+            "type": "modify_movement",
+            "target": "self",
+            "amount": 2,
+            "duration": "current_turn"
+          }
+        ],
+        "description": "The veteran advances behind its shield, gaining +3 Defense and two additional movement squares for this turn."
+      }
+    ],
+    "description": "A battle-hardened reptilian warrior with heavy scales, a sturdy shield, and a barbed spear."
+  },
+  {
+    "id": "minotaur-champion",
+    "name": "Minotaur Champion",
+    "image": "/static/tokens/monster_027.webp",
+    "maxHp": 58,
+    "defense": 15,
+    "movement": 6,
+    "size": {
+      "w": 2,
+      "h": 2
+    },
+    "attacks": [
+      {
+        "id": "war-axe",
+        "name": "War Axe",
+        "attack": "1d20+7",
+        "damage": "2d8+4",
+        "range": 2,
+        "damageType": "slashing"
+      }
+    ],
+    "abilities": [
+      {
+        "id": "bull-rush",
+        "name": "Bull Rush",
+        "actionCost": 1,
+        "range": 3,
+        "effects": [
+          {
+            "type": "attack",
+            "target": "enemy",
+            "range": 3,
+            "attack": "1d20+6",
+            "damage": "2d6+3",
+            "damageType": "bludgeoning"
+          },
+          {
+            "type": "modify_movement",
+            "target": "hit_enemies",
+            "amount": -2,
+            "duration": "next_dm_phase",
+            "when": "attack_hits"
+          }
+        ],
+        "description": "The minotaur charges a foe with its massive horns, dealing bludgeoning damage and reducing the target's movement on a hit."
+      }
+    ],
+    "description": "A heavily armored bull-headed warrior who dominates the battlefield with powerful charges and sweeping axe strikes."
+  },
+  {
+    "id": "medusa",
+    "name": "Medusa",
+    "image": "/static/tokens/monster_028.webp",
+    "maxHp": 48,
+    "defense": 15,
+    "movement": 6,
+    "attacks": [
+      {
+        "id": "serpent-strike",
+        "name": "Serpent Strike",
+        "attack": "1d20+6",
+        "damage": "1d8+3",
+        "range": 2,
+        "damageType": "piercing"
+      }
+    ],
+    "abilities": [
+      {
+        "id": "petrifying-gaze",
+        "name": "Petrifying Gaze",
+        "actionCost": 1,
+        "range": 4,
+        "effects": [
+          {
+            "type": "roll_to_apply",
+            "target": "enemy",
+            "roll": "1d20+6",
+            "onSuccess": [
+              {
+                "type": "apply_status",
+                "target": "checked_enemy",
+                "status": "snared",
+                "duration": "next_dm_phase"
+              }
+            ]
+          }
+        ],
+        "description": "The medusa fixes a foe with its petrifying gaze, freezing it in place if it fails to resist."
+      }
+    ],
+    "description": "A dangerous serpent-haired enchantress whose supernatural gaze can immobilize those who meet her eyes."
+  },
+  {
+    "id": "beholder",
+    "name": "Beholder",
+    "image": "/static/tokens/monster_029.webp",
+    "maxHp": 100,
+    "defense": 17,
+    "movement": 5,
+    "actions": 2,
+    "size": {
+      "w": 2,
+      "h": 2
+    },
+    "attacks": [
+      {
+        "id": "central-bite",
+        "name": "Central Maw",
+        "attack": "1d20+7",
+        "damage": "2d8+4",
+        "range": 1,
+        "damageType": "piercing"
+      }
+    ],
+    "abilities": [
+      {
+        "id": "eye-ray",
+        "name": "Eye Ray",
+        "actionCost": 1,
+        "range": 8,
+        "effects": [
+          {
+            "type": "attack",
+            "target": "enemy",
+            "range": 8,
+            "attack": "1d20+7",
+            "damage": "2d8+3",
+            "damageType": "arcane"
+          }
+        ],
+        "description": "The beholder fires a concentrated beam of magical energy from one of its eyestalks."
+      },
+      {
+        "id": "paralyzing-gaze",
+        "name": "Paralyzing Gaze",
+        "actionCost": 1,
+        "range": 5,
+        "effects": [
+          {
+            "type": "roll_to_apply",
+            "target": "enemy",
+            "roll": "1d20+7",
+            "onSuccess": [
+              {
+                "type": "apply_status",
+                "target": "checked_enemy",
+                "status": "snared",
+                "duration": "next_dm_phase"
+              }
+            ]
+          }
+        ],
+        "description": "One of the beholder's eyes fixes a target with a paralyzing beam, snaring it if it fails to resist."
+      }
+    ],
+    "description": "A floating aberration surrounded by eyestalks, each capable of unleashing strange and dangerous magic."
+  },
+  {
+    "id": "black-dragon",
+    "name": "Black Dragon",
+    "image": "/static/tokens/monster_030.webp",
+    "maxHp": 135,
+    "defense": 18,
+    "movement": 8,
+    "actions": 2,
+    "size": {
+      "w": 3,
+      "h": 3
+    },
+    "attacks": [
+      {
+        "id": "dragon-bite",
+        "name": "Dragon Bite",
+        "attack": "1d20+10",
+        "damage": "2d10+6",
+        "range": 2,
+        "damageType": "piercing"
+      },
+      {
+        "id": "dragon-claws",
+        "name": "Dragon Claws",
+        "attack": "1d20+9",
+        "damage": "2d8+5",
+        "range": 2,
+        "damageType": "slashing"
+      }
+    ],
+    "abilities": [
+      {
+        "id": "acid-breath",
+        "name": "Acid Breath",
+        "actionCost": 1,
+        "range": 8,
+        "effects": [
+          {
+            "type": "area_attack",
+            "target": "enemies_in_area",
+            "center": "target",
+            "radius": 2,
+            "range": 8,
+            "attack": "1d20+8",
+            "damage": "6d6",
+            "damageType": "acid"
+          }
+        ],
+        "description": "The dragon unleashes a torrent of corrosive acid over a chosen area, attacking every enemy within two squares of the impact point."
+      },
+      {
+        "id": "dreadful-presence",
+        "name": "Dreadful Presence",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [
+          {
+            "type": "roll_to_apply",
+            "target": "enemies_in_area",
+            "radius": 3,
+            "roll": "1d20+8",
+            "onSuccess": [
+              {
+                "type": "apply_status",
+                "target": "checked_enemy",
+                "status": "frightened",
+                "duration": "next_dm_phase"
+              }
+            ]
+          }
+        ],
+        "description": "The dragon radiates terrifying menace, frightening nearby foes that fail to resist its presence."
+      }
+    ],
+    "description": "A colossal black dragon with obsidian scales and glowing red eyes. It corrodes its enemies with acid breath and tears through armor with its claws."
   }
 ]

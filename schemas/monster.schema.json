@@ -1673,7 +1673,7 @@
     },
     "effect_roll_to_apply": {
       "type": "object",
-      "description": "Rolls `roll` against each subject's Defense (nat 20 always succeeds, nat 1 always fails), then runs onSuccess/onFailure on that subject. Use for debuffs that should be resistible.",
+      "description": "The CASTER rolls `roll` against each subject's Defense, like an attack (nat 20 always succeeds, nat 1 always fails). onSuccess runs when the caster's roll meets or beats the Defense, which is the same as the target failing to resist; onFailure runs when the target resists. This is NOT a D&D saving throw: there is no DC, no save roll by the target, and no `dc`, `onFail` or `onSave` field. Put the debuff in onSuccess. Use for debuffs that should be resistible.",
       "additionalProperties": false,
       "required": [
         "type",
@@ -1708,10 +1708,12 @@
           "description": "Max distance in grid squares to the picked target. Usually equal to the ability range."
         },
         "onSuccess": {
-          "$ref": "#/$defs/nestedEffects"
+          "$ref": "#/$defs/nestedEffects",
+          "description": "Runs on each subject the caster's roll beat (the target failed to resist). Put the debuff here."
         },
         "onFailure": {
-          "$ref": "#/$defs/nestedEffects"
+          "$ref": "#/$defs/nestedEffects",
+          "description": "Runs on each subject that resisted. Usually left out."
         },
         "when": {
           "$ref": "#/$defs/when"
@@ -1744,10 +1746,12 @@
           "$ref": "#/$defs/attackRoll"
         },
         "onSuccess": {
-          "$ref": "#/$defs/nestedEffects"
+          "$ref": "#/$defs/nestedEffects",
+          "description": "Runs if the DM rules the check a success for the caster."
         },
         "onFailure": {
-          "$ref": "#/$defs/nestedEffects"
+          "$ref": "#/$defs/nestedEffects",
+          "description": "Runs if the DM rules the check a failure for the caster."
         },
         "when": {
           "$ref": "#/$defs/when"

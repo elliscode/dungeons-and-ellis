@@ -1,0 +1,93 @@
+[
+  {
+    "id": "keening-wraith",
+    "name": "Keening Wraith",
+    "image": "/static/tokens/monster_064.webp",
+    "maxHp": 22,
+    "defense": 14,
+    "movement": 7,
+    "attacks": [
+      { "id": "grave-touch", "name": "Grave Touch", "attack": "1d20+5", "damage": "1d6+3", "range": 1, "damageType": "cold" }
+    ],
+    "abilities": [
+      {
+        "id": "soul-siphon",
+        "name": "Soul Siphon",
+        "actionCost": 1,
+        "range": 5,
+        "effects": [
+          {
+            "type": "attack",
+            "target": "enemy",
+            "attack": "1d20+5",
+            "damage": "1d8+2",
+            "range": 5,
+            "damageType": "necrotic"
+          },
+          { "type": "heal", "target": "allies_in_area", "radius": 3, "heal": "2d6+2", "when": "attack_hits" }
+        ],
+        "description": "Rips a wisp of life from a hero within 5. On a hit, the wraith and every ally within 3 of it heal 2d6+2."
+      }
+    ],
+    "inventory": ["ectoplasm"],
+    "description": "Support healer. Keep it within 3 of the monster it's sustaining; its heal only lands if Soul Siphon hits."
+  },
+  {
+    "id": "crimson-plague-doctor",
+    "name": "Crimson Plague Doctor",
+    "image": "/static/tokens/monster_059.webp",
+    "maxHp": 26,
+    "defense": 13,
+    "movement": 6,
+    "attacks": [
+      { "id": "bone-saw", "name": "Bone Saw", "attack": "1d20+4", "damage": "1d6+2", "range": 1 },
+      { "id": "leech-dart", "name": "Leech Dart", "attack": "1d20+4", "damage": "1d4+2", "range": 6, "damageType": "poison" }
+    ],
+    "abilities": [
+      {
+        "id": "blood-transfusion",
+        "name": "Blood Transfusion",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [{ "type": "heal", "target": "ally_or_self", "heal": "3d8+4", "range": 6 }],
+        "description": "Pumps stolen blood into itself or an ally within 6, healing 3d8+4."
+      }
+    ],
+    "inventory": ["blood-vials", "surgical-kit"],
+    "description": "Support healer with the biggest single-target heal. Hangs back at range 6 from the monster it's sustaining."
+  },
+  {
+    "id": "skullbone-shaman",
+    "name": "Skullbone Shaman",
+    "image": "/static/tokens/monster_058.webp",
+    "maxHp": 24,
+    "defense": 13,
+    "movement": 5,
+    "attacks": [
+      { "id": "skull-staff", "name": "Skull Staff", "attack": "1d20+4", "damage": "1d6+2", "range": 1 },
+      { "id": "hex-bolt", "name": "Hex Bolt", "attack": "1d20+4", "damage": "1d6+2", "range": 6, "damageType": "necrotic" }
+    ],
+    "abilities": [
+      {
+        "id": "bone-totem",
+        "name": "Bone Totem",
+        "actionCost": 1,
+        "range": 4,
+        "effects": [
+          { "type": "healing_aura", "target": "cell", "name": "Bone Totem", "heal": "2d6+2", "radius": 2, "pulses": 2, "range": 4 }
+        ],
+        "description": "Plants a bone totem within 4. At the start of each of the next 2 player phases, it heals the shaman's allies within 2 for 2d6+2."
+      },
+      {
+        "id": "ancestral-ward",
+        "name": "Ancestral Ward",
+        "actionCost": 1,
+        "range": 5,
+        "effects": [{ "type": "grant_protection", "target": "ally", "fraction": 0.5, "range": 5, "label": "Ancestral Ward" }],
+        "description": "Calls ancestor spirits around an ally within 5. The ally's next hit taken is halved."
+      }
+    ],
+    "inventory": ["shrunken-skull", "fetish-bones"],
+    "description": "Support healer. Drop a Bone Totem next to the monster it's sustaining (a 2×2 or 3×3 monster only needs one square inside the radius), then alternate totems and wards."
+  }
+]
