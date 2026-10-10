@@ -67,7 +67,7 @@ Keep listed dice at the levels in this table. The multipliers are applied on top
 - a status is added or removed;
 - the schema allows something the engine would reject.
 
-When you extend the engine, update the schema and add a sample to `SAMPLES` in the test. Also update the field descriptions and the balance table above, since that's what the LLM reads.
+When you extend the engine, update the schema and add a sample to `SAMPLES` in `test/schema-samples.js`. Then run `npm run build:monster-schema`, because the monster schema ([MONSTER_GENERATION.md](MONSTER_GENERATION.md)) copies its shared definitions from this one. Also update the field descriptions and the balance table above, since that's what the LLM reads.
 
 The schema is intentionally narrower than the engine in a few places, to keep generated output clean:
 

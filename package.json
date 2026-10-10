@@ -12,7 +12,9 @@
     "dev": "node --watch --env-file-if-exists=.env server/index.js",
     "test": "node --test \"test/**/*.test.js\"",
     "placeholders": "node scripts/gen-placeholders.js",
-    "validate:characters": "node scripts/validate-characters.js"
+    "validate:characters": "node scripts/validate-characters.js",
+    "validate:monsters": "node scripts/validate-monsters.js",
+    "build:monster-schema": "node scripts/build-monster-schema.js"
   },
   "dependencies": {
     "express": "^5.2.1",

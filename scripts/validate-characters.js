@@ -15,9 +15,9 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ROSTER = join(ROOT, 'data', 'characters');
 export const SCHEMA_PATH = join(ROOT, 'schemas', 'character.schema.json');
 
-export function compileSchema() {
+export function compileSchema(path = SCHEMA_PATH) {
   const ajv = new Ajv2020({ allErrors: true, discriminator: true, strict: true, strictTypes: false, strictRequired: false });
-  return ajv.compile(JSON.parse(readFileSync(SCHEMA_PATH, 'utf8')));
+  return ajv.compile(JSON.parse(readFileSync(path, 'utf8')));
 }
 
 // Readable "path: message" lines for one character.
@@ -30,7 +30,7 @@ export function schemaErrors(validate, def) {
   });
 }
 
-// Checks JSON Schema can't express: ids unique within a character.
+// Checks JSON Schema can't express: ids unique within a character (or monster).
 export function extraErrors(def) {
   const errors = [];
   for (const k of ['attacks', 'abilities']) {

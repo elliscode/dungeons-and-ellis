@@ -41,6 +41,8 @@ npm test                  # unit + socket integration tests
 
 ## Content
 
+To generate new heroes or monsters with an LLM, use the JSON Schemas in `schemas/`. See [docs/CHARACTER_GENERATION.md](docs/CHARACTER_GENERATION.md) and [docs/MONSTER_GENERATION.md](docs/MONSTER_GENERATION.md). Check the results with `npm run validate:characters` or `npm run validate:monsters`.
+
 Manage content from the DM home page; no restart is needed:
 
 - **🖼 Assets** (`/assets`): upload (drag and drop, several at once), replace, or delete art in `static/backgrounds`, `static/tokens`, and `static/images`. Files are checked to be real PNG, JPG, GIF, WebP, or SVG images (max 15 MB). Names get cleaned up, so `Swamp Map.png` becomes `swamp-map.png`. Each card shows how many scenes or definitions use that file.
