@@ -646,7 +646,7 @@
   },
   {
     "id": "gazerender",
-    "name": "The Thousandfold Gaze",
+    "name": "Zorvath Eleven-Eyes",
     "role": "dps",
     "image": "/static/tokens/token_122.webp",
     "maxHp": 35,
@@ -787,6 +787,1324 @@
     "inventory": [
       "thornsteel-rapier",
       "venom-vial",
+      "healing-potion"
+    ]
+  },
+  {
+    "id": "solflare",
+    "name": "Nayara Sunflare",
+    "role": "dps",
+    "image": "/static/tokens/token_215.webp",
+    "maxHp": 32,
+    "movement": 6,
+    "defense": 14,
+    "attacks": [
+      {
+        "id": "sunflare-radiant-bolt",
+        "name": "Radiant Bolt",
+        "attack": "1d20+5",
+        "damage": "1d8+4",
+        "range": 7
+      },
+      {
+        "id": "sunflare-solar-blade",
+        "name": "Solar Blade",
+        "attack": "1d20+5",
+        "damage": "1d10+3",
+        "range": 1
+      }
+    ],
+    "abilities": [
+      {
+        "id": "sunflare-corona-burst",
+        "name": "Corona Burst",
+        "actionCost": 1,
+        "range": 7,
+        "effects": [
+          {
+            "type": "area_attack",
+            "target": "enemies_in_area",
+            "center": "target",
+            "radius": 2,
+            "range": 7,
+            "attack": "1d20+5",
+            "damage": "1d8+3",
+            "damageType": "radiant"
+          }
+        ],
+        "description": "Detonate a sphere of sunlight around a chosen enemy, attacking every enemy within 2 squares of the target."
+      },
+      {
+        "id": "sunflare-burning-mark",
+        "name": "Mark of the Sun",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [
+          {
+            "type": "mark_target",
+            "target": "enemy",
+            "bonus": "1d6",
+            "range": 6,
+            "duration": "until_used"
+          }
+        ],
+        "description": "Mark an enemy with radiant energy. Your next hit against it deals an additional 1d6 damage."
+      }
+    ],
+    "inventory": [
+      "sunsteel-sabre",
+      "sunstone-focus",
+      "healing-potion"
+    ]
+  },
+  {
+    "id": "veilmender",
+    "name": "Sister Maelis Ashveil",
+    "role": "dps",
+    "image": "/static/tokens/token_200.webp",
+    "maxHp": 34,
+    "movement": 6,
+    "defense": 15,
+    "attacks": [
+      {
+        "id": "ashveil-shadow-bolt",
+        "name": "Shadow Bolt",
+        "attack": "1d20+5",
+        "damage": "1d8+4",
+        "range": 7
+      },
+      {
+        "id": "ashveil-ritual-dagger",
+        "name": "Ritual Dagger",
+        "attack": "1d20+4",
+        "damage": "1d8+3",
+        "range": 1
+      }
+    ],
+    "abilities": [
+      {
+        "id": "ashveil-soul-rend",
+        "name": "Soul Rend",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [
+          {
+            "type": "attack",
+            "target": "enemy",
+            "attack": "1d20+5",
+            "damage": "2d6+3",
+            "range": 6,
+            "damageType": "necrotic"
+          },
+          {
+            "type": "modify_damage_received",
+            "target": "hit_enemies",
+            "amount": 3,
+            "duration": "next_dm_phase",
+            "when": "attack_hits"
+          }
+        ],
+        "description": "Rip at an enemy's life force for necrotic damage. On a hit, the target takes 3 additional damage from incoming hits through the next DM phase."
+      },
+      {
+        "id": "ashveil-grave-chains",
+        "name": "Grave Chains",
+        "actionCost": 1,
+        "range": 5,
+        "effects": [
+          {
+            "type": "roll_to_apply",
+            "target": "enemy",
+            "roll": "1d20+5",
+            "range": 5,
+            "onSuccess": [
+              {
+                "type": "apply_status",
+                "target": "checked_enemy",
+                "status": "snared",
+                "duration": "next_dm_phase"
+              }
+            ]
+          }
+        ],
+        "description": "Call spectral chains around an enemy within 5 squares. On a successful roll against its Defense, the target is snared through the next DM phase."
+      }
+    ],
+    "inventory": [
+      "black-iron-dagger",
+      "sealed-ritual-scroll",
+      "healing-potion"
+    ]
+  },
+  {
+    "id": "barkstriker",
+    "name": "Thornax Bluebark",
+    "role": "dps",
+    "image": "/static/tokens/token_134.webp",
+    "maxHp": 36,
+    "movement": 6,
+    "defense": 15,
+    "attacks": [
+      {
+        "id": "bluebark-branch-cleaver",
+        "name": "Branch Cleaver",
+        "attack": "1d20+5",
+        "damage": "1d10+4",
+        "range": 1
+      },
+      {
+        "id": "bluebark-seed-shot",
+        "name": "Hardwood Seed Shot",
+        "attack": "1d20+5",
+        "damage": "1d8+3",
+        "range": 6
+      }
+    ],
+    "abilities": [
+      {
+        "id": "bluebark-rootquake",
+        "name": "Rootquake",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [
+          {
+            "type": "area_attack",
+            "target": "enemies_in_area",
+            "center": "self",
+            "radius": 2,
+            "attack": "1d20+4",
+            "damage": "1d8+3",
+            "damageType": "nature"
+          }
+        ],
+        "description": "Stomp the ground and send roots surging outward, attacking every enemy within 2 squares."
+      },
+      {
+        "id": "bluebark-piercing-bark",
+        "name": "Piercing Bark",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [
+          {
+            "type": "attack",
+            "target": "enemy",
+            "attack": "1d20+5",
+            "damage": "1d8+3",
+            "range": 6,
+            "defenseReduction": 3,
+            "damageType": "piercing"
+          }
+        ],
+        "description": "Launch a sharpened sliver of enchanted bark at an enemy within 6 squares, treating its Defense as 3 lower for this attack."
+      }
+    ],
+    "inventory": [
+      "bluewood-totem",
+      "barkscale-armor",
+      "healing-potion"
+    ]
+  },
+  {
+    "id": "moonbolt",
+    "name": "Pip Quickwhisk",
+    "role": "dps",
+    "image": "/static/tokens/token_126.webp",
+    "maxHp": 30,
+    "movement": 7,
+    "defense": 14,
+    "attacks": [
+      {
+        "id": "quickwhisk-hand-cannon",
+        "name": "Pocket Hand Cannon",
+        "attack": "1d20+5",
+        "damage": "1d10+3",
+        "range": 7
+      },
+      {
+        "id": "quickwhisk-dagger",
+        "name": "Quickwhisk Dagger",
+        "attack": "1d20+6",
+        "damage": "1d6+4",
+        "range": 1
+      }
+    ],
+    "abilities": [
+      {
+        "id": "quickwhisk-trick-shot",
+        "name": "Ricochet Trick Shot",
+        "actionCost": 1,
+        "range": 7,
+        "effects": [
+          {
+            "type": "chain_attack",
+            "target": "enemy",
+            "jumps": 2,
+            "jumpRange": 3,
+            "range": 7,
+            "attack": "1d20+5",
+            "damage": "1d6+2"
+          }
+        ],
+        "description": "Fire a clever ricochet shot that can leap from the first target to up to two additional enemies within 3 squares of the previous target."
+      },
+      {
+        "id": "quickwhisk-evasive-dash",
+        "name": "Evasive Dash",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [
+          {
+            "type": "modify_movement",
+            "target": "self",
+            "amount": 3,
+            "duration": "current_turn"
+          },
+          {
+            "type": "defense_bonus",
+            "target": "self",
+            "amount": 2,
+            "duration": "current_turn"
+          }
+        ],
+        "description": "Dash an additional 3 squares and gain +2 Defense for the remainder of the current turn."
+      }
+    ],
+    "inventory": [
+      "pocket-ammunition",
+      "lockpick-set",
+      "healing-potion"
+    ]
+  },
+  {
+    "id": "frostbrand",
+    "name": "Vaelis Frostbrand",
+    "role": "dps",
+    "image": "/static/tokens/token_260.webp",
+    "maxHp": 33,
+    "movement": 6,
+    "defense": 14,
+    "attacks": [
+      {
+        "id": "frostbrand-iceblade",
+        "name": "Glacial Blade",
+        "attack": "1d20+6",
+        "damage": "1d8+4",
+        "range": 1
+      },
+      {
+        "id": "frostbrand-ice-shard",
+        "name": "Ice Shard",
+        "attack": "1d20+5",
+        "damage": "1d8+3",
+        "range": 7
+      }
+    ],
+    "abilities": [
+      {
+        "id": "frostbrand-piercing-frost",
+        "name": "Piercing Frost",
+        "actionCost": 1,
+        "range": 7,
+        "effects": [
+          {
+            "type": "attack",
+            "target": "enemy",
+            "attack": "1d20+5",
+            "damage": "2d6+3",
+            "range": 7,
+            "damageType": "cold"
+          }
+        ],
+        "description": "Hurl a concentrated spear of ice at an enemy within 7 squares for heavy cold damage."
+      },
+      {
+        "id": "frostbrand-frozen-mark",
+        "name": "Frozen Mark",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [
+          {
+            "type": "mark_target",
+            "target": "enemy",
+            "bonus": "1d6",
+            "range": 6,
+            "duration": "until_used"
+          }
+        ],
+        "description": "Mark an enemy with freezing runes. Your next hit against it deals an additional 1d6 damage."
+      }
+    ],
+    "inventory": [
+      "froststeel-blade",
+      "blue-crystal-focus",
+      "healing-potion"
+    ]
+  },
+  {
+    "id": "runeweaver",
+    "name": "Ormund Starcoil",
+    "role": "dps",
+    "image": "/static/tokens/token_238.webp",
+    "maxHp": 34,
+    "movement": 6,
+    "defense": 14,
+    "attacks": [
+      {
+        "id": "starcoil-arcane-orb",
+        "name": "Arcane Orb",
+        "attack": "1d20+5",
+        "damage": "1d8+4",
+        "range": 8
+      },
+      {
+        "id": "starcoil-rune-staff",
+        "name": "Rune Staff",
+        "attack": "1d20+4",
+        "damage": "1d8+3",
+        "range": 1
+      }
+    ],
+    "abilities": [
+      {
+        "id": "starcoil-prismatic-blast",
+        "name": "Prismatic Blast",
+        "actionCost": 1,
+        "range": 8,
+        "effects": [
+          {
+            "type": "area_attack",
+            "target": "enemies_in_area",
+            "center": "target",
+            "radius": 1,
+            "range": 8,
+            "attack": "1d20+5",
+            "damage": "1d8+3",
+            "damageType": "arcane"
+          }
+        ],
+        "description": "Detonate a prismatic burst around a chosen enemy, attacking all enemies within 1 square of the target."
+      },
+      {
+        "id": "starcoil-overcharge",
+        "name": "Overcharged Sigil",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [
+          {
+            "type": "modify_damage_dealt",
+            "target": "self",
+            "multiplier": 1.5,
+            "duration": "until_used"
+          }
+        ],
+        "description": "Empower your next hit to deal 50% more damage."
+      }
+    ],
+    "inventory": [
+      "rune-etched-staff",
+      "prismatic-crystal",
+      "healing-potion"
+    ]
+  },
+  {
+    "id": "duskcaller",
+    "name": "Nymera Duskveil",
+    "role": "dps",
+    "image": "/static/tokens/token_239.webp",
+    "maxHp": 32,
+    "movement": 7,
+    "defense": 14,
+    "attacks": [
+      {
+        "id": "duskveil-void-bolt",
+        "name": "Void Bolt",
+        "attack": "1d20+5",
+        "damage": "1d8+4",
+        "range": 7
+      },
+      {
+        "id": "duskveil-shadow-dagger",
+        "name": "Shadow Dagger",
+        "attack": "1d20+6",
+        "damage": "1d6+4",
+        "range": 1
+      }
+    ],
+    "abilities": [
+      {
+        "id": "duskveil-soul-piercer",
+        "name": "Soul Piercer",
+        "actionCost": 1,
+        "range": 7,
+        "effects": [
+          {
+            "type": "attack",
+            "target": "enemy",
+            "attack": "1d20+5",
+            "damage": "2d6+3",
+            "range": 7,
+            "damageType": "necrotic"
+          }
+        ],
+        "description": "Fire a lance of shadow energy that tears into an enemy's life force."
+      },
+      {
+        "id": "duskveil-grasp",
+        "name": "Grasp of the Void",
+        "actionCost": 1,
+        "range": 5,
+        "effects": [
+          {
+            "type": "roll_to_apply",
+            "target": "enemy",
+            "roll": "1d20+5",
+            "range": 5,
+            "onSuccess": [
+              {
+                "type": "apply_status",
+                "target": "checked_enemy",
+                "status": "snared",
+                "duration": "next_dm_phase"
+              }
+            ]
+          }
+        ],
+        "description": "Attempt to bind an enemy within 5 squares in shadowy tendrils, snaring it through the next DM phase on success."
+      }
+    ],
+    "inventory": [
+      "shadowglass-dagger",
+      "obsidian-charm",
+      "healing-potion"
+    ]
+  },
+  {
+    "id": "iceoracle",
+    "name": "Iskandra Rimeheart",
+    "role": "dps",
+    "image": "/static/tokens/token_237.webp",
+    "maxHp": 32,
+    "movement": 6,
+    "defense": 14,
+    "attacks": [
+      {
+        "id": "rimeheart-frost-lance",
+        "name": "Frost Lance",
+        "attack": "1d20+5",
+        "damage": "1d10+3",
+        "range": 7
+      },
+      {
+        "id": "rimeheart-crystal-shard",
+        "name": "Crystal Shard",
+        "attack": "1d20+5",
+        "damage": "1d6+3",
+        "range": 1
+      }
+    ],
+    "abilities": [
+      {
+        "id": "rimeheart-blizzard",
+        "name": "Localized Blizzard",
+        "actionCost": 1,
+        "range": 7,
+        "effects": [
+          {
+            "type": "area_attack",
+            "target": "enemies_in_area",
+            "center": "target",
+            "radius": 2,
+            "range": 7,
+            "attack": "1d20+4",
+            "damage": "1d8+3",
+            "damageType": "cold"
+          }
+        ],
+        "description": "Summon a freezing storm around a chosen enemy, attacking all enemies within 2 squares of the target."
+      },
+      {
+        "id": "rimeheart-chill",
+        "name": "Biting Chill",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [
+          {
+            "type": "attack",
+            "target": "enemy",
+            "attack": "1d20+5",
+            "damage": "1d6+2",
+            "range": 6,
+            "damageType": "cold"
+          },
+          {
+            "type": "apply_status",
+            "target": "hit_enemies",
+            "status": "slowed",
+            "duration": "next_dm_phase",
+            "when": "attack_hits"
+          }
+        ],
+        "description": "Strike an enemy with bitter cold, dealing damage and applying the slowed status on a hit."
+      }
+    ],
+    "inventory": [
+      "rime-crystal",
+      "frostwoven-mantle",
+      "healing-potion"
+    ]
+  },
+  {
+    "id": "emberwitch",
+    "name": "Seraphine Cinderfall",
+    "role": "dps",
+    "image": "/static/tokens/token_236.webp",
+    "maxHp": 31,
+    "movement": 6,
+    "defense": 13,
+    "attacks": [
+      {
+        "id": "cinderfall-firebolt",
+        "name": "Firebolt",
+        "attack": "1d20+5",
+        "damage": "1d8+4",
+        "range": 7
+      },
+      {
+        "id": "cinderfall-flame-whip",
+        "name": "Flame Whip",
+        "attack": "1d20+5",
+        "damage": "1d8+3",
+        "range": 2
+      }
+    ],
+    "abilities": [
+      {
+        "id": "cinderfall-inferno",
+        "name": "Cinderburst",
+        "actionCost": 1,
+        "range": 7,
+        "effects": [
+          {
+            "type": "area_attack",
+            "target": "enemies_in_area",
+            "center": "target",
+            "radius": 1,
+            "range": 7,
+            "attack": "1d20+5",
+            "damage": "2d6+2",
+            "damageType": "fire"
+          }
+        ],
+        "description": "Explode a point in searing flame, attacking all enemies within 1 square of the chosen target."
+      },
+      {
+        "id": "cinderfall-ignition",
+        "name": "Ignition",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [
+          {
+            "type": "mark_target",
+            "target": "enemy",
+            "bonus": "1d6",
+            "range": 6,
+            "duration": "until_used"
+          }
+        ],
+        "description": "Brand an enemy with volatile fire magic. Your next hit against it deals an additional 1d6 damage."
+      }
+    ],
+    "inventory": [
+      "emberglass-wand",
+      "fire-opal",
+      "healing-potion"
+    ]
+  },
+  {
+    "id": "graveflame",
+    "name": "Malrec Bonewake",
+    "role": "dps",
+    "image": "/static/tokens/token_235.webp",
+    "maxHp": 35,
+    "movement": 6,
+    "defense": 14,
+    "attacks": [
+      {
+        "id": "bonewake-skull-bolt",
+        "name": "Skull Bolt",
+        "attack": "1d20+5",
+        "damage": "1d8+4",
+        "range": 7
+      },
+      {
+        "id": "bonewake-reaper",
+        "name": "Reaper's Edge",
+        "attack": "1d20+5",
+        "damage": "1d10+3",
+        "range": 1
+      }
+    ],
+    "abilities": [
+      {
+        "id": "bonewake-soulstorm",
+        "name": "Soulstorm",
+        "actionCost": 1,
+        "range": 7,
+        "effects": [
+          {
+            "type": "area_attack",
+            "target": "enemies_in_area",
+            "center": "target",
+            "radius": 1,
+            "range": 7,
+            "attack": "1d20+5",
+            "damage": "1d8+3",
+            "damageType": "necrotic"
+          }
+        ],
+        "description": "Unleash a storm of restless souls around a chosen enemy, attacking all enemies within 1 square of the target."
+      },
+      {
+        "id": "bonewake-weaken",
+        "name": "Withering Curse",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [
+          {
+            "type": "roll_to_apply",
+            "target": "enemy",
+            "roll": "1d20+5",
+            "range": 6,
+            "onSuccess": [
+              {
+                "type": "apply_status",
+                "target": "checked_enemy",
+                "status": "shaken",
+                "duration": "next_dm_phase"
+              }
+            ]
+          }
+        ],
+        "description": "Curse an enemy within 6 squares, leaving it shaken through the next DM phase if your roll meets its Defense."
+      }
+    ],
+    "inventory": [
+      "bone-carved-focus",
+      "grave-silk-cloak",
+      "healing-potion"
+    ]
+  },
+  {
+    "id": "imphex",
+    "name": "Zyra Nightwhistle",
+    "role": "dps",
+    "image": "/static/tokens/token_234.webp",
+    "maxHp": 31,
+    "movement": 7,
+    "defense": 14,
+    "attacks": [
+      {
+        "id": "nightwhistle-hex-bolt",
+        "name": "Hex Bolt",
+        "attack": "1d20+5",
+        "damage": "1d8+3",
+        "range": 7
+      },
+      {
+        "id": "nightwhistle-hellclaw",
+        "name": "Hellclaw",
+        "attack": "1d20+6",
+        "damage": "1d6+4",
+        "range": 1
+      }
+    ],
+    "abilities": [
+      {
+        "id": "nightwhistle-chaos-bolts",
+        "name": "Chaos Bolts",
+        "actionCost": 1,
+        "range": 7,
+        "effects": [
+          {
+            "type": "multi_attack",
+            "target": "enemy",
+            "count": 3,
+            "range": 7,
+            "attack": "1d20+4",
+            "damage": "1d4+1",
+            "damageType": "arcane"
+          }
+        ],
+        "description": "Hurl three unstable bolts at one enemy, each with its own attack roll and damage roll on a hit."
+      },
+      {
+        "id": "nightwhistle-impish-escape",
+        "name": "Impish Escape",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [
+          {
+            "type": "modify_movement",
+            "target": "self",
+            "amount": 3,
+            "duration": "current_turn"
+          },
+          {
+            "type": "defense_bonus",
+            "target": "self",
+            "amount": 2,
+            "duration": "current_turn"
+          }
+        ],
+        "description": "Gain 3 additional movement squares and +2 Defense for the current turn."
+      }
+    ],
+    "inventory": [
+      "imp-familiar-charm",
+      "witchglass-orb",
+      "healing-potion"
+    ]
+  },
+  {
+    "id": "wildfang",
+    "name": "Torren Wolfscar",
+    "role": "dps",
+    "image": "/static/tokens/token_233.webp",
+    "maxHp": 36,
+    "movement": 7,
+    "defense": 15,
+    "attacks": [
+      {
+        "id": "wolfscar-hunters-axe",
+        "name": "Hunter's Axe",
+        "attack": "1d20+6",
+        "damage": "1d10+4",
+        "range": 1
+      },
+      {
+        "id": "wolfscar-hunting-spear",
+        "name": "Hunting Spear",
+        "attack": "1d20+5",
+        "damage": "1d8+3",
+        "range": 5
+      }
+    ],
+    "abilities": [
+      {
+        "id": "wolfscar-predators-lunge",
+        "name": "Predator's Lunge",
+        "actionCost": 1,
+        "range": 5,
+        "effects": [
+          {
+            "type": "attack",
+            "target": "enemy",
+            "attack": "1d20+6",
+            "damage": "2d6+3",
+            "range": 1,
+            "damageType": "slashing"
+          }
+        ],
+        "description": "Lunge at an enemy within 5 squares and strike it in melee for heavy damage."
+      },
+      {
+        "id": "wolfscar-hunters-mark",
+        "name": "Hunter's Mark",
+        "actionCost": 1,
+        "range": 7,
+        "effects": [
+          {
+            "type": "mark_target",
+            "target": "enemy",
+            "bonus": "1d6",
+            "range": 7,
+            "duration": "until_used"
+          }
+        ],
+        "description": "Mark your prey. Your next hit against the marked enemy deals an additional 1d6 damage."
+      }
+    ],
+    "inventory": [
+      "whetstone",
+      "hunter's-trap",
+      "healing-potion"
+    ]
+  },
+  {
+    "id": "goldenstrum",
+    "name": "Lucien Goldstrum",
+    "role": "dps",
+    "image": "/static/tokens/token_251.webp",
+    "maxHp": 30,
+    "movement": 7,
+    "defense": 13,
+    "attacks": [
+      {
+        "id": "goldstrum-enchanted-lute",
+        "name": "Enchanted Lute",
+        "attack": "1d20+5",
+        "damage": "1d8+3",
+        "range": 4
+      },
+      {
+        "id": "goldstrum-rapier",
+        "name": "Duelist's Rapier",
+        "attack": "1d20+6",
+        "damage": "1d8+4",
+        "range": 1
+      }
+    ],
+    "abilities": [
+      {
+        "id": "goldstrum-discordant-chord",
+        "name": "Discordant Chord",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [
+          {
+            "type": "attack",
+            "target": "enemy",
+            "attack": "1d20+5",
+            "damage": "2d6+3",
+            "range": 6,
+            "damageType": "thunder"
+          }
+        ],
+        "description": "Strike a discordant chord that releases a thunderous wave of sound against an enemy within 6 squares."
+      },
+      {
+        "id": "goldstrum-rhythm-of-ruin",
+        "name": "Rhythm of Ruin",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [
+          {
+            "type": "grant_roll_bonus",
+            "target": "self",
+            "bonus": 2,
+            "duration": "until_used"
+          }
+        ],
+        "description": "Build a dangerous rhythm, gaining +2 on your next attack or check roll."
+      }
+    ],
+    "inventory": [
+      "enchanted-lute",
+      "duelist's-rapier",
+      "healing-potion"
+    ]
+  },
+  {
+    "id": "sunmarshal",
+    "name": "Cassian Dawnward",
+    "role": "dps",
+    "image": "/static/tokens/token_245.webp",
+    "maxHp": 35,
+    "movement": 6,
+    "defense": 15,
+    "attacks": [
+      {
+        "id": "dawnward-sunblade",
+        "name": "Sunblade",
+        "attack": "1d20+6",
+        "damage": "1d10+4",
+        "range": 1
+      },
+      {
+        "id": "dawnward-radiant-javelin",
+        "name": "Radiant Javelin",
+        "attack": "1d20+5",
+        "damage": "1d8+3",
+        "range": 6
+      }
+    ],
+    "abilities": [
+      {
+        "id": "dawnward-judgment",
+        "name": "Solar Judgment",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [
+          {
+            "type": "attack",
+            "target": "enemy",
+            "attack": "1d20+5",
+            "damage": "2d8+3",
+            "range": 6,
+            "damageType": "radiant"
+          }
+        ],
+        "description": "Call down a focused ray of sunlight that strikes an enemy within 6 squares."
+      },
+      {
+        "id": "dawnward-execution",
+        "name": "Executioner's Mark",
+        "actionCost": 1,
+        "range": 5,
+        "effects": [
+          {
+            "type": "mark_target",
+            "target": "enemy",
+            "bonus": "1d8",
+            "range": 5,
+            "duration": "until_used"
+          }
+        ],
+        "description": "Mark a foe for execution. Your next hit against it deals an additional 1d8 damage."
+      }
+    ],
+    "inventory": [
+      "sunsteel-greatsword",
+      "golden-signet",
+      "healing-potion"
+    ]
+  },
+  {
+    "id": "ironhowl",
+    "name": "Brakka Stonejaw",
+    "role": "dps",
+    "image": "/static/tokens/token_248.webp",
+    "maxHp": 36,
+    "movement": 6,
+    "defense": 14,
+    "attacks": [
+      {
+        "id": "stonejaw-warhammer",
+        "name": "Warhammer",
+        "attack": "1d20+6",
+        "damage": "1d10+4",
+        "range": 1
+      },
+      {
+        "id": "stonejaw-throwing-axe",
+        "name": "Throwing Axe",
+        "attack": "1d20+5",
+        "damage": "1d8+3",
+        "range": 5
+      }
+    ],
+    "abilities": [
+      {
+        "id": "stonejaw-earthshaker",
+        "name": "Earthshaker",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [
+          {
+            "type": "area_attack",
+            "target": "enemies_in_area",
+            "center": "self",
+            "radius": 2,
+            "attack": "1d20+5",
+            "damage": "1d8+3",
+            "damageType": "bludgeoning"
+          }
+        ],
+        "description": "Slam the ground, attacking all enemies within 2 squares."
+      },
+      {
+        "id": "stonejaw-rending-blow",
+        "name": "Rending Blow",
+        "actionCost": 1,
+        "range": 1,
+        "effects": [
+          {
+            "type": "attack",
+            "target": "enemy",
+            "attack": "1d20+6",
+            "damage": "2d6+3",
+            "range": 1
+          },
+          {
+            "type": "defense_bonus",
+            "target": "hit_enemies",
+            "amount": -2,
+            "duration": "next_dm_phase",
+            "when": "attack_hits"
+          }
+        ],
+        "description": "Deliver a brutal strike to an adjacent enemy, reducing its Defense by 2 through the next DM phase on a hit."
+      }
+    ],
+    "inventory": [
+      "ironbound-warhammer",
+      "throwing-axes",
+      "healing-potion"
+    ]
+  },
+  {
+    "id": "violethex",
+    "name": "Amara Vexley",
+    "role": "dps",
+    "image": "/static/tokens/token_268.webp",
+    "maxHp": 32,
+    "movement": 7,
+    "defense": 14,
+    "attacks": [
+      {
+        "id": "vexley-hex-dart",
+        "name": "Hex Dart",
+        "attack": "1d20+5",
+        "damage": "1d8+3",
+        "range": 7
+      },
+      {
+        "id": "vexley-ritual-sickle",
+        "name": "Ritual Sickle",
+        "attack": "1d20+5",
+        "damage": "1d8+3",
+        "range": 1
+      }
+    ],
+    "abilities": [
+      {
+        "id": "vexley-hexburst",
+        "name": "Hexburst",
+        "actionCost": 1,
+        "range": 7,
+        "effects": [
+          {
+            "type": "attack",
+            "target": "enemy",
+            "attack": "1d20+5",
+            "damage": "2d6+3",
+            "range": 7,
+            "damageType": "necrotic"
+          },
+          {
+            "type": "apply_status",
+            "target": "hit_enemies",
+            "status": "shaken",
+            "duration": "next_dm_phase",
+            "when": "attack_hits"
+          }
+        ],
+        "description": "Blast an enemy with violet curse energy. On a hit, it becomes shaken through the next DM phase."
+      },
+      {
+        "id": "vexley-shadow-step",
+        "name": "Shadow Step",
+        "actionCost": 1,
+        "range": 5,
+        "effects": [
+          {
+            "type": "teleport",
+            "target": "cell",
+            "distance": 5
+          }
+        ],
+        "description": "Teleport to an unoccupied square up to 5 squares away."
+      }
+    ],
+    "inventory": [
+      "violet-crystal",
+      "ritual-sickle",
+      "healing-potion"
+    ]
+  },
+  {
+    "id": "stormscale",
+    "name": "Sszaryn Bluefang",
+    "role": "dps",
+    "image": "/static/tokens/token_270.webp",
+    "maxHp": 34,
+    "movement": 6,
+    "defense": 14,
+    "attacks": [
+      {
+        "id": "bluefang-lightning-claw",
+        "name": "Lightning Claw",
+        "attack": "1d20+6",
+        "damage": "1d8+4",
+        "range": 1
+      },
+      {
+        "id": "bluefang-thunder-spit",
+        "name": "Thunder Spit",
+        "attack": "1d20+5",
+        "damage": "1d8+3",
+        "range": 6
+      }
+    ],
+    "abilities": [
+      {
+        "id": "bluefang-chain-lightning",
+        "name": "Chain Lightning",
+        "actionCost": 1,
+        "range": 7,
+        "effects": [
+          {
+            "type": "chain_attack",
+            "target": "enemy",
+            "jumps": 2,
+            "jumpRange": 3,
+            "range": 7,
+            "attack": "1d20+5",
+            "damage": "1d8+2",
+            "damageType": "lightning"
+          }
+        ],
+        "description": "Unleash lightning that strikes the first enemy and can jump to up to two additional enemies within 3 squares of the previous target."
+      },
+      {
+        "id": "bluefang-thunderclap",
+        "name": "Thunderclap",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [
+          {
+            "type": "area_attack",
+            "target": "enemies_in_area",
+            "center": "self",
+            "radius": 1,
+            "attack": "1d20+5",
+            "damage": "1d6+3",
+            "damageType": "thunder"
+          }
+        ],
+        "description": "Release a thunderous shockwave, attacking every enemy within 1 square."
+      }
+    ],
+    "inventory": [
+      "stormscale-clawguards",
+      "lightning-essence",
+      "healing-potion"
+    ]
+  },
+  {
+    "id": "winterwolf",
+    "name": "Eira Frosthowl",
+    "role": "dps",
+    "image": "/static/tokens/token_250.webp",
+    "maxHp": 35,
+    "movement": 7,
+    "defense": 15,
+    "attacks": [
+      {
+        "id": "frosthowl-hunting-bow",
+        "name": "Hunting Bow",
+        "attack": "1d20+6",
+        "damage": "1d8+4",
+        "range": 8
+      },
+      {
+        "id": "frosthowl-hatchet",
+        "name": "Wolfbite Hatchet",
+        "attack": "1d20+5",
+        "damage": "1d8+3",
+        "range": 1
+      }
+    ],
+    "abilities": [
+      {
+        "id": "frosthowl-packshot",
+        "name": "Pack Hunter's Volley",
+        "actionCost": 1,
+        "range": 8,
+        "effects": [
+          {
+            "type": "multi_attack",
+            "target": "enemy",
+            "count": 2,
+            "range": 8,
+            "attack": "1d20+5",
+            "damage": "1d6+2",
+            "damageType": "piercing"
+          }
+        ],
+        "description": "Fire two quick arrows at a single enemy, resolving each attack and damage roll independently."
+      },
+      {
+        "id": "frosthowl-snowbind",
+        "name": "Snowbind",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [
+          {
+            "type": "roll_to_apply",
+            "target": "enemy",
+            "roll": "1d20+5",
+            "range": 6,
+            "onSuccess": [
+              {
+                "type": "apply_status",
+                "target": "checked_enemy",
+                "status": "slowed",
+                "duration": "next_dm_phase"
+              }
+            ]
+          }
+        ],
+        "description": "Encase an enemy in freezing snow, applying the slowed status through the next DM phase if your roll meets its Defense."
+      }
+    ],
+    "inventory": [
+      "yew-hunting-bow",
+      "wolf-pelt-cloak",
+      "healing-potion"
+    ]
+  },
+  {
+    "id": "moonstalker",
+    "name": "Liora Nighttrail",
+    "role": "dps",
+    "image": "/static/tokens/token_231.webp",
+    "maxHp": 33,
+    "movement": 7,
+    "defense": 14,
+    "attacks": [
+      {
+        "id": "nighttrail-longbow",
+        "name": "Moonwood Longbow",
+        "attack": "1d20+6",
+        "damage": "1d8+4",
+        "range": 8
+      },
+      {
+        "id": "nighttrail-dual-blades",
+        "name": "Twin Trailblades",
+        "attack": "1d20+5",
+        "damage": "1d8+3",
+        "range": 1
+      }
+    ],
+    "abilities": [
+      {
+        "id": "nighttrail-ambush",
+        "name": "Moonshadow Ambush",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [
+          {
+            "type": "attack",
+            "target": "enemy",
+            "attack": "1d20+6",
+            "damage": "2d6+3",
+            "range": 6,
+            "damageType": "piercing"
+          }
+        ],
+        "description": "Strike from the shadows with a precision shot against an enemy within 6 squares."
+      },
+      {
+        "id": "nighttrail-hunters-focus",
+        "name": "Hunter's Focus",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [
+          {
+            "type": "grant_roll_bonus",
+            "target": "self",
+            "bonus": 2,
+            "duration": "until_used"
+          }
+        ],
+        "description": "Focus your aim, gaining +2 on your next attack or check roll."
+      }
+    ],
+    "inventory": [
+      "moonwood-longbow",
+      "twin-trailblades",
       "healing-potion"
     ]
   }

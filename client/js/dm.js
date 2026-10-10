@@ -325,6 +325,19 @@ function renderBanks() {
 
 // ---------- inspector ----------
 
+// Half-typed inspector values survive re-renders (state updates rebuild the panel). A draft is
+// dropped once the underlying value changes elsewhere (e.g. the monster takes damage or is killed).
+const drafts = new Map(); // `${entityId}:${field}` -> { value, base }
+function draftInput(entityId, field, value, attrs = {}) {
+  const key = `${entityId}:${field}`;
+  const d = drafts.get(key);
+  if (d && d.base !== value) drafts.delete(key);
+  const input = h('input', { type: 'number', ...attrs, value: drafts.get(key)?.value ?? value });
+  input.addEventListener('input', () => drafts.set(key, { value: input.value, base: value }));
+  return input;
+}
+const clearDrafts = (entityId, ...fields) => { for (const f of fields) drafts.delete(`${entityId}:${f}`); };
+
 function renderInspector() {
   const root = $('#inspector');
   const e = selected();
@@ -335,9 +348,18 @@ function renderInspector() {
   root.classList.remove('hidden');
   const id = e.id;
   const mortal = !e.immortal && e.kind !== 'object';
-  const amount = h('input', { type: 'number', min: 0, value: 5 });
-  const hpInput = h('input', { type: 'number', min: 0, max: e.maxHp, value: e.hp });
-  const maxInput = h('input', { type: 'number', min: 1, value: e.maxHp });
+  const amount = draftInput(e.id, 'amount', 5, { min: 0 });
+  const hpInput = draftInput(e.id, 'hp', e.hp, { min: 0 });
+  const maxInput = draftInput(e.id, 'max', e.maxHp, { min: 1 });
+  // One Set for both fields: the server applies max HP first, so "20 / 20" works in one click.
+  // Raw strings are sent so a blank box is rejected instead of becoming 0.
+  const setHealth = () => {
+    const cmd = { type: 'entity.setHealth', entityId: id };
+    if (maxInput.value !== String(e.maxHp)) cmd.maxHp = maxInput.value;
+    if (hpInput.value !== String(e.hp) || cmd.maxHp === undefined) cmd.hp = hpInput.value;
+    send(cmd).then((r) => { if (r) { clearDrafts(id, 'hp', 'max'); memoKeys.inspector = null; renderInspector(); } });
+  };
+  for (const input of [hpInput, maxInput]) input.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') setHealth(); });
   const itemInput = h('input.grow', { placeholder: 'Add item…', maxLength: 60 });
   const statusPick = h('select', {}, h('option', { value: '' }, 'Add status…'), ...['poisoned', 'snared', 'shaken', 'slowed'].map((st) => h('option', { value: st }, st)));
   statusPick.addEventListener('change', () => { if (statusPick.value) send({ type: 'effect.addStatus', entityId: id, status: statusPick.value }); });
@@ -364,12 +386,12 @@ function renderInspector() {
     c.active && isEnemy(e) && !e.immortal && e.status === 'active' ? h('p.muted', { style: { fontSize: '12px', margin: '0 0 6px' } },
       c.phase === 'dm' ? `⚡ ${enemyActionsLeft(e)} action(s) left this DM phase. Shift-drag to force-move.` : 'Enemies act during the DM PHASE.') : null,
     e.kind !== 'object' ? h('div.row', {}, amount,
-      h('button.small.danger', { onclick: () => send({ type: 'entity.damage', entityId: id, amount: Number(amount.value) }) }, '− Damage'),
-      mortal ? h('button.small', { onclick: () => send({ type: 'entity.heal', entityId: id, amount: Number(amount.value) }) }, '+ Heal') : null,
+      h('button.small.danger', { onclick: () => send({ type: 'entity.damage', entityId: id, amount: amount.value }) }, '− Damage'),
+      mortal ? h('button.small', { onclick: () => send({ type: 'entity.heal', entityId: id, amount: amount.value }) }, '+ Heal') : null,
       e.immortal ? h('button.small', { onclick: () => send({ type: 'entity.resetDummy', entityId: id }) }, 'Reset counter') : null) : null,
     mortal ? h('div.row', { style: { marginTop: '6px' } },
-      h('label.inline', {}, 'HP', hpInput), h('button.small', { onclick: () => send({ type: 'entity.setHp', entityId: id, hp: Number(hpInput.value) }) }, 'Set'),
-      h('label.inline', {}, 'Max', maxInput), h('button.small', { onclick: () => send({ type: 'entity.setMaxHp', entityId: id, maxHp: Number(maxInput.value) }) }, 'Set')) : null,
+      h('label.inline', {}, 'HP', hpInput), h('span.muted', {}, '/'), h('label.inline', {}, 'Max', maxInput),
+      h('button.small', { onclick: setHealth, title: 'Applies max HP first, then HP (Enter works too)' }, 'Set')) : null,
     mortal ? h('div.row', { style: { marginTop: '6px' } },
       e.status !== 'active' ? h('button.small.primary', { onclick: () => send({ type: 'entity.revive', entityId: id }) }, '✚ Revive') : null,
       e.status !== 'dead' ? h('button.small.danger', { onclick: () => send({ type: 'entity.kill', entityId: id }) }, '☠ Kill') : null,

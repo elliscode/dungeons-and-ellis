@@ -35,7 +35,7 @@
     "id": "druid",
     "name": "Daisy Sunbeam",
     "role": "heal",
-    "image": "/static/tokens/token_052.webp",
+    "image": "/static/tokens/token_057.webp",
     "maxHp": 32,
     "movement": 6,
     "defense": 14,

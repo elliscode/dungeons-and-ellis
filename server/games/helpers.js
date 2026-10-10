@@ -9,6 +9,8 @@ export const str = (v, max, label) => {
   return s.slice(0, max);
 };
 export const int = (v, label, min = -Infinity, max = Infinity) => {
+  // A blank field must not silently become 0 (Number('') === 0).
+  if (v === undefined || v === null || (typeof v === 'string' && !v.trim())) fail(`${label} is required`);
   const n = Number(v);
   if (!Number.isInteger(n) || n < min || n > max) fail(`${label} must be a whole number${min > -Infinity ? ` from ${min} to ${max}` : ''}`);
   return n;
@@ -31,6 +33,7 @@ export function statusSuffix(e, change) {
   if (change.after === 'down') return ` ${e.name} is DOWN!`;
   if (change.after === 'dead') return e.kind === 'monster' ? ` ${e.name} is slain!` : ` ${e.name} has DIED!`;
   if (change.after === 'active' && change.before === 'down') return ` ${e.name} is back on their feet!`;
+  if (change.after === 'active' && change.before === 'dead') return ` ${e.name} is revived!`;
   return '';
 }
 

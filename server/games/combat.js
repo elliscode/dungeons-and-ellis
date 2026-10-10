@@ -69,9 +69,10 @@ export function applyHeal(e, amount) {
   return { before, after: e.status, healed: e.hp - old };
 }
 
+// DM override: any HP above 0 brings a downed or dead creature back.
 export function setHp(e, value) {
   e.hp = Math.max(0, Math.min(e.maxHp, Math.floor(value)));
-  if (e.hp > 0 && e.status === 'down') e.status = 'active';
+  if (e.hp > 0 && e.status !== 'active') e.status = 'active';
   if (e.hp === 0 && e.status === 'active') e.status = e.kind === 'monster' ? 'dead' : 'down';
 }
 

@@ -266,21 +266,37 @@ def('entity.heal', { who: 'dm', undoable: 'heal' }, (ctx) => {
   ctx.log('heal', text + t.pub, { dmText: text + t.dm });
 });
 
-def('entity.setHp', { who: 'dm', undoable: 'set HP' }, (ctx) => {
-  const e = getEntity(ctx, ctx.cmd.entityId);
+// DM HP tools. Max HP is applied before HP, so one command can raise both ("20 / 20").
+// HP above max is refused rather than silently capped; blank fields are refused, never 0.
+function applyHealth(ctx, e, { hp, maxHp }) {
   requireMortal(e);
-  const before = e.status;
-  setHp(e, int(ctx.cmd.hp, 'HP', 0, 100000));
+  if (hp === undefined && maxHp === undefined) fail('Enter HP or max HP');
+  const before = { hp: e.hp, maxHp: e.maxHp, status: e.status };
+  if (maxHp !== undefined) {
+    e.maxHp = int(maxHp, 'Max HP', 1, 100000);
+    e.hp = Math.min(e.hp, e.maxHp);
+  }
+  if (hp !== undefined) {
+    const value = int(hp, 'HP', 0, 100000);
+    if (value > e.maxHp) fail(`HP can't be more than max HP (${e.maxHp}) — raise max HP too`);
+    setHp(e, value);
+  }
   const t = hpTexts(e);
-  const suffix = statusSuffix(e, { before, after: e.status });
-  ctx.log('hp', `DM adjusted ${e.name}.${suffix}${t.pub}`, { dmText: `DM set ${e.name} HP.${suffix}${t.dm}` });
+  const suffix = statusSuffix(e, { before: before.status, after: e.status });
+  const what = [maxHp !== undefined && e.maxHp !== before.maxHp ? 'max HP' : null, hp !== undefined ? 'HP' : null].filter(Boolean).join(' and ') || 'HP';
+  ctx.log('hp', `DM adjusted ${e.name}.${suffix}${t.pub}`, { dmText: `DM set ${e.name} ${what}.${suffix}${t.dm}` });
+}
+
+def('entity.setHealth', { who: 'dm', undoable: 'set HP' }, (ctx) => {
+  applyHealth(ctx, getEntity(ctx, ctx.cmd.entityId), { hp: ctx.cmd.hp, maxHp: ctx.cmd.maxHp });
+});
+
+def('entity.setHp', { who: 'dm', undoable: 'set HP' }, (ctx) => {
+  applyHealth(ctx, getEntity(ctx, ctx.cmd.entityId), { hp: ctx.cmd.hp ?? null });
 });
 
 def('entity.setMaxHp', { who: 'dm', undoable: 'set max HP' }, (ctx) => {
-  const e = getEntity(ctx, ctx.cmd.entityId);
-  requireMortal(e);
-  e.maxHp = int(ctx.cmd.maxHp, 'Max HP', 1, 100000);
-  e.hp = Math.min(e.hp, e.maxHp);
+  applyHealth(ctx, getEntity(ctx, ctx.cmd.entityId), { maxHp: ctx.cmd.maxHp ?? null });
 });
 
 def('entity.kill', { who: 'dm', undoable: 'kill' }, (ctx) => {
