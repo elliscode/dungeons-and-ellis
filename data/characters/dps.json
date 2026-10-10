@@ -316,8 +316,7 @@
             "count": 4,
             "attack": "1d20+5",
             "damage": "2d6+2",
-            "range": 1,
-            "independentRolls": true
+            "range": 1
           }
         ],
         "description": "Spend your momentum on a flurry of fast unarmed strikes."

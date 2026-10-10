@@ -87,7 +87,7 @@ export function kill(e) {
 // Every damage source (weapon attacks, abilities, area/chain/multi attacks, enemy attacks, the
 // DM's Damage button) goes through dealDamage(); every heal goes through healTarget().
 
-const MAGICAL_TYPES = new Set(['fire', 'cold', 'frost', 'lightning', 'thunder', 'radiant', 'holy', 'necrotic', 'shadow', 'arcane', 'force', 'psychic', 'poison', 'acid', 'nature']);
+export const MAGICAL_TYPES = new Set(['fire', 'cold', 'frost', 'lightning', 'thunder', 'radiant', 'holy', 'necrotic', 'shadow', 'arcane', 'force', 'psychic', 'poison', 'acid', 'nature']);
 export const isMagical = (damageType) => !!damageType && MAGICAL_TYPES.has(String(damageType).toLowerCase());
 
 // To-hit penalties from statuses on the attacker.

@@ -17,13 +17,13 @@ export const STATUSES = {
   slowed: { label: 'Slowed', icon: '🐌' }, // label for negative movement modifiers
 };
 
-const TARGETS = ['self', 'enemy', 'ally', 'ally_or_self', 'cell', 'enemies_in_area', 'allies_in_area', 'hit_enemies', 'checked_enemy', 'target'];
-const WHEN = ['attack_hits', 'attack_misses'];
+export const TARGETS = ['self', 'enemy', 'ally', 'ally_or_self', 'cell', 'enemies_in_area', 'allies_in_area', 'hit_enemies', 'checked_enemy', 'target'];
+export const WHEN = ['attack_hits', 'attack_misses'];
 
 // ---------- registry ----------
 // spec: dice fields, numeric ranges, enum fields, required fields, default target.
 const R = (min, max) => ({ min, max });
-const SPECS = {
+export const SPECS = {
   attack: { target: 'enemy', dice: ['attack', 'damage'], required: ['attack', 'damage'], nums: { range: R(0, 30), attackBonus: R(-10, 10), defenseReduction: R(0, 20), damageBonus: R(-20, 50) } },
   multi_attack: { target: 'enemy', dice: ['attack', 'damage'], required: ['attack', 'damage', 'count'], nums: { count: R(2, 10), range: R(0, 30), attackBonus: R(-10, 10), damageBonus: R(-20, 50) } },
   area_attack: { target: 'enemies_in_area', dice: ['attack', 'damage'], required: ['attack', 'damage'], nums: { radius: R(0, 10), range: R(0, 30), attackBonus: R(-10, 10), damageBonus: R(-20, 50) }, enums: { center: ['self', 'target'] } },
