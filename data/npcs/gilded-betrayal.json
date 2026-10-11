@@ -1,0 +1,207 @@
+[
+  {
+    "id": "lucien-voss",
+    "name": "Lucien Voss",
+    "image": "/static/tokens/token_271.webp",
+    "maxHp": 200,
+    "defense": 17,
+    "movement": 6,
+    "actions": 4,
+    "attacks": [
+      { "id": "sword-cane", "name": "Sword Cane", "attack": "1d20+8", "damage": "1d8+4", "range": 1, "damageType": "piercing" },
+      { "id": "gilded-bolt", "name": "Gilded Bolt", "attack": "1d20+8", "damage": "1d10+3", "range": 8, "damageType": "force" }
+    ],
+    "abilities": [
+      {
+        "id": "gilded-ruin",
+        "name": "Gilded Ruin",
+        "actionCost": 1,
+        "range": 8,
+        "usesPerPhase": 1,
+        "effects": [
+          {
+            "type": "area_attack",
+            "target": "enemies_in_area",
+            "center": "target",
+            "radius": 1,
+            "range": 8,
+            "attack": "1d20+7",
+            "damage": "2d8+3",
+            "damageType": "force"
+          }
+        ],
+        "description": "A burst of molten gold erupts around a foe within 8, striking everyone within 1 of it. Once per phase."
+      },
+      {
+        "id": "objection",
+        "name": "Objection!",
+        "actionCost": 1,
+        "range": 6,
+        "usesPerPhase": 1,
+        "effects": [
+          {
+            "type": "roll_to_apply",
+            "target": "enemy",
+            "roll": "1d20+8",
+            "range": 6,
+            "onSuccess": [
+              { "type": "reduce_actions", "target": "checked_enemy", "amount": 1, "label": "Overruled" }
+            ]
+          }
+        ],
+        "description": "Voss silences a foe within 6 with a word of binding law. If it doesn't resist, it loses 1 action on its next turn. Once per phase."
+      },
+      {
+        "id": "binding-contract",
+        "name": "Binding Contract",
+        "actionCost": 1,
+        "range": 6,
+        "usesPerPhase": 1,
+        "effects": [
+          {
+            "type": "roll_to_apply",
+            "target": "enemy",
+            "roll": "1d20+8",
+            "range": 6,
+            "onSuccess": [
+              { "type": "apply_status", "target": "checked_enemy", "status": "snared" },
+              { "type": "apply_status", "target": "checked_enemy", "status": "shaken" }
+            ]
+          }
+        ],
+        "description": "Glowing clauses wrap a foe within 6. If it doesn't resist, it is snared (can't move) and shaken (−2 to hit) through the next DM phase. Once per phase."
+      },
+      {
+        "id": "vanishing-act",
+        "name": "Vanishing Act",
+        "actionCost": 1,
+        "range": 6,
+        "usesPerPhase": 1,
+        "effects": [
+          { "type": "teleport", "target": "cell", "distance": 6 },
+          { "type": "defense_bonus", "target": "self", "amount": 2, "label": "Vanishing Act" }
+        ],
+        "description": "Voss steps through a fold of gold light to a square within 6 and gains +2 Defense until the next player phase. Once per phase."
+      }
+    ],
+    "inventory": ["court-papers", "quill-and-inkwell", "heavy-coin-purse"],
+    "description": "The party's court-appointed lawyer. Starts friendly and fights alongside the party. If he is ever marked hostile, he gets 4 actions per DM phase."
+  },
+  {
+    "id": "judge-octavian-rook",
+    "name": "Judge Octavian Rook",
+    "image": "/static/tokens/token_272.webp",
+    "maxHp": 100,
+    "defense": 16,
+    "movement": 5,
+    "actions": 2,
+    "attacks": [
+      { "id": "gavel-of-truth", "name": "Gavel of Truth", "attack": "1d20+6", "damage": "2d6+4", "range": 1, "damageType": "bludgeoning" }
+    ],
+    "abilities": [
+      {
+        "id": "final-verdict",
+        "name": "Final Verdict",
+        "actionCost": 1,
+        "range": 1,
+        "usesPerPhase": 1,
+        "effects": [
+          { "type": "attack", "target": "enemy", "attack": "1d20+6", "damage": "2d8+4", "range": 1, "damageType": "bludgeoning" },
+          { "type": "apply_status", "target": "hit_enemies", "status": "shaken", "when": "attack_hits" }
+        ],
+        "description": "Brings the Gavel of Truth down on an adjacent foe for 2d8+4. On a hit, the foe is shaken (−2 to hit) through the next DM phase. Once per phase."
+      },
+      {
+        "id": "order-in-the-court",
+        "name": "Order in the Court!",
+        "actionCost": 1,
+        "range": 0,
+        "usesPerPhase": 1,
+        "effects": [
+          {
+            "type": "roll_to_apply",
+            "target": "enemies_in_area",
+            "radius": 2,
+            "roll": "1d20+6",
+            "onSuccess": [{ "type": "apply_status", "target": "checked_enemy", "status": "frightened" }]
+          }
+        ],
+        "description": "Rook slams his gavel and bellows for order. Each foe within 2 that doesn't resist is frightened (can't move closer to him) through the next DM phase. Once per phase."
+      },
+      {
+        "id": "contempt-of-court",
+        "name": "Contempt of Court",
+        "actionCost": 1,
+        "range": 5,
+        "usesPerPhase": 1,
+        "effects": [
+          {
+            "type": "roll_to_apply",
+            "target": "enemy",
+            "roll": "1d20+6",
+            "range": 5,
+            "onSuccess": [{ "type": "apply_status", "target": "checked_enemy", "status": "snared" }]
+          }
+        ],
+        "description": "Rook holds a pursuer within 5 in contempt. If it doesn't resist, it is snared (can't move) through the next DM phase. Once per phase."
+      },
+      {
+        "id": "judicial-immunity",
+        "name": "Judicial Immunity",
+        "actionCost": 1,
+        "range": 0,
+        "usesPerPhase": 1,
+        "effects": [{ "type": "discourage_attacks", "target": "self", "penalty": 5, "label": "Judicial Immunity" }],
+        "description": "Rook invokes the protection of his office. Attacks against him take −5 to hit through the next DM phase. Once per phase."
+      },
+      {
+        "id": "court-is-adjourned",
+        "name": "Court Is Adjourned",
+        "actionCost": 0,
+        "range": 0,
+        "usesPerPhase": 1,
+        "effects": [{ "type": "modify_movement", "target": "self", "amount": 4, "duration": "current_turn", "label": "Court Is Adjourned" }],
+        "description": "Rook gathers his robes and hurries off. Free action: +4 movement this phase. Once per phase."
+      }
+    ],
+    "inventory": ["writ-of-arrest", "court-seal", "tram-key"],
+    "description": "Starts hostile so the party can attack him at the tram. He flees instead of fighting: Judicial Immunity, Court Is Adjourned, then Order in the Court or Contempt of Court on whoever chases him."
+  },
+  {
+    "id": "gideon",
+    "name": "Gideon",
+    "image": "/static/tokens/token_005.webp",
+    "maxHp": 34,
+    "defense": 16,
+    "movement": 6,
+    "attacks": [
+      { "id": "longsword", "name": "Longsword", "attack": "1d20+6", "damage": "1d8+4", "range": 1, "damageType": "slashing" },
+      { "id": "heavy-crossbow", "name": "Heavy Crossbow", "attack": "1d20+5", "damage": "1d10+3", "range": 10, "damageType": "piercing" }
+    ],
+    "abilities": [
+      {
+        "id": "trip-attack",
+        "name": "Trip Attack",
+        "actionCost": 1,
+        "range": 1,
+        "usesPerPhase": 1,
+        "effects": [
+          { "type": "attack", "target": "enemy", "attack": "1d20+6", "damage": "1d8+4", "range": 1, "damageType": "slashing" },
+          { "type": "apply_status", "target": "hit_enemies", "status": "snared", "when": "attack_hits", "label": "Knocked Prone" }
+        ],
+        "description": "A sweeping longsword strike at an adjacent foe. On a hit, the foe is knocked prone and can't move through the next DM phase. Once per phase."
+      },
+      {
+        "id": "second-wind",
+        "name": "Second Wind",
+        "actionCost": 0,
+        "range": 0,
+        "usesPerPhase": 1,
+        "effects": [{ "type": "heal", "target": "self", "heal": "1d10+4" }],
+        "description": "Gideon steadies himself and recovers 1d10+4 HP. Free action, once per phase."
+      }
+    ],
+    "inventory": ["whetstone", "travel-rations", "bedroll"],
+    "description": "A knight and a former member of the party's treasure-hunting crew. Token is a placeholder until his lineage is decided."
+  }
+]
