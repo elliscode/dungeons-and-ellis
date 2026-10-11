@@ -50,6 +50,21 @@ test('chat and game events share one chronological feed with stable ids', () => 
   assert.deepEqual(s.service.history(s.game.id, 'player').feed.map((f) => f.id), ids, 'same ids on reload');
 });
 
+test('player history starts when the player joined', () => {
+  const s = setup();
+  ok(s.run(DM, { type: 'roll', expr: '1d20' }));
+  s.service.chat(s.game.id, DM, 'testing testing');
+  s.clock.t += 1000;
+  const a = s.join('Ana');
+  ok(s.run(DM, { type: 'roll', expr: '1d6' }));
+  const since = s.state().players[a.playerId].joinedAt;
+  const texts = s.service.history(s.game.id, 'player', { since }).feed.map((f) => f.text);
+  assert.equal(texts.length, 2);
+  assert.match(texts[0], /Ana joined/);
+  assert.match(texts[1], /DM rolls 1d6/);
+  assert.equal(s.service.history(s.game.id, 'dm').feed.length, 4, 'the DM still sees everything');
+});
+
 test('DM-only events and hidden HP never reach players', () => {
   const s = setup();
   const tpl = s.templates.create({ name: 'R', grid: { cols: 6, rows: 6 } });
@@ -111,6 +126,46 @@ test('old chat + activity tables migrate into the feed in time order', () => {
     assert.equal(again.prepare('SELECT count(*) AS n FROM feed_events').get().n, 4);
     again.close();
   } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('over sockets, players see nothing from before they joined', async () => {
+  const server = createServer({ dbFile: ':memory:', password: 'pw', contentDir: FIXTURE_DATA });
+  await new Promise((r) => server.httpServer.listen(0, '127.0.0.1', r));
+  const base = `http://127.0.0.1:${server.httpServer.address().port}`;
+  const sockets = [];
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const emit = (s, ev, d) => new Promise((r) => s.emit(ev, d, r));
+  try {
+    const game = server.service.createGame('Setup');
+    const dmRoll = (expr) => assert.equal(server.service.dispatch(game.id, DM, { type: 'roll', expr }).ok, true);
+    dmRoll('1d4'); // DM testing before anyone joins
+    await wait(5);
+    const a = connect(`${base}/play`, { transports: ['websocket'], forceNew: true, auth: { joinToken: game.joinToken } });
+    sockets.push(a);
+    const live = [];
+    a.on('feed', (rows) => live.push(...rows));
+    assert.deepEqual((await new Promise((r) => a.once('history', r))).feed, [], 'join screen: no history');
+    dmRoll('1d8');
+    await wait(50);
+    assert.equal(live.length, 0, 'join screen: no live events');
+    const historyAfterJoin = new Promise((r) => a.once('history', r));
+    const ja = await emit(a, 'join', { name: 'Ana' });
+    const joined = (await historyAfterJoin).feed.map((f) => f.text);
+    assert.equal(joined.length, 1);
+    assert.match(joined[0], /Ana joined/);
+    dmRoll('1d12');
+    await wait(50);
+    assert.ok(live.some((f) => /1d12/.test(f.text)), 'live events after joining');
+    a.disconnect();
+    const a2 = connect(`${base}/play`, { transports: ['websocket'], forceNew: true, auth: { joinToken: game.joinToken, playerId: ja.playerId, seatSecret: ja.seatSecret } });
+    sockets.push(a2);
+    const texts = (await new Promise((r) => a2.once('history', r))).feed.map((f) => f.text).join('\n');
+    assert.match(texts, /Ana joined[\s\S]*1d12/, 'reconnect: everything since joining');
+    assert.doesNotMatch(texts, /1d4|1d8/, 'reconnect: nothing from before');
+  } finally {
+    for (const s of sockets) s.disconnect();
+    await server.close();
+  }
 });
 
 test('feed events arrive live over sockets and reconnects load history without duplicates', async () => {

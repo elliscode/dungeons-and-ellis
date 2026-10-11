@@ -41,7 +41,8 @@ export function attachSockets(io, { service, auth }) {
         continue;
       }
       s.emit('state', stateFor(s));
-      if (payload.feed?.length) {
+      // Players still on the join screen get no feed until they join.
+      if (payload.feed?.length && (s.data.role === 'dm' || s.data.playerId)) {
         const role = s.data.role === 'dm' ? 'dm' : 'player';
         const rows = payload.feed.map((r) => feedForRole(r, role)).filter(Boolean);
         if (rows.length) s.emit('feed', rows);
@@ -88,8 +89,15 @@ export function attachSockets(io, { service, auth }) {
       if (p && safeEqual(p.seatSecret, seatSecret)) bind(playerId);
       else socket.emit('seatInvalid');
     }
+    // Feed history starts when this seat joined (nothing before joining). A seat without a join
+    // time (older games) only sees what happens from now on.
+    const history = () => {
+      const p = service.get(game.id)?.state.players[socket.data.playerId];
+      if (!p) return { feed: [] };
+      return service.history(game.id, 'player', { since: p.joinedAt ?? service.now() });
+    };
     socket.emit('state', stateFor(socket));
-    socket.emit('history', service.history(game.id, 'player'));
+    socket.emit('history', history());
 
     socket.on('join', (data, ack) => {
       if (socket.data.playerId) return reply(ack, { ok: false, error: 'Already joined' });
@@ -97,6 +105,7 @@ export function attachSockets(io, { service, auth }) {
       if (!r.ok) return reply(ack, r);
       bind(r.result.playerId);
       socket.emit('state', stateFor(socket));
+      socket.emit('history', history());
       reply(ack, { ok: true, playerId: r.result.playerId, seatSecret: r.result.seatSecret });
     });
 

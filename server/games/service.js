@@ -264,9 +264,11 @@ export class GameService extends EventEmitter {
   }
 
   // The most recent Game Feed rows, oldest first, filtered for the viewer's role.
-  history(gameId, role) {
+  // `since` (ms) limits the feed to rows from that time on: players only see what happened after
+  // they joined, so the DM's setup and testing stay private.
+  history(gameId, role, { since = null } = {}) {
     const rows = this.db.prepare(`SELECT * FROM (SELECT id, kind, type, text, dm_text AS dmText, visibility, color, name,
-      player_id AS playerId, data, ts FROM feed_events WHERE game_id = ? ORDER BY id DESC LIMIT ${HISTORY_LIMIT}) ORDER BY id`).all(gameId);
+      player_id AS playerId, data, ts FROM feed_events WHERE game_id = ? AND ts >= ? ORDER BY id DESC LIMIT ${HISTORY_LIMIT}) ORDER BY id`).all(gameId, since ?? 0);
     const feed = rows.map((r) => feedForRole({ ...r, data: r.data ? JSON.parse(r.data) : null }, role)).filter(Boolean);
     return { feed };
   }
