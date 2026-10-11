@@ -1,0 +1,1774 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dungeons-and-ellis/schemas/npc.schema.json",
+  "title": "One & Done NPC",
+  "description": "A non-player character for the DM's NPC bank in One & Done, a grid-based tabletop game: townsfolk, guards, quest givers, companions, rivals. Spawned NPCs are independent copies, so editing a definition never changes NPCs already in a game. All mechanics come from structured fields; `description` is a note for the DM and never drives mechanics. NPCs are FRIENDLY by default: they side with the party, players see their HP, and they can act in any phase without an action limit. The DM can mark any NPC hostile (or friendly again) mid-game, and `hostile: true` makes it start hostile. Which side an NPC is on decides what ability targets mean. Friendly: \"ally\" = heroes and other friendly NPCs, \"enemy\" = monsters and hostile NPCs. Hostile: the reverse. Design abilities for the side the NPC normally starts on. Attacks roll `attack` (always 1d20+N) against the target's Defense; on a hit, roll `damage`. Attacks and damaging abilities only work in combat. Hostile NPCs take the heroes' role bonuses (DPS heroes multiply their damage, default 4×), so size a hostile NPC's maxHp like a monster's. Distances are grid squares (1 = adjacent).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "name",
+    "image",
+    "defense",
+    "movement",
+    "attacks"
+  ],
+  "properties": {
+    "id": {
+      "$ref": "#/$defs/id",
+      "description": "Unique kebab-case id, e.g. \"town-guard\". Must not clash with an existing NPC id."
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 60,
+      "description": "Display name, e.g. \"Innkeeper\" or a proper name like \"Walky the Wize\"."
+    },
+    "image": {
+      "type": "string",
+      "pattern": "^/static/(?:tokens|images)/[A-Za-z0-9_.-]+\\.(?:webp|png|svg|jpg|jpeg|gif)$",
+      "description": "Token image. Use \"/static/tokens/token_NNN.webp\" (NNN 001–213) for people, or \"/static/tokens/monster_NNN.webp\" (NNN 001–071) for creatures."
+    },
+    "maxHp": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9999,
+      "description": "Required unless `immortal`. Typical: commoners 6–8, guards 11–16, notable NPCs (veterans, mages) 25–40. An NPC meant to fight the party should use monster-sized HP."
+    },
+    "defense": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 30,
+      "description": "Number an attack roll must meet or beat to hit. Typical: 10 (commoner), 12–15 (adventurer types), 16 (armored guard)."
+    },
+    "movement": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 20,
+      "description": "Squares per phase. 0 = stationary. Typical 5–6."
+    },
+    "actions": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10,
+      "description": "Actions per DM phase, used only while the NPC is hostile (default 1). Friendly NPCs have no action limit. Leave out unless the NPC is a hostile boss."
+    },
+    "size": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "w",
+        "h"
+      ],
+      "description": "Footprint in squares. Leave out for normal 1×1 NPCs. Range is measured from the nearest edge.",
+      "properties": {
+        "w": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10
+        },
+        "h": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10
+        }
+      }
+    },
+    "hostile": {
+      "type": "boolean",
+      "description": "Default false (friendly). true = the NPC starts on the monsters' side: it acts only in the DM PHASE with `actions` actions, players can't see its HP, and heroes target it as an enemy. Leave out for ordinary NPCs. The DM can flip this mid-game."
+    },
+    "immortal": {
+      "type": "boolean",
+      "description": "true = cannot be downed or killed and has no HP (damage is only recorded). Use rarely, e.g. a story-critical figure or a sparring partner. Omit maxHp when true."
+    },
+    "attacks": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 6,
+      "items": {
+        "$ref": "#/$defs/weaponAttack"
+      },
+      "description": "Weapon attacks, one per action. Empty for NPCs that never fight (merchants, quest givers); otherwise usually 1."
+    },
+    "abilities": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 6,
+      "items": {
+        "$ref": "#/$defs/ability"
+      },
+      "description": "Optional special abilities (same effect engine as heroes). For a friendly NPC, \"ally\" targets are heroes and friendly NPCs and \"enemy\" targets are monsters. Use a \"narrative\" effect for roleplay or utility abilities with no mechanics."
+    },
+    "inventory": {
+      "type": "array",
+      "maxItems": 10,
+      "items": {
+        "$ref": "#/$defs/id",
+        "description": "Item id, kebab-case, e.g. \"room-key\"."
+      },
+      "description": "Optional items the NPC carries, sells or can hand over. Only the DM sees an NPC's inventory."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300,
+      "description": "Optional note for the DM (personality, what they know, what they want). Not shown to players and not used by the game."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "immortal"
+        ],
+        "properties": {
+          "immortal": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "not": {
+          "required": [
+            "maxHp"
+          ]
+        }
+      },
+      "else": {
+        "required": [
+          "maxHp"
+        ]
+      }
+    }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$",
+      "maxLength": 60
+    },
+    "dice": {
+      "type": "string",
+      "maxLength": 40,
+      "pattern": "^(?:[1-9]|[1-4][0-9]|50)d(?:4|6|8|10|12|20)(?:[+-](?:(?:[1-9]|[1-4][0-9]|50)d(?:4|6|8|10|12|20)|[0-9]{1,3}))*$",
+      "description": "Dice expression: NdS terms (S is 4, 6, 8, 10, 12 or 20) and flat modifiers joined by + or -, e.g. \"2d6+3\", \"1d8+1d6\". No spaces."
+    },
+    "attackRoll": {
+      "type": "string",
+      "pattern": "^1d20(?:[+-][0-9]{1,2})?$",
+      "description": "A d20 roll with a flat modifier, e.g. \"1d20+3\". Typical NPC modifiers are +2 (commoner) to +7 (powerful mage or veteran)."
+    },
+    "damageType": {
+      "enum": [
+        "slashing",
+        "piercing",
+        "bludgeoning",
+        "fire",
+        "cold",
+        "lightning",
+        "thunder",
+        "radiant",
+        "necrotic",
+        "arcane",
+        "force",
+        "psychic",
+        "poison",
+        "acid",
+        "nature"
+      ],
+      "description": "Optional. Everything except slashing/piercing/bludgeoning counts as magical (matters for magicalOnly protections). Leave out for plain physical attacks."
+    },
+    "status": {
+      "enum": [
+        "frightened",
+        "snared",
+        "shaken",
+        "poisoned",
+        "slowed"
+      ],
+      "description": "frightened: can't move closer to the caster. snared: movement 0. shaken/poisoned: −2 to hit. slowed: label only (use modify_movement for a real slow)."
+    },
+    "label": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 40,
+      "description": "Name shown on the token and in the feed. Defaults to the ability name."
+    },
+    "when": {
+      "enum": [
+        "attack_hits",
+        "attack_misses"
+      ],
+      "description": "Run this effect only if an earlier attack effect in the same ability hit (or missed)."
+    },
+    "duration": {
+      "description": "How long the effect lasts. current_turn: until this phase ends. until_next_player_phase. next_dm_phase: through the end of the next DM phase (the usual choice). combat: until combat ends. until_used: no time limit, removed when consumed. {\"phases\": N}: N phase transitions.",
+      "oneOf": [
+        {
+          "enum": [
+            "current_turn",
+            "until_next_player_phase",
+            "next_dm_phase",
+            "combat",
+            "until_used"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "phases"
+          ],
+          "properties": {
+            "phases": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20
+            }
+          }
+        }
+      ]
+    },
+    "trigger": {
+      "enum": [
+        "next_hit",
+        "next_magical_hit",
+        "next_attack_against_self",
+        "until_used",
+        "until_next_heal_by_caster"
+      ],
+      "description": "Consumes the effect the first time this happens. Most effects already have a sensible default; only set it to override."
+    },
+    "weaponAttack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "attack",
+        "damage",
+        "range"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "attack": {
+          "$ref": "#/$defs/attackRoll"
+        },
+        "damage": {
+          "$ref": "#/$defs/dice",
+          "description": "Typical: 1d4 (improvised) to 1d6+1 (guard); powerful NPCs up to 2d8+3."
+        },
+        "range": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30,
+          "description": "1 = melee. Ranged attacks and spells are typically 6–10."
+        },
+        "damageType": {
+          "$ref": "#/$defs/damageType"
+        }
+      }
+    },
+    "ability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "actionCost",
+        "range",
+        "effects",
+        "description"
+      ],
+      "description": "Effects run top to bottom. An ability needs at most one picked target: the first effect that targets enemy/ally/ally_or_self/cell decides what the DM picks. A friendly NPC's abilities can be used in any phase and cost no actions (usesPerPhase isn't enforced either), so the DM is the only limit. While hostile, the NPC follows enemy rules: DM PHASE only, and each ability costs actions from its per-phase allowance.",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id",
+          "description": "Unique within this character."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "actionCost": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5,
+          "description": "Actions spent. 1 is normal; 0 means free (pair free abilities with usesPerPhase: 1 unless trivial)."
+        },
+        "range": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30,
+          "description": "Targeting range in squares; 0 for self/around-self abilities."
+        },
+        "usesPerPhase": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "Max uses per combat phase. Required if any effect is grant_actions."
+        },
+        "effects": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 6,
+          "items": {
+            "$ref": "#/$defs/effect"
+          }
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "One DM-facing sentence that matches what the effects actually do."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "type": "object",
+            "required": [
+              "effects"
+            ],
+            "properties": {
+              "effects": {
+                "type": "array",
+                "contains": {
+                  "type": "object",
+                  "required": [
+                    "type"
+                  ],
+                  "properties": {
+                    "type": {
+                      "const": "grant_actions"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "usesPerPhase"
+            ]
+          }
+        },
+        {
+          "if": {
+            "type": "object",
+            "required": [
+              "actionCost"
+            ],
+            "properties": {
+              "actionCost": {
+                "const": 0
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "effects": {
+                "type": "array",
+                "items": {
+                  "if": {
+                    "type": "object",
+                    "required": [
+                      "type"
+                    ],
+                    "properties": {
+                      "type": {
+                        "const": "grant_actions"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "amount": {
+                        "const": 1
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "effect": {
+      "description": "One step of an ability. `type` picks the shape. Target meanings: self; enemy / ally / ally_or_self = the creature the DM picks; cell = a square the DM picks; enemies_in_area / allies_in_area = everyone in a radius; hit_enemies = enemies hit by an earlier attack effect in this ability; checked_enemy = the subject inside roll_to_apply / dm_check outcomes. Omit `target` to use the default.",
+      "discriminator": {
+        "propertyName": "type"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/effect_attack"
+        },
+        {
+          "$ref": "#/$defs/effect_multi_attack"
+        },
+        {
+          "$ref": "#/$defs/effect_area_attack"
+        },
+        {
+          "$ref": "#/$defs/effect_chain_attack"
+        },
+        {
+          "$ref": "#/$defs/effect_heal"
+        },
+        {
+          "$ref": "#/$defs/effect_chain_heal"
+        },
+        {
+          "$ref": "#/$defs/effect_modify_healing"
+        },
+        {
+          "$ref": "#/$defs/effect_grant_protection"
+        },
+        {
+          "$ref": "#/$defs/effect_absorb_next_hit"
+        },
+        {
+          "$ref": "#/$defs/effect_redirect_next_hit"
+        },
+        {
+          "$ref": "#/$defs/effect_defense_bonus"
+        },
+        {
+          "$ref": "#/$defs/effect_modify_damage_received"
+        },
+        {
+          "$ref": "#/$defs/effect_modify_damage_dealt"
+        },
+        {
+          "$ref": "#/$defs/effect_modify_movement"
+        },
+        {
+          "$ref": "#/$defs/effect_taunt"
+        },
+        {
+          "$ref": "#/$defs/effect_reduce_actions"
+        },
+        {
+          "$ref": "#/$defs/effect_mark_target"
+        },
+        {
+          "$ref": "#/$defs/effect_grant_roll_bonus"
+        },
+        {
+          "$ref": "#/$defs/effect_apply_status"
+        },
+        {
+          "$ref": "#/$defs/effect_remove_status"
+        },
+        {
+          "$ref": "#/$defs/effect_discourage_attacks"
+        },
+        {
+          "$ref": "#/$defs/effect_grant_actions"
+        },
+        {
+          "$ref": "#/$defs/effect_teleport"
+        },
+        {
+          "$ref": "#/$defs/effect_narrative"
+        },
+        {
+          "$ref": "#/$defs/effect_create_barrier"
+        },
+        {
+          "$ref": "#/$defs/effect_healing_aura"
+        },
+        {
+          "$ref": "#/$defs/effect_roll_to_apply"
+        },
+        {
+          "$ref": "#/$defs/effect_dm_check"
+        }
+      ]
+    },
+    "nestedEffects": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4,
+      "items": {
+        "$ref": "#/$defs/effect"
+      },
+      "description": "Effects applied to the subject; target them at \"checked_enemy\" (or \"self\" for the caster)."
+    },
+    "effect_attack": {
+      "type": "object",
+      "description": "One attack roll against the target's Defense, then damage on a hit.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "attack",
+        "damage"
+      ],
+      "properties": {
+        "type": {
+          "const": "attack"
+        },
+        "target": {
+          "enum": [
+            "enemy",
+            "checked_enemy"
+          ]
+        },
+        "range": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30,
+          "description": "Max distance in grid squares to the picked target. Usually equal to the ability range."
+        },
+        "attack": {
+          "$ref": "#/$defs/attackRoll"
+        },
+        "damage": {
+          "$ref": "#/$defs/dice",
+          "description": "Damage dice rolled on a hit, e.g. \"2d8+2\". A crit doubles the dice, not the modifier."
+        },
+        "attackBonus": {
+          "type": "integer",
+          "minimum": -10,
+          "maximum": 10,
+          "description": "Flat bonus added to the attack roll. Usually leave out and put the bonus in `attack`."
+        },
+        "defenseReduction": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 20,
+          "description": "Treat the target's Defense as this much lower for this attack only."
+        },
+        "damageBonus": {
+          "type": "integer",
+          "minimum": -20,
+          "maximum": 50,
+          "description": "Flat bonus added to the damage roll. Usually leave out and put it in `damage`."
+        },
+        "damageType": {
+          "$ref": "#/$defs/damageType"
+        },
+        "when": {
+          "$ref": "#/$defs/when"
+        }
+      }
+    },
+    "effect_multi_attack": {
+      "type": "object",
+      "description": "Several independent strikes on one target (each its own attack and damage roll). The ability pays actionCost once. Remaining strikes are lost if the target dies.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "attack",
+        "damage",
+        "count"
+      ],
+      "properties": {
+        "type": {
+          "const": "multi_attack"
+        },
+        "target": {
+          "enum": [
+            "enemy",
+            "checked_enemy"
+          ]
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 10,
+          "description": "Number of strikes."
+        },
+        "range": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30,
+          "description": "Max distance in grid squares to the picked target. Usually equal to the ability range."
+        },
+        "attack": {
+          "$ref": "#/$defs/attackRoll"
+        },
+        "damage": {
+          "$ref": "#/$defs/dice",
+          "description": "Damage dice rolled on a hit, e.g. \"2d8+2\". A crit doubles the dice, not the modifier."
+        },
+        "attackBonus": {
+          "type": "integer",
+          "minimum": -10,
+          "maximum": 10,
+          "description": "Flat bonus added to the attack roll. Usually leave out and put the bonus in `attack`."
+        },
+        "defenseReduction": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 20,
+          "description": "Treat the target's Defense as this much lower for this attack only."
+        },
+        "damageBonus": {
+          "type": "integer",
+          "minimum": -20,
+          "maximum": 50,
+          "description": "Flat bonus added to the damage roll. Usually leave out and put it in `damage`."
+        },
+        "damageType": {
+          "$ref": "#/$defs/damageType"
+        },
+        "when": {
+          "$ref": "#/$defs/when"
+        }
+      }
+    },
+    "effect_area_attack": {
+      "type": "object",
+      "description": "Every enemy within `radius` of the center gets its own attack roll and damage roll.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "attack",
+        "damage",
+        "radius"
+      ],
+      "properties": {
+        "type": {
+          "const": "area_attack"
+        },
+        "target": {
+          "enum": [
+            "enemies_in_area"
+          ]
+        },
+        "center": {
+          "enum": [
+            "self",
+            "target"
+          ],
+          "description": "\"self\" = burst around the caster (set ability range 0). \"target\" = player picks an enemy within `range` and the burst centers on it. Default \"self\"."
+        },
+        "radius": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Burst radius in squares (default 1)."
+        },
+        "range": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30,
+          "description": "Max distance in grid squares to the picked target. Usually equal to the ability range."
+        },
+        "attack": {
+          "$ref": "#/$defs/attackRoll"
+        },
+        "damage": {
+          "$ref": "#/$defs/dice",
+          "description": "Damage dice rolled on a hit, e.g. \"2d8+2\". A crit doubles the dice, not the modifier."
+        },
+        "attackBonus": {
+          "type": "integer",
+          "minimum": -10,
+          "maximum": 10,
+          "description": "Flat bonus added to the attack roll. Usually leave out and put the bonus in `attack`."
+        },
+        "defenseReduction": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 20,
+          "description": "Treat the target's Defense as this much lower for this attack only."
+        },
+        "damageBonus": {
+          "type": "integer",
+          "minimum": -20,
+          "maximum": 50,
+          "description": "Flat bonus added to the damage roll. Usually leave out and put it in `damage`."
+        },
+        "damageType": {
+          "$ref": "#/$defs/damageType"
+        },
+        "when": {
+          "$ref": "#/$defs/when"
+        }
+      }
+    },
+    "effect_chain_attack": {
+      "type": "object",
+      "description": "Hits the picked enemy, then up to `jumps` more enemies the DM picks; each jump must be within `jumpRange` of the previous target, no repeats.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "attack",
+        "damage",
+        "jumps"
+      ],
+      "properties": {
+        "type": {
+          "const": "chain_attack"
+        },
+        "target": {
+          "enum": [
+            "enemy",
+            "checked_enemy"
+          ]
+        },
+        "jumps": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "jumpRange": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20,
+          "description": "Max squares between chain links (default 3)."
+        },
+        "range": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30,
+          "description": "Max distance in grid squares to the picked target. Usually equal to the ability range."
+        },
+        "attack": {
+          "$ref": "#/$defs/attackRoll"
+        },
+        "damage": {
+          "$ref": "#/$defs/dice",
+          "description": "Damage dice rolled on a hit, e.g. \"2d8+2\". A crit doubles the dice, not the modifier."
+        },
+        "attackBonus": {
+          "type": "integer",
+          "minimum": -10,
+          "maximum": 10,
+          "description": "Flat bonus added to the attack roll. Usually leave out and put the bonus in `attack`."
+        },
+        "defenseReduction": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 20,
+          "description": "Treat the target's Defense as this much lower for this attack only."
+        },
+        "damageBonus": {
+          "type": "integer",
+          "minimum": -20,
+          "maximum": 50,
+          "description": "Flat bonus added to the damage roll. Usually leave out and put it in `damage`."
+        },
+        "damageType": {
+          "$ref": "#/$defs/damageType"
+        },
+        "when": {
+          "$ref": "#/$defs/when"
+        }
+      }
+    },
+    "effect_heal": {
+      "type": "object",
+      "description": "Rolls `heal` and restores that much HP (capped at max HP). Dead creatures cannot be healed.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "heal"
+      ],
+      "properties": {
+        "type": {
+          "const": "heal"
+        },
+        "target": {
+          "enum": [
+            "self",
+            "ally",
+            "ally_or_self",
+            "allies_in_area"
+          ],
+          "description": "\"allies_in_area\" heals every ally (and the caster) within `radius` of the caster."
+        },
+        "heal": {
+          "$ref": "#/$defs/dice"
+        },
+        "radius": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Only with target \"allies_in_area\" (default 1)."
+        },
+        "range": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30,
+          "description": "Max distance in grid squares to the picked target. Usually equal to the ability range."
+        },
+        "when": {
+          "$ref": "#/$defs/when"
+        }
+      }
+    },
+    "effect_chain_heal": {
+      "type": "object",
+      "description": "Heals the picked ally, then up to `jumps` more wounded allies the DM picks, each within `jumpRange` of the previous one. Each heal is rolled separately.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "heal",
+        "jumps"
+      ],
+      "properties": {
+        "type": {
+          "const": "chain_heal"
+        },
+        "target": {
+          "enum": [
+            "ally_or_self",
+            "ally"
+          ]
+        },
+        "heal": {
+          "$ref": "#/$defs/dice"
+        },
+        "jumps": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "jumpRange": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20,
+          "description": "Default 3."
+        },
+        "range": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30,
+          "description": "Max distance in grid squares to the picked target. Usually equal to the ability range."
+        },
+        "when": {
+          "$ref": "#/$defs/when"
+        }
+      }
+    },
+    "effect_modify_healing": {
+      "type": "object",
+      "description": "The caster's next heal on the target gets +amount.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "amount"
+      ],
+      "properties": {
+        "type": {
+          "const": "modify_healing"
+        },
+        "target": {
+          "enum": [
+            "ally",
+            "ally_or_self"
+          ]
+        },
+        "amount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 50
+        },
+        "range": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30,
+          "description": "Max distance in grid squares to the picked target. Usually equal to the ability range."
+        },
+        "label": {
+          "$ref": "#/$defs/label"
+        },
+        "duration": {
+          "$ref": "#/$defs/duration"
+        },
+        "trigger": {
+          "$ref": "#/$defs/trigger"
+        },
+        "when": {
+          "$ref": "#/$defs/when"
+        }
+      }
+    },
+    "effect_grant_protection": {
+      "type": "object",
+      "description": "The holder's next incoming hit is reduced by `fraction` (default 0.5) or by a flat `amount`. Set one, not both.",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": "grant_protection"
+        },
+        "target": {
+          "enum": [
+            "self",
+            "ally",
+            "ally_or_self"
+          ]
+        },
+        "fraction": {
+          "type": "number",
+          "minimum": 0.05,
+          "maximum": 1,
+          "description": "0.5 halves the hit."
+        },
+        "amount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "magicalOnly": {
+          "type": "boolean",
+          "description": "Only magical hits (fire, cold, lightning, …) are reduced."
+        },
+        "range": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30,
+          "description": "Max distance in grid squares to the picked target. Usually equal to the ability range."
+        },
+        "label": {
+          "$ref": "#/$defs/label"
+        },
+        "duration": {
+          "$ref": "#/$defs/duration"
+        },
+        "trigger": {
+          "$ref": "#/$defs/trigger"
+        },
+        "when": {
+          "$ref": "#/$defs/when"
+        }
+      }
+    },
+    "effect_absorb_next_hit": {
+      "type": "object",
+      "description": "The holder's next incoming hit deals 0 damage.",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": "absorb_next_hit"
+        },
+        "target": {
+          "enum": [
+            "self",
+            "ally",
+            "ally_or_self"
+          ]
+        },
+        "magicalOnly": {
+          "type": "boolean",
+          "description": "Only absorbs a magical hit."
+        },
+        "range": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30,
+          "description": "Max distance in grid squares to the picked target. Usually equal to the ability range."
+        },
+        "label": {
+          "$ref": "#/$defs/label"
+        },
+        "duration": {
+          "$ref": "#/$defs/duration"
+        },
+        "trigger": {
+          "$ref": "#/$defs/trigger"
+        },
+        "when": {
+          "$ref": "#/$defs/when"
+        }
+      }
+    },
+    "effect_redirect_next_hit": {
+      "type": "object",
+      "description": "Placed on an ally: their next incoming hit lands on the caster instead.",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": "redirect_next_hit"
+        },
+        "target": {
+          "enum": [
+            "ally"
+          ]
+        },
+        "range": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30,
+          "description": "Max distance in grid squares to the picked target. Usually equal to the ability range."
+        },
+        "label": {
+          "$ref": "#/$defs/label"
+        },
+        "duration": {
+          "$ref": "#/$defs/duration"
+        },
+        "trigger": {
+          "$ref": "#/$defs/trigger"
+        },
+        "when": {
+          "$ref": "#/$defs/when"
+        }
+      }
+    },
+    "effect_defense_bonus": {
+      "type": "object",
+      "description": "Defense modifier (negative = penalty). Default duration: until the next player phase.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "amount"
+      ],
+      "properties": {
+        "type": {
+          "const": "defense_bonus"
+        },
+        "target": {
+          "enum": [
+            "self",
+            "ally",
+            "ally_or_self",
+            "enemy",
+            "checked_enemy",
+            "hit_enemies"
+          ]
+        },
+        "amount": {
+          "type": "integer",
+          "minimum": -10,
+          "maximum": 10
+        },
+        "radius": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "If set, also applies to every ally within this radius of the caster (the caster always gets it)."
+        },
+        "range": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30,
+          "description": "Max distance in grid squares to the picked target. Usually equal to the ability range."
+        },
+        "label": {
+          "$ref": "#/$defs/label"
+        },
+        "duration": {
+          "$ref": "#/$defs/duration"
+        },
+        "trigger": {
+          "$ref": "#/$defs/trigger"
+        },
+        "when": {
+          "$ref": "#/$defs/when"
+        }
+      }
+    },
+    "effect_modify_damage_received": {
+      "type": "object",
+      "description": "Changes the damage the holder takes from hits: +amount / ×multiplier. Set at least one.",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": "modify_damage_received"
+        },
+        "target": {
+          "enum": [
+            "self",
+            "ally",
+            "ally_or_self",
+            "enemy",
+            "checked_enemy",
+            "hit_enemies"
+          ]
+        },
+        "amount": {
+          "type": "integer",
+          "minimum": -50,
+          "maximum": 50
+        },
+        "multiplier": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 5
+        },
+        "label": {
+          "$ref": "#/$defs/label"
+        },
+        "duration": {
+          "$ref": "#/$defs/duration"
+        },
+        "trigger": {
+          "$ref": "#/$defs/trigger"
+        },
+        "when": {
+          "$ref": "#/$defs/when"
+        }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "amount"
+          ]
+        },
+        {
+          "required": [
+            "multiplier"
+          ]
+        }
+      ]
+    },
+    "effect_modify_damage_dealt": {
+      "type": "object",
+      "description": "Changes the holder's next hit: +amount / ×multiplier (0.5 halves it). Set at least one. Default trigger next_hit.",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": "modify_damage_dealt"
+        },
+        "target": {
+          "enum": [
+            "self",
+            "ally",
+            "ally_or_self",
+            "enemy",
+            "checked_enemy",
+            "hit_enemies"
+          ]
+        },
+        "amount": {
+          "type": "integer",
+          "minimum": -50,
+          "maximum": 50
+        },
+        "multiplier": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 5
+        },
+        "label": {
+          "$ref": "#/$defs/label"
+        },
+        "duration": {
+          "$ref": "#/$defs/duration"
+        },
+        "trigger": {
+          "$ref": "#/$defs/trigger"
+        },
+        "when": {
+          "$ref": "#/$defs/when"
+        }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "amount"
+          ]
+        },
+        {
+          "required": [
+            "multiplier"
+          ]
+        }
+      ]
+    },
+    "effect_modify_movement": {
+      "type": "object",
+      "description": "Movement modifier. Negative values show as Slowed. Use duration \"current_turn\" for a self dash.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "amount"
+      ],
+      "properties": {
+        "type": {
+          "const": "modify_movement"
+        },
+        "target": {
+          "enum": [
+            "self",
+            "ally",
+            "ally_or_self",
+            "enemy",
+            "checked_enemy",
+            "hit_enemies"
+          ]
+        },
+        "amount": {
+          "type": "integer",
+          "minimum": -20,
+          "maximum": 20
+        },
+        "label": {
+          "$ref": "#/$defs/label"
+        },
+        "duration": {
+          "$ref": "#/$defs/duration"
+        },
+        "trigger": {
+          "$ref": "#/$defs/trigger"
+        },
+        "when": {
+          "$ref": "#/$defs/when"
+        }
+      }
+    },
+    "effect_taunt": {
+      "type": "object",
+      "description": "While the taunter is a valid target, the taunted enemy's attacks must target the taunter.",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": "taunt"
+        },
+        "target": {
+          "enum": [
+            "enemy",
+            "checked_enemy",
+            "hit_enemies"
+          ]
+        },
+        "radius": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "If set, taunts every enemy within this radius of the caster instead of one target."
+        },
+        "label": {
+          "$ref": "#/$defs/label"
+        },
+        "duration": {
+          "$ref": "#/$defs/duration"
+        },
+        "trigger": {
+          "$ref": "#/$defs/trigger"
+        },
+        "when": {
+          "$ref": "#/$defs/when"
+        }
+      }
+    },
+    "effect_reduce_actions": {
+      "type": "object",
+      "description": "Lowers the target's action allowance (never below 0). Default duration: next DM phase.",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": "reduce_actions"
+        },
+        "target": {
+          "enum": [
+            "enemy",
+            "checked_enemy",
+            "hit_enemies"
+          ]
+        },
+        "amount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "label": {
+          "$ref": "#/$defs/label"
+        },
+        "duration": {
+          "$ref": "#/$defs/duration"
+        },
+        "trigger": {
+          "$ref": "#/$defs/trigger"
+        },
+        "when": {
+          "$ref": "#/$defs/when"
+        }
+      }
+    },
+    "effect_mark_target": {
+      "type": "object",
+      "description": "The caster's next hit on the target adds `bonus` damage dice.",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": "mark_target"
+        },
+        "target": {
+          "enum": [
+            "enemy",
+            "checked_enemy",
+            "hit_enemies"
+          ]
+        },
+        "bonus": {
+          "$ref": "#/$defs/dice",
+          "description": "Default 1d6."
+        },
+        "range": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30,
+          "description": "Max distance in grid squares to the picked target. Usually equal to the ability range."
+        },
+        "label": {
+          "$ref": "#/$defs/label"
+        },
+        "duration": {
+          "$ref": "#/$defs/duration"
+        },
+        "trigger": {
+          "$ref": "#/$defs/trigger"
+        },
+        "when": {
+          "$ref": "#/$defs/when"
+        }
+      }
+    },
+    "effect_grant_roll_bonus": {
+      "type": "object",
+      "description": "Adds `bonus` to the holder's next attack or check roll.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "bonus"
+      ],
+      "properties": {
+        "type": {
+          "const": "grant_roll_bonus"
+        },
+        "target": {
+          "enum": [
+            "self",
+            "ally",
+            "ally_or_self"
+          ]
+        },
+        "bonus": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/dice"
+            },
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10
+            }
+          ],
+          "description": "Dice like \"1d6\" or a whole number."
+        },
+        "range": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30,
+          "description": "Max distance in grid squares to the picked target. Usually equal to the ability range."
+        },
+        "label": {
+          "$ref": "#/$defs/label"
+        },
+        "duration": {
+          "$ref": "#/$defs/duration"
+        },
+        "trigger": {
+          "$ref": "#/$defs/trigger"
+        },
+        "when": {
+          "$ref": "#/$defs/when"
+        }
+      }
+    },
+    "effect_apply_status": {
+      "type": "object",
+      "description": "Applies a status. To affect a whole area, wrap this in roll_to_apply with a radius.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "status"
+      ],
+      "properties": {
+        "type": {
+          "const": "apply_status"
+        },
+        "target": {
+          "enum": [
+            "enemy",
+            "checked_enemy",
+            "hit_enemies"
+          ]
+        },
+        "status": {
+          "$ref": "#/$defs/status"
+        },
+        "label": {
+          "$ref": "#/$defs/label"
+        },
+        "duration": {
+          "$ref": "#/$defs/duration"
+        },
+        "trigger": {
+          "$ref": "#/$defs/trigger"
+        },
+        "when": {
+          "$ref": "#/$defs/when"
+        }
+      }
+    },
+    "effect_remove_status": {
+      "type": "object",
+      "description": "Removes every instance of a status from the target.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "status"
+      ],
+      "properties": {
+        "type": {
+          "const": "remove_status"
+        },
+        "target": {
+          "enum": [
+            "self",
+            "ally",
+            "ally_or_self"
+          ]
+        },
+        "status": {
+          "$ref": "#/$defs/status"
+        },
+        "when": {
+          "$ref": "#/$defs/when"
+        }
+      }
+    },
+    "effect_discourage_attacks": {
+      "type": "object",
+      "description": "Attacks against the holder take −penalty to hit.",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": "discourage_attacks"
+        },
+        "target": {
+          "enum": [
+            "self",
+            "ally",
+            "ally_or_self"
+          ]
+        },
+        "penalty": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "Default 5."
+        },
+        "range": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30,
+          "description": "Max distance in grid squares to the picked target. Usually equal to the ability range."
+        },
+        "label": {
+          "$ref": "#/$defs/label"
+        },
+        "duration": {
+          "$ref": "#/$defs/duration"
+        },
+        "trigger": {
+          "$ref": "#/$defs/trigger"
+        },
+        "when": {
+          "$ref": "#/$defs/when"
+        }
+      }
+    },
+    "effect_grant_actions": {
+      "type": "object",
+      "description": "Extra actions this phase. The ability MUST set usesPerPhase, and total granted ≤ actionCost + 1.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "amount"
+      ],
+      "properties": {
+        "type": {
+          "const": "grant_actions"
+        },
+        "target": {
+          "enum": [
+            "self"
+          ]
+        },
+        "amount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3
+        },
+        "when": {
+          "$ref": "#/$defs/when"
+        }
+      }
+    },
+    "effect_teleport": {
+      "type": "object",
+      "description": "Moves the caster to the square the DM picks, up to `distance` away. Set the ability range equal to distance.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "distance"
+      ],
+      "properties": {
+        "type": {
+          "const": "teleport"
+        },
+        "target": {
+          "enum": [
+            "cell"
+          ]
+        },
+        "distance": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 30
+        },
+        "when": {
+          "$ref": "#/$defs/when"
+        }
+      }
+    },
+    "effect_narrative": {
+      "type": "object",
+      "description": "Records the use (and optional roll) in the feed; the DM decides the outcome. Use for utility/roleplay abilities with no mechanical effect.",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": "narrative"
+        },
+        "target": {
+          "enum": [
+            "self"
+          ]
+        },
+        "roll": {
+          "$ref": "#/$defs/dice"
+        },
+        "when": {
+          "$ref": "#/$defs/when"
+        }
+      }
+    },
+    "effect_create_barrier": {
+      "type": "object",
+      "description": "Places a temporary object token on the picked square. Visual cover only; the DM adjudicates.",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": "create_barrier"
+        },
+        "target": {
+          "enum": [
+            "cell"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "duration": {
+          "$ref": "#/$defs/duration"
+        },
+        "range": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "when": {
+          "$ref": "#/$defs/when"
+        }
+      }
+    },
+    "effect_healing_aura": {
+      "type": "object",
+      "description": "Places a totem on the picked square. At the start of each of the next `pulses` player phases it heals friendlies within `radius`.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "heal"
+      ],
+      "properties": {
+        "type": {
+          "const": "healing_aura"
+        },
+        "target": {
+          "enum": [
+            "cell"
+          ]
+        },
+        "heal": {
+          "$ref": "#/$defs/dice"
+        },
+        "radius": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Default 2."
+        },
+        "pulses": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "Default 2."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "range": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "when": {
+          "$ref": "#/$defs/when"
+        }
+      }
+    },
+    "effect_roll_to_apply": {
+      "type": "object",
+      "description": "The CASTER rolls `roll` against each subject's Defense, like an attack (nat 20 always succeeds, nat 1 always fails). onSuccess runs when the caster's roll meets or beats the Defense, which is the same as the target failing to resist; onFailure runs when the target resists. This is NOT a D&D saving throw: there is no DC, no save roll by the target, and no `dc`, `onFail` or `onSave` field. Put the debuff in onSuccess. Use for debuffs that should be resistible.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "roll",
+        "onSuccess"
+      ],
+      "properties": {
+        "type": {
+          "const": "roll_to_apply"
+        },
+        "target": {
+          "enum": [
+            "enemy",
+            "enemies_in_area",
+            "hit_enemies",
+            "checked_enemy"
+          ]
+        },
+        "roll": {
+          "$ref": "#/$defs/attackRoll"
+        },
+        "radius": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "If set, every enemy within this radius of the caster is a subject (set ability range 0)."
+        },
+        "range": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30,
+          "description": "Max distance in grid squares to the picked target. Usually equal to the ability range."
+        },
+        "onSuccess": {
+          "$ref": "#/$defs/nestedEffects",
+          "description": "Runs on each subject the caster's roll beat (the target failed to resist). Put the debuff here."
+        },
+        "onFailure": {
+          "$ref": "#/$defs/nestedEffects",
+          "description": "Runs on each subject that resisted. Usually left out."
+        },
+        "when": {
+          "$ref": "#/$defs/when"
+        }
+      }
+    },
+    "effect_dm_check": {
+      "type": "object",
+      "description": "Rolls `roll` and creates a pending check; the DM clicks Success or Failure, which runs onSuccess/onFailure on the subject.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "roll"
+      ],
+      "properties": {
+        "type": {
+          "const": "dm_check"
+        },
+        "target": {
+          "enum": [
+            "enemy",
+            "hit_enemies",
+            "self",
+            "ally",
+            "ally_or_self",
+            "checked_enemy"
+          ]
+        },
+        "roll": {
+          "$ref": "#/$defs/attackRoll"
+        },
+        "onSuccess": {
+          "$ref": "#/$defs/nestedEffects",
+          "description": "Runs if the DM rules the check a success for the caster."
+        },
+        "onFailure": {
+          "$ref": "#/$defs/nestedEffects",
+          "description": "Runs if the DM rules the check a failure for the caster."
+        },
+        "when": {
+          "$ref": "#/$defs/when"
+        }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "onSuccess"
+          ]
+        },
+        {
+          "required": [
+            "onFailure"
+          ]
+        }
+      ]
+    }
+  }
+}

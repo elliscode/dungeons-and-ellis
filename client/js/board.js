@@ -5,7 +5,7 @@ const DRAG_THRESHOLD = 5;
 
 // Renders a scene (background + independent grid) and tokens. Used by the player view, the DM
 // view, and the scene editor. Tokens are plain descriptors:
-//   { id, kind, name, image, size:{w,h}, position:{x,y}, z, hp?, maxHp?, status, color?, obstacle? }
+//   { id, kind, name, image, size:{w,h}, position:{x,y}, z, hp?, maxHp?, status, color? }
 export class Board {
   constructor(root, opts = {}) {
     this.opts = opts;
@@ -24,11 +24,10 @@ export class Board {
     this.bg = h('img.board-bg', { alt: '', draggable: false });
     this.grid = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     this.grid.classList.add('board-grid');
-    this.objectLayer = h('div.layer.objects');
     this.hlLayer = h('div.layer.highlights');
     this.tokenLayer = h('div.layer.tokens');
     this.fxLayer = h('div.layer.fx');
-    this.stage.append(this.bg, this.grid, this.objectLayer, this.hlLayer, this.tokenLayer, this.fxLayer);
+    this.stage.append(this.bg, this.grid, this.hlLayer, this.tokenLayer, this.fxLayer);
     this.sizer = h('div.board-sizer');
     this.sizer.append(this.stage);
     this.viewport.append(this.sizer);
@@ -68,7 +67,7 @@ export class Board {
   get cell() { return this.scene?.grid.cellSize ?? 64; }
 
   setScene(scene) {
-    const key = scene ? JSON.stringify([scene.id, scene.background, scene.bgScale, scene.grid, scene.objects]) : null;
+    const key = scene ? JSON.stringify([scene.id, scene.background, scene.bgScale, scene.grid]) : null;
     if (key === this.sceneKey) return;
     const firstForScene = scene?.id !== this.scene?.id;
     this.sceneKey = key;
@@ -82,7 +81,6 @@ export class Board {
       this.bg.classList.add('hidden');
     }
     this.drawGrid();
-    this.drawObjects();
     this.layout();
     if (firstForScene) this.autoFit = true;
     if (this.autoFit) this.fit();
@@ -140,17 +138,6 @@ export class Board {
       const sp = this.scene.spawn ?? { x: 0, y: g.rows - 1 };
       svg.innerHTML += `<rect class="spawn-mark" x="${sp.x * g.cellSize + 3}" y="${sp.y * g.cellSize + 3}" width="${g.cellSize - 6}" height="${g.cellSize - 6}" rx="6"/>
         <text class="spawn-text" x="${(sp.x + 0.5) * g.cellSize}" y="${(sp.y + 0.5) * g.cellSize}" text-anchor="middle" dominant-baseline="central" font-size="${g.cellSize * 0.24}">SPAWN</text>`;
-    }
-  }
-
-  drawObjects() {
-    this.objectLayer.replaceChildren();
-    for (const o of this.scene.objects ?? []) {
-      const el = h('div.object', { title: o.label || '' });
-      this.placeRect(el, o.x, o.y, o.w, o.h);
-      if (o.image) el.append(h('img', { src: o.image, alt: o.label || '', draggable: false }));
-      if (o.label) el.append(h('div.object-label', {}, o.label));
-      this.objectLayer.append(el);
     }
   }
 
@@ -220,7 +207,6 @@ export class Board {
       if (v.selectedId === t.id) el.classList.add('selected');
       if (v.targetIds?.has(t.id)) el.classList.add('targetable');
       if (v.targetIds && !v.targetIds.has(t.id) && !mine) el.classList.add('dimmed');
-      if (t.obstacle) el.classList.add('obstacle');
       if (t.color) el.style.setProperty('--ring', t.color);
       const big = t.size.w > 1 || t.size.h > 1;
       const body = h(`div.token-body${big ? '.big' : ''}`);

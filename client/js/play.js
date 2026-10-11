@@ -2,7 +2,7 @@ import { io } from '/socket.io/socket.io.esm.min.js';
 import { $, fill, h, toast, sendCmd, popupMenu, closeMenu, combatBar, ROLE_LABELS, ROLE_ICONS, PLAYER_COLORS } from './common.js';
 import { Board } from './board.js';
 import { GameFeed } from './panel.js';
-import { startAbility, abilitySummary, distance } from './abilities.js';
+import { startAbility, abilitySummary, distance, sideOf } from './abilities.js';
 
 const token = decodeURIComponent(location.pathname.split('/').pop());
 const SEAT_KEY = `dne:seat:${token}`;
@@ -165,7 +165,7 @@ function onTokenClick(t, e, stack) {
   }
 }
 
-const isFoe = (me) => (e) => e.id !== me.id && e.kind !== 'object';
+const isFoe = (me) => (e) => !!sideOf(e) && sideOf(e) !== sideOf(me);
 
 function onSegment(seg, t, e) {
   const a = availability();

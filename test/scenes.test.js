@@ -32,6 +32,20 @@ test('editing a template does not change existing instances', () => {
   assert.equal(state().scenes[s1].name, 'Cave');
 });
 
+test('scene templates hold only creatures: objects are dropped on save and never reach a game', () => {
+  const { run, state, templates } = setup();
+  const t = templates.create({
+    name: 'Old', grid: { cols: 6, rows: 6 },
+    objects: [{ id: 'o1', image: '/static/images/crate.png', x: 1, y: 1, w: 1, h: 1, obstacle: true }],
+    entities: [{ kind: 'monster', defId: 'rat', x: 2, y: 2 }],
+  });
+  assert.equal(templates.get(t.id).data.objects, undefined);
+  assert.equal(templates.get(t.id).data.entities.length, 1);
+  assert.equal(templates.imageRefs().get('/static/images/crate.png'), undefined);
+  const sid = ok(run(DM, { type: 'scene.add', templateId: t.id })).sceneId;
+  assert.equal(state().scenes[sid].objects, undefined);
+});
+
 test('scene switching: PCs and game-scoped entities follow, scene-scoped entities stay', () => {
   const { run, state, tpl, tpl2, join } = setup();
   const a = join('Ana');

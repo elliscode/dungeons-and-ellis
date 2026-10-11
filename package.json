@@ -14,7 +14,10 @@
     "placeholders": "node scripts/gen-placeholders.js",
     "validate:characters": "node scripts/validate-characters.js",
     "validate:monsters": "node scripts/validate-monsters.js",
-    "build:monster-schema": "node scripts/build-monster-schema.js"
+    "validate:npcs": "node scripts/validate-npcs.js",
+    "build:monster-schema": "node scripts/build-monster-schema.js",
+    "build:npc-schema": "node scripts/build-npc-schema.js",
+    "build:schemas": "node scripts/build-monster-schema.js && node scripts/build-npc-schema.js"
   },
   "dependencies": {
     "express": "^5.2.1",

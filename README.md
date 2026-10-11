@@ -19,7 +19,7 @@ npm test                  # unit + socket integration tests
 
 ## How it works
 
-- **Scenes** (DM home → Scenes) are reusable map templates. Each one has a background, an independent grid (columns, rows, cell size, offset), objects and obstacles, starting NPC/monster placements, and a player spawn square. The default spawn is the bottom-left square.
+- **Scenes** (DM home → Scenes) are reusable map templates. Each one has a background, an independent grid (columns, rows, cell size, offset), starting NPC/monster placements, and a player spawn square. The default spawn is the bottom-left square.
 - **Games** are actual adventures. When you add a scene to a game, the game gets its own live copy (a *scene instance*). Moving or hurting things in a game never changes the template, and editing the template later never changes games that already use it.
 - **Players** open the game link, enter a name, pick Tank / DPS / Heal, and then pick a hero. They can do all of this before the DM shows up. The browser remembers each seat as a `playerId` plus a server-issued secret, so refreshing or reconnecting puts the player back on the same hero. Name changes keep the seat, color, and hero.
 - **DM controls** (Games → Open):
@@ -41,7 +41,7 @@ npm test                  # unit + socket integration tests
 
 ## Content
 
-To generate new heroes or monsters with an LLM, use the JSON Schemas in `schemas/`. See [docs/CHARACTER_GENERATION.md](docs/CHARACTER_GENERATION.md) and [docs/MONSTER_GENERATION.md](docs/MONSTER_GENERATION.md). Check the results with `npm run validate:characters` or `npm run validate:monsters`.
+To generate new heroes, monsters or NPCs with an LLM, use the JSON Schemas in `schemas/`. See [docs/CHARACTER_GENERATION.md](docs/CHARACTER_GENERATION.md), [docs/MONSTER_GENERATION.md](docs/MONSTER_GENERATION.md) and [docs/NPC_GENERATION.md](docs/NPC_GENERATION.md). Check the results with `npm run validate:characters`, `npm run validate:monsters` or `npm run validate:npcs`.
 
 Manage content from the DM home page; no restart is needed:
 

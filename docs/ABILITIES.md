@@ -2,7 +2,7 @@
 
 Every ability for every hero, NPC, and monster resolves on the server through one engine (`server/games/effects.js`). Ability text in `description` is only shown in the UI; it never drives mechanics.
 
-To generate new heroes with an LLM, see [CHARACTER_GENERATION.md](CHARACTER_GENERATION.md) and `schemas/character.schema.json`. For monsters, see [MONSTER_GENERATION.md](MONSTER_GENERATION.md) and `schemas/monster.schema.json`.
+To generate new heroes with an LLM, see [CHARACTER_GENERATION.md](CHARACTER_GENERATION.md) and `schemas/character.schema.json`. For monsters, see [MONSTER_GENERATION.md](MONSTER_GENERATION.md) and `schemas/monster.schema.json`. For NPCs, see [NPC_GENERATION.md](NPC_GENERATION.md) and `schemas/npc.schema.json`.
 
 ## Ability schema
 

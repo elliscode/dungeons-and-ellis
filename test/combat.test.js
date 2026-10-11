@@ -175,3 +175,20 @@ test('failed commands leave state untouched', () => {
   assert.equal(run(a, { type: 'act', entityId: ea, text: 'Dance', roll: '1d7' }).ok, false);
   assert.equal(JSON.stringify(state()), before);
 });
+
+test('players can only weapon-attack the other side; the DM can still force friendly fire', () => {
+  const { run, a, ea, eb, gob, state } = arena();
+  ok(run(DM, { type: 'move', entityId: ea, x: 0, y: 7, force: true }));
+  ok(run(DM, { type: 'move', entityId: eb, x: 1, y: 6, force: true }));
+  const guard = ok(run(DM, { type: 'entity.spawn', kind: 'npc', defId: 'town-guard', x: 0, y: 6 })).entityId;
+  const bandit = ok(run(DM, { type: 'entity.spawn', kind: 'npc', defId: 'merchant', x: 2, y: 7 })).entityId;
+  ok(run(DM, { type: 'entity.setHostile', entityId: bandit, hostile: true }));
+  ok(run(DM, { type: 'combat.start' }));
+  const hit = (target) => run(a, { type: 'attack', entityId: ea, attackId: 'throwing-knife', targetId: target });
+  assert.match(hit(eb).error, /not an enemy/, 'another PC');
+  assert.match(hit(guard).error, /not an enemy/, 'a friendly NPC');
+  assert.equal(state().turn[ea]?.actions ?? 0, 0, 'a refused attack spends no action');
+  ok(hit(bandit), 'a hostile NPC');
+  assert.match(hit(gob).error, /no actions left/);
+  ok(run(DM, { type: 'attack', entityId: eb, attackId: 'mace', targetId: ea }), 'DM-forced friendly fire');
+});

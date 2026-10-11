@@ -29,7 +29,7 @@ const monster = (extra = {}) => ({
 
 test('monster.schema.json is up to date with character.schema.json', () => {
   const character = JSON.parse(readFileSync(CHARACTER_SCHEMA, 'utf8'));
-  assert.equal(readFileSync(MONSTER_SCHEMA, 'utf8'), render(buildMonsterSchema(character)), 'run: npm run build:monster-schema');
+  assert.equal(readFileSync(MONSTER_SCHEMA, 'utf8'), render(buildMonsterSchema(character)), 'run: npm run build:schemas');
   const types = schema.$defs.effect.oneOf.map((r) => r.$ref.replace('#/$defs/effect_', ''));
   assert.deepEqual([...types].sort(), [...EFFECT_TYPES].sort());
 });

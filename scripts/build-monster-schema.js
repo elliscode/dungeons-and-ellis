@@ -5,7 +5,7 @@
 // top-level monster fields and a few monster-specific descriptions are defined here. That keeps
 // the two schemas from drifting apart: edit effects in character.schema.json, then run
 //
-//   npm run build:monster-schema           # regenerate
+//   npm run build:schemas                    # regenerate the monster and NPC schemas
 //   npm run build:monster-schema -- --check  # exit 1 if monster.schema.json is out of date
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -16,7 +16,7 @@ export const CHARACTER_SCHEMA = join(ROOT, 'schemas', 'character.schema.json');
 export const MONSTER_SCHEMA = join(ROOT, 'schemas', 'monster.schema.json');
 
 // Monster abilities are used by the DM, so "the player picks" becomes "the DM picks".
-function forMonsters(value) {
+export function forMonsters(value) {
   if (typeof value === 'string') {
     return value
       .replaceAll('the player picks', 'the DM picks')
@@ -134,7 +134,7 @@ function main(args) {
     let current = '';
     try { current = readFileSync(MONSTER_SCHEMA, 'utf8'); } catch { /* missing */ }
     if (current !== out) {
-      console.error('schemas/monster.schema.json is out of date — run: npm run build:monster-schema');
+      console.error('schemas/monster.schema.json is out of date — run: npm run build:schemas');
       process.exit(1);
     }
     console.log('monster.schema.json is up to date.');

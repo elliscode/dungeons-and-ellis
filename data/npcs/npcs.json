@@ -8,7 +8,11 @@
     "inventory": ["room-key", "ale"] },
   { "id": "walky-the-wize", "name": "Walky the Wize", "image": "/static/tokens/monster_033.webp", "maxHp": 25, "defense": 12, "movement": 5,
     "attacks": [ { "id": "staff-zap", "name": "Staff Zap", "attack": "1d20+5", "damage": "1d8+2", "range": 6 } ],
-    "abilities": [ { "id": "wize-words", "name": "Wize Words", "roll": "1d20+6" } ],
+    "abilities": [
+      { "id": "wize-words", "name": "Wize Words", "actionCost": 1, "range": 0,
+        "effects": [{ "type": "narrative", "roll": "1d20+6" }],
+        "description": "Shares some dubious wisdom. Rolls 1d20+6; the DM decides what it means." }
+    ],
     "inventory": ["walking-stick", "suspicious-map"] },
   { "id": "mysterious-wizard", "name": "Mysterious Wizard", "image": "/static/tokens/token_156.webp", "maxHp": 40, "defense": 15, "movement": 6,
     "attacks": [ { "id": "arcane-blast", "name": "Arcane Blast", "attack": "1d20+7", "damage": "2d8+3", "range": 10 } ] }

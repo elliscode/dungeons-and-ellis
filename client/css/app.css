@@ -99,9 +99,7 @@ label.inline { flex-direction: row; align-items: center; gap: 6px; }
 .board-zoom { position: absolute; right: 10px; bottom: 10px; display: flex; gap: 4px; z-index: 5; }
 .board-zoom button { padding: 4px 10px; background: #000a; }
 .board-empty { position: absolute; inset: 0; display: grid; place-items: center; font-family: Georgia, serif; font-size: 26px; color: var(--muted); text-align: center; padding: 20px; }
-.object { position: absolute; }
-.object img { width: 100%; height: 100%; object-fit: contain; }
-.object-label, .token-name {
+.token-name {
   position: absolute; left: 50%; transform: translateX(-50%); bottom: -16px; white-space: nowrap; font-size: 11px;
   background: #000b; padding: 0 5px; border-radius: 4px; pointer-events: none; color: #fff;
 }
@@ -116,7 +114,6 @@ label.inline { flex-direction: row; align-items: center; gap: 6px; }
 .token-body.big img { object-fit: contain; }
 .kind-object .token-body { border-radius: 6px; background: transparent; box-shadow: none; }
 .kind-object .token-body img { object-fit: contain; }
-.kind-object.obstacle .token-body { box-shadow: inset 0 0 0 2px #e6194b99; background: repeating-linear-gradient(45deg, #e6194b22 0 6px, transparent 6px 12px); }
 .kind-spawn .token-body { background: transparent; box-shadow: none; }
 .token-fallback { display: grid; place-items: center; height: 100%; font-weight: bold; font-size: 20px; }
 .token.selected .token-body { box-shadow: 0 0 0 3px var(--gold), 0 0 18px var(--gold); }

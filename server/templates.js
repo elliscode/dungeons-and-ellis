@@ -21,14 +21,6 @@ export function normalizeTemplate(input = {}) {
   const inGrid = (o) => Number.isInteger(o.x) && Number.isInteger(o.y) && o.x >= 0 && o.y >= 0 && o.x < grid.cols && o.y < grid.rows;
   const background = typeof input.background === 'string' && input.background.startsWith('/static/') ? input.background : null;
   const bgScale = Math.max(0.1, Math.min(10, Number(input.bgScale) || 1));
-  const objects = (Array.isArray(input.objects) ? input.objects : []).filter(inGrid).slice(0, 500).map((o) => ({
-    id: typeof o.id === 'string' ? o.id.slice(0, 20) : newId('o'),
-    image: typeof o.image === 'string' && o.image.startsWith('/static/') ? o.image : null,
-    label: String(o.label ?? '').slice(0, 40),
-    x: o.x, y: o.y,
-    w: clampInt(o.w, 1, 20, 1), h: clampInt(o.h, 1, 20, 1),
-    obstacle: !!o.obstacle,
-  }));
   const entities = (Array.isArray(input.entities) ? input.entities : []).filter(inGrid).slice(0, 200)
     .filter((e) => (e.kind === 'npc' || e.kind === 'monster') && typeof e.defId === 'string')
     .map((e) => ({
@@ -37,7 +29,7 @@ export function normalizeTemplate(input = {}) {
       ...(e.name ? { name: String(e.name).slice(0, 40) } : {}),
     }));
   const spawn = input.spawn && inGrid(input.spawn) ? { x: input.spawn.x, y: input.spawn.y } : null;
-  return { name, data: { background, bgScale, grid, objects, entities, spawn } };
+  return { name, data: { background, bgScale, grid, entities, spawn } };
 }
 
 export class TemplateStore {
@@ -56,14 +48,13 @@ export class TemplateStore {
     return r ? { id: r.id, name: r.name, data: JSON.parse(r.data), updatedAt: r.updated_at } : null;
   }
 
-  // Counts how many templates reference each /static/... image (background or objects).
+  // Counts how many templates reference each /static/... image (as a background).
   imageRefs() {
     const counts = new Map();
     const add = (path) => path && counts.set(path, (counts.get(path) ?? 0) + 1);
     for (const r of this.db.prepare('SELECT data FROM scene_templates').all()) {
       const d = JSON.parse(r.data);
       add(d.background);
-      for (const o of d.objects ?? []) add(o.image);
     }
     return counts;
   }

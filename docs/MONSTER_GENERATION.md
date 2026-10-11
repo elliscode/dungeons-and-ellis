@@ -73,7 +73,7 @@ Monster request:
 
 `monster.schema.json` is **generated** from `character.schema.json`. The shared attack, ability and effect definitions are copied over, and only the monster fields live in `scripts/build-monster-schema.js`.
 
-- **After editing `character.schema.json`:** run `npm run build:monster-schema`.
+- **After editing `character.schema.json`:** run `npm run build:schemas`. This rebuilds both the monster schema and the NPC schema ([NPC_GENERATION.md](NPC_GENERATION.md)).
 - **When monsters gain new engine features:** edit the monster fields in `scripts/build-monster-schema.js`, then rebuild.
 
 `test/monster-schema.test.js` fails if the generated file is out of date. It also checks that:

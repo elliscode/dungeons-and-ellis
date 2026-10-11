@@ -127,7 +127,6 @@ def('scene.add', { who: 'dm', clearsUndo: true }, (ctx) => {
     name: sameName ? `${tpl.name} (${sameName + 1})` : tpl.name,
     background: data.background ?? null,
     grid: data.grid,
-    objects: data.objects ?? [],
     spawn: data.spawn ?? null,
   };
   ctx.state.scenes[id] = scene;
@@ -434,6 +433,8 @@ def('attack', { who: 'any', undoable: 'attack' }, (ctx) => {
   const target = getEntity(ctx, ctx.cmd.targetId);
   if (target.id === e.id) fail('You cannot attack yourself');
   if (target.kind === 'object') fail(`${target.name} can't be attacked`);
+  // Players can only attack the other side; the DM may still force friendly fire.
+  if (ctx.actor.role === 'player' && !areEnemies(e, target)) fail(`${target.name} is not an enemy`);
   onActiveScene(ctx, target);
   if (target.status === 'dead') fail(`${target.name} is already dead`);
   const range = Number(attack.range) || 1;

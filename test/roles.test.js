@@ -31,6 +31,8 @@ function world(heroes) {
     spawn: (defId, x, y, kind = 'monster') => ok(s.run(DM, { type: 'entity.spawn', kind, defId, x, y })).entityId,
     use: (k, abilityId, extra = {}) => s.run(h[k].actor, { type: 'ability', entityId: h[k].id, abilityId, ...extra }),
     attack: (k, attackId, targetId) => s.run(h[k].actor, { type: 'attack', entityId: h[k].id, attackId, targetId }),
+    // Friendly fire is DM-only, so hero-on-hero shots go through the DM.
+    dmAttack: (k, attackId, targetId) => s.run(DM, { type: 'attack', entityId: h[k].id, attackId, targetId }),
     last: (role = 'player') => s.service.history(s.game.id, role).feed.at(-1).text,
   };
 }
@@ -63,10 +65,9 @@ test('DPS crit: dice doubled first, then ×4; area and chain multiply per target
 
 test('DPS hitting a tank: ×4 then the tank takes ¼ (exactly once each)', () => {
   const w = world([['mage', 'x-fire-mage', 0, 0], ['wall', 'x-shieldmarshal', 2, 0]]);
-  // Friendly fire through a weapon attack (players may target allies with weapons).
   ok(w.run(DM, { type: 'combat.start' }));
   w.rng.push(15, 5); // fire bolt 1d10+3 = 8 → ×4 = 32 → tank ¼ = 8
-  const r = ok(w.attack('mage', 'fire-bolt', w.h.wall.id));
+  const r = ok(w.dmAttack('mage', 'fire-bolt', w.h.wall.id));
   assert.equal(r.damage, 8);
   assert.equal(w.hero('wall').hp, 44 - 8);
   assert.match(w.last(), /×4 DPS, reduced by Tank/);
@@ -77,7 +78,7 @@ test('protections and debuffs still apply after the DPS multiplier', () => {
   ok(w.use('wall', 'shield-wall'));
   ok(w.run(DM, { type: 'combat.start' }));
   w.rng.push(15, 5); // 8 → 32 → halved 16 → tank 4
-  assert.equal(ok(w.attack('mage', 'fire-bolt', w.h.wall.id)).damage, 4);
+  assert.equal(ok(w.dmAttack('mage', 'fire-bolt', w.h.wall.id)).damage, 4);
   // Curse of Weakness on a DPS hero: halve first (attacker modifier), then ×4.
   const curse = { type: 'modify_damage_dealt', label: 'Curse', trigger: 'next_hit', params: { multiplier: 0.5 } };
   const lock = w.hero('lock');
