@@ -69,7 +69,7 @@ export function startAbility({ caster, ab, entities, setMode, send, toast }) {
       const next = (from) => {
         if (picks.length >= t.chain.jumps) return send({ ...base, targetId: target.id, picks });
         const chainValid = (e) => valid(e) && e.id !== target.id && !picks.includes(e.id)
-          && (!wantAlly || (e.hp !== undefined && e.hp < e.maxHp));
+          && (!wantAlly || e.hp === undefined || e.hp < e.maxHp); // NPC HP is hidden: allow, server skips unwounded
         if (!entities().some((e) => chainValid(e) && distance(from, e) <= t.chain.jumpRange)) return send({ ...base, targetId: target.id, picks });
         setMode({
           type: 'target', label: `${ab.name}: pick the next ${wantAlly ? 'wounded ally' : 'enemy'} (${picks.length + 1}/${t.chain.jumps}) or finish`,

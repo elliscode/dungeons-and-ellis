@@ -203,12 +203,20 @@ test('player projection hides enemy HP and stats; activity text does not leak it
   assert.match(dmLog, /Goblin 3\/9/);
 });
 
-test('hostile NPCs are hidden like monsters', () => {
-  const { run, a, state } = arena();
+test('players never see NPC HP, friendly or hostile, in the projection or the feed', () => {
+  const { run, a, state, service, game } = arena();
   const w = ok(run(DM, { type: 'entity.spawn', kind: 'npc', defId: 'mysterious-wizard' })).entityId;
-  assert.equal(typeof projectForPlayer(state(), a.playerId, () => 'online').entities.find((e) => e.id === w).hp, 'number');
+  const name = state().entities[w].name;
+  const wiz = () => projectForPlayer(state(), a.playerId, () => 'online').entities.find((e) => e.id === w);
+  assert.equal(state().entities[w].hostile, false);
+  assert.equal('hp' in wiz(), false, 'friendly NPC HP hidden');
+  assert.equal('maxHp' in wiz(), false);
+  ok(run(DM, { type: 'entity.damage', entityId: w, amount: 1 }));
   ok(run(DM, { type: 'entity.setHostile', entityId: w, hostile: true }));
-  assert.equal('hp' in projectForPlayer(state(), a.playerId, () => 'online').entities.find((e) => e.id === w), false);
+  assert.equal('hp' in wiz(), false, 'hostile NPC HP hidden');
+  const re = new RegExp(`${name} \\d+/\\d+`);
+  assert.doesNotMatch(service.history(game.id, 'player').feed.map((r) => r.text).join('\n'), re);
+  assert.match(service.history(game.id, 'dm').feed.map((r) => r.text).join('\n'), re);
 });
 
 test('undo restores the last supported actions', () => {

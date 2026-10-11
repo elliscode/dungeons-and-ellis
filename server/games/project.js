@@ -1,4 +1,4 @@
-import { entitiesInScene, isFriendly, actionAllowance } from './state.js';
+import { entitiesInScene, actionAllowance } from './state.js';
 import { movementAllowance } from './status.js';
 import { normalizeAbility, targetingOf, dealsDamage } from './effects.js';
 
@@ -44,7 +44,8 @@ function entityView(e, sceneId, viewerPlayerId, state) {
   };
   if (e.immortal) Object.assign(v, { immortal: true, damageTaken: e.damageTaken ?? 0, hits: e.hits ?? 0 });
   if (e.kind === 'object') Object.assign(v, { temporary: !!e.temporary, icon: e.icon ?? null });
-  if (isFriendly(e)) {
+  // Players only ever see PC HP: an NPC can turn hostile mid-scene, so its HP is never revealed.
+  if (e.kind === 'pc') {
     v.hp = e.hp;
     v.maxHp = e.maxHp;
   }

@@ -304,7 +304,8 @@ const HANDLERS = {
     const links = chainOf(ctx, act, eff, (t) => {
       if (!areAllies(act.caster, t) && t !== act.caster) return `${t.name} is not an ally`;
       if (t.immortal || t.maxHp === null || t.status === 'dead') return `${t.name} can't be healed`;
-      if (t.hp >= t.maxHp) return `${t.name} isn't wounded`;
+      // Players can't see NPC HP, so an unwounded NPC is a wasted jump rather than an error.
+      if (t.hp >= t.maxHp && t.kind === 'pc') return `${t.name} isn't wounded`;
       return null;
     });
     for (const t of links) healOne(ctx, act, eff, t);

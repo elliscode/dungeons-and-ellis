@@ -20,12 +20,12 @@ export function hpNote(e) {
   if (e.immortal) return `${e.name}: ${e.damageTaken} total damage`;
   return `${e.name} ${e.hp}/${e.maxHp}${e.status !== 'active' ? ` ${e.status.toUpperCase()}` : ''}`;
 }
-// Public text only reveals HP for friendly entities; the DM text always does. A training dummy's
-// running damage total isn't secret, so everyone sees it.
+// Public text only reveals HP for PCs (never NPCs, which may turn hostile); the DM text always
+// does. A training dummy's running damage total isn't secret, so everyone sees it.
 export function hpTexts(e) {
   if (e.kind === 'object') return { pub: '', dm: '' };
   const dm = ` (${hpNote(e)})`;
-  return { pub: isFriendly(e) || e.immortal ? dm : '', dm };
+  return { pub: e.kind === 'pc' || e.immortal ? dm : '', dm };
 }
 
 export function statusSuffix(e, change) {
