@@ -311,17 +311,19 @@ function waitingScreen() {
 
 function meChip() {
   const me = state.me;
-  return withRoster(h('span.me-chip', { onclick: (e) => settingsMenu(e) }, h('span.dot', { style: { background: me.color } }), me.name, ' ⚙'), 'me');
+  return h('span.me-chip', { onclick: (e) => settingsMenu(e) }, h('span.dot', { style: { background: me.color } }), me.name, ' ⚙');
 }
 
 // The other players, right-aligned against your own chip. Chips that don't fit run off the left
-// edge behind a fade; the roster card (hover any chip) lists everyone.
+// edge behind a fade; the roster card (hover the chips) lists everyone.
 function partyList() {
   const chips = state.players.filter((p) => p.id !== state.me.id).map((p) =>
     h(`span.party-chip${p.presence !== 'online' ? '.away' : ''}`, {}, h('span.dot', { style: { background: p.color } }), p.name));
-  const list = withRoster(h('span.party-list', {}, h('span.party-track', {}, ...chips)), 'party');
+  const list = h('span.party-list', {}, h('span.party-track', {}, ...chips));
+  list.addEventListener('mouseenter', () => showRoster(list));
+  list.addEventListener('mouseleave', hideRoster);
   // Touch screens have no hover: a tap toggles the card.
-  list.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch') (roster.anchor === 'party' ? hideRoster() : showRoster(list, 'party')); });
+  list.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch') (roster.open ? hideRoster() : showRoster(list)); });
   return list;
 }
 
@@ -332,16 +334,10 @@ function markClipped() {
 addEventListener('resize', markClipped);
 
 // One shared roster card, fixed-positioned so the top bar's clipping can't cut it off.
-const roster = { el: h('div.roster-tip.hidden'), anchor: null };
+const roster = { el: h('div.roster-tip.hidden'), open: false };
 document.body.append(roster.el);
 
-function withRoster(el, anchor) {
-  el.addEventListener('mouseenter', () => showRoster(el, anchor));
-  el.addEventListener('mouseleave', hideRoster);
-  return el;
-}
-
-function showRoster(el, anchor) {
+function showRoster(el) {
   const me = state.me;
   const players = [me, ...state.players.filter((p) => p.id !== me.id)].map((p) => state.players.find((x) => x.id === p.id) ?? p);
   fill(roster.el, ...players.map((p) => {
@@ -351,7 +347,7 @@ function showRoster(el, anchor) {
       h('span', {}, p.name, p.id === me.id ? h('span.muted', {}, ' (you)') : null),
       h('span.muted', {}, heroById.get(p.characterId)?.name ?? 'choosing a hero', away ? ` · ${p.presence}` : ''));
   }));
-  roster.anchor = anchor;
+  roster.open = true;
   roster.el.classList.remove('hidden');
   const r = el.getBoundingClientRect();
   roster.el.style.top = `${r.bottom + 6}px`;
@@ -359,13 +355,13 @@ function showRoster(el, anchor) {
 }
 
 function hideRoster() {
-  roster.anchor = null;
+  roster.open = false;
   roster.el.classList.add('hidden');
 }
-// Close on a tap elsewhere, or if the mouse is no longer over a chip (a re-render can swap the
+// Close on a tap elsewhere, or if the mouse is no longer over the chips (a re-render can swap the
 // hovered element out without a mouseleave).
 for (const type of ['pointerdown', 'mousemove']) {
-  addEventListener(type, (e) => { if (roster.anchor && !e.target.closest?.('.party-list, .me-chip')) hideRoster(); });
+  addEventListener(type, (e) => { if (roster.open && !e.target.closest?.('.party-list')) hideRoster(); });
 }
 
 function settingsMenu(e) {
@@ -397,7 +393,7 @@ function gameScreen() {
   $('#party-list').replaceWith(Object.assign(partyList(), { id: 'party-list' }));
   requestAnimationFrame(markClipped);
   // The chips were just replaced: keep an open card attached (and up to date) on the new ones.
-  if (roster.anchor) showRoster(roster.anchor === 'me' ? $('#me-chip') : $('#party-list'), roster.anchor);
+  if (roster.open) showRoster($('#party-list'));
   bar.update(state.combat, state.serverNow);
   const me = myEntity();
   const info = $('#turn-info');
