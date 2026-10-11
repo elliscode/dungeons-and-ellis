@@ -1270,7 +1270,7 @@
     "maxHp": 135,
     "defense": 18,
     "movement": 8,
-    "actions": 2,
+    "actions": 3,
     "size": {
       "w": 3,
       "h": 3
