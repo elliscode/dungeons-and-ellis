@@ -79,26 +79,86 @@ test('crit doubles damage dice', () => {
   assert.equal(state().entities[gob].status, 'dead');
 });
 
-test('down at 0 HP, death when downed creature takes max HP, heal restores', () => {
-  const { run, a, ea, b, eb, state } = arena();
-  ok(run(DM, { type: 'entity.damage', entityId: ea, amount: 100 }));
-  assert.equal(state().entities[ea].status, 'down');
-  assert.equal(state().entities[ea].hp, 0);
+test('down at 0 HP, damage goes negative, death at -max HP, heal adds onto negative', () => {
+  const { run, a, ea, b, eb, state, rng } = arena();
+  const e = () => state().entities[ea];
+  assert.equal(e().maxHp, 32);
+  ok(run(DM, { type: 'entity.damage', entityId: ea, amount: 32 }));
+  assert.equal(e().status, 'down');
+  assert.equal(e().hp, 0);
   assert.match(run(a, { type: 'move', entityId: ea, x: 2, y: 7 }).error, /down/);
   assert.match(run(a, { type: 'act', entityId: ea, actId: 'search' }).error, /down/);
+  rng.push(12);
   ok(run(a, { type: 'downRoll', entityId: ea }));
+  assert.equal(e().hp, 0, 'a stable roll changes nothing');
   ok(run(DM, { type: 'entity.damage', entityId: ea, amount: 31 }));
-  assert.equal(state().entities[ea].status, 'down', '31 < 32 max HP');
-  ok(run(b, { type: 'ability', entityId: eb, abilityId: 'healing-word', targetId: ea }));
-  assert.equal(state().entities[ea].status, 'active');
+  assert.deepEqual([e().status, e().hp], ['down', -31]);
+  ok(run(DM, { type: 'entity.heal', entityId: ea, amount: 5 }));
+  assert.deepEqual([e().status, e().hp], ['down', -26], 'healing adds onto negative HP');
+  ok(run(DM, { type: 'entity.heal', entityId: ea, amount: 40 }));
+  assert.deepEqual([e().status, e().hp], ['active', 14]);
   ok(run(DM, { type: 'entity.setHp', entityId: ea, hp: 0 }));
-  assert.equal(state().entities[ea].status, 'down');
+  assert.equal(e().status, 'down');
   ok(run(DM, { type: 'entity.damage', entityId: ea, amount: 32 }));
-  assert.equal(state().entities[ea].status, 'dead');
+  assert.deepEqual([e().status, e().hp], ['dead', -32]);
   assert.match(run(b, { type: 'ability', entityId: eb, abilityId: 'healing-word', targetId: ea }).error, /dead/);
   ok(run(DM, { type: 'entity.revive', entityId: ea }));
-  assert.equal(state().entities[ea].status, 'active');
-  assert.equal(state().entities[ea].hp, 1);
+  assert.deepEqual([e().status, e().hp], ['active', 1]);
+});
+
+test('one hit from full past -max HP kills a hero outright; HP never drops below -max', () => {
+  const { run, ea, state } = arena();
+  ok(run(DM, { type: 'entity.damage', entityId: ea, amount: 100 }));
+  assert.deepEqual([state().entities[ea].status, state().entities[ea].hp], ['dead', -32]);
+});
+
+test('DM HP tools accept negative HP down to -max for heroes, 0 for monsters', () => {
+  const { run, ea, gob, state } = arena();
+  const e = () => state().entities[ea];
+  ok(run(DM, { type: 'entity.setHp', entityId: ea, hp: -5 }));
+  assert.deepEqual([e().status, e().hp], ['down', -5]);
+  ok(run(DM, { type: 'entity.setHp', entityId: ea, hp: -32 }));
+  assert.deepEqual([e().status, e().hp], ['dead', -32]);
+  assert.match(run(DM, { type: 'entity.setHp', entityId: ea, hp: -33 }).error, /below -32/);
+  ok(run(DM, { type: 'entity.setHp', entityId: ea, hp: 10 }));
+  assert.equal(e().status, 'active');
+  ok(run(DM, { type: 'entity.kill', entityId: ea }));
+  assert.equal(e().hp, -32);
+  ok(run(DM, { type: 'entity.revive', entityId: ea }));
+  ok(run(DM, { type: 'entity.setStatus', entityId: ea, status: 'down' }));
+  assert.deepEqual([e().status, e().hp], ['down', 0]);
+  assert.match(run(DM, { type: 'entity.setHp', entityId: gob, hp: -1 }).error, /below 0/);
+});
+
+test('bleed-out roll: 1-3 bleeds 25%, 4-9 bleeds 10%, 10-17 holds, 18-20 gets up', () => {
+  const { run, a, ea, state, rng } = arena();
+  const e = () => state().entities[ea];
+  const down = () => ok(run(DM, { type: 'entity.setHp', entityId: ea, hp: 0 }));
+  const roll = (n) => { rng.push(n); ok(run(a, { type: 'downRoll', entityId: ea })); return e().hp; };
+  down();
+  assert.equal(roll(1), -8, '25% of 32');
+  assert.equal(roll(3), -16);
+  assert.equal(roll(4), -20, '10% of 32 rounds up to 4');
+  assert.equal(roll(9), -24);
+  assert.equal(roll(10), -24);
+  assert.equal(roll(17), -24);
+  assert.equal(roll(18), 1);
+  assert.equal(e().status, 'active');
+  down();
+  roll(20);
+  assert.deepEqual([e().status, e().hp], ['active', 1]);
+  ok(run(DM, { type: 'entity.setHp', entityId: ea, hp: -30 }));
+  roll(2);
+  assert.deepEqual([e().status, e().hp], ['dead', -32], 'bleeding to -max HP is true death');
+  assert.match(run(a, { type: 'downRoll', entityId: ea }).error, /Only downed/);
+});
+
+test('bleed-out roll bleeds at least 1 HP', () => {
+  const { run, a, ea, state, rng } = arena();
+  ok(run(DM, { type: 'entity.setHealth', entityId: ea, hp: 0, maxHp: 3 }));
+  rng.push(5);
+  ok(run(a, { type: 'downRoll', entityId: ea }));
+  assert.equal(state().entities[ea].hp, -1);
 });
 
 test('monsters die at 0 HP', () => {

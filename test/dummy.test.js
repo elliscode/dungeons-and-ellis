@@ -135,6 +135,6 @@ test('normal monsters and heroes still go down and die', () => {
   const gob = ok(s.run(DM, { type: 'entity.spawn', kind: 'monster', defId: 'goblin', x: 5, y: 5 })).entityId;
   ok(s.run(DM, { type: 'entity.damage', entityId: gob, amount: 100 }));
   assert.equal(s.state().entities[gob].status, 'dead');
-  ok(s.run(DM, { type: 'entity.damage', entityId: s.monk, amount: 100 }));
+  ok(s.run(DM, { type: 'entity.damage', entityId: s.monk, amount: s.state().entities[s.monk].hp }));
   assert.equal(s.state().entities[s.monk].status, 'down');
 });

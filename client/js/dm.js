@@ -338,7 +338,32 @@ function draftInput(entityId, field, value, attrs = {}) {
 }
 const clearDrafts = (entityId, ...fields) => { for (const f of fields) drafts.delete(`${entityId}:${f}`); };
 
+// One shared hover card for ability descriptions. It's fixed-positioned so the scrolling sidebar
+// can't clip it, and hidden on every inspector render since the hovered row may be replaced.
+const abTip = h('div.ab-tip.hidden');
+document.body.append(abTip);
+const hideAbTip = () => abTip.classList.add('hidden');
+
+function abilityLabel(ab) {
+  const name = h('span.ab-name', {}, ab.name);
+  if (ab.description) {
+    name.classList.add('has-tip');
+    name.addEventListener('mouseenter', () => {
+      fill(abTip, h('strong', {}, ab.name), h('div', {}, ab.description));
+      abTip.classList.remove('hidden');
+      const r = name.getBoundingClientRect();
+      const left = Math.min(r.left, innerWidth - abTip.offsetWidth - 8);
+      const below = r.bottom + 4 + abTip.offsetHeight <= innerHeight;
+      abTip.style.left = `${Math.max(8, left)}px`;
+      abTip.style.top = `${below ? r.bottom + 4 : r.top - 4 - abTip.offsetHeight}px`;
+    });
+    name.addEventListener('mouseleave', hideAbTip);
+  }
+  return h('span', {}, name, ' ', h('span.muted', {}, abilitySummary(ab)));
+}
+
 function renderInspector() {
+  hideAbTip();
   const root = $('#inspector');
   const e = selected();
   if (!e || !(e.scope === 'game' || e.sceneId === state.activeSceneId)) {
@@ -349,7 +374,7 @@ function renderInspector() {
   const id = e.id;
   const mortal = !e.immortal && e.kind !== 'object';
   const amount = draftInput(e.id, 'amount', 5, { min: 0 });
-  const hpInput = draftInput(e.id, 'hp', e.hp, { min: 0 });
+  const hpInput = draftInput(e.id, 'hp', e.hp, { min: e.kind === 'monster' ? 0 : -e.maxHp });
   const maxInput = draftInput(e.id, 'max', e.maxHp, { min: 1 });
   // One Set for both fields: the server applies max HP first, so "20 / 20" works in one click.
   // Raw strings are sent so a blank box is rejected instead of becoming 0.
@@ -423,12 +448,14 @@ function renderInspector() {
       })() : null)),
     e.kind !== 'pc' && e.abilities?.length ? h('div.section-title', {}, 'Abilities (DM)') : null,
     ...(e.kind !== 'pc' ? e.abilities ?? [] : []).map((ab) => h('div.inv-item', {},
-      h('span', { title: ab.description ?? '' }, ab.name, ' ', h('span.muted', {}, abilitySummary(ab))),
+      abilityLabel(ab),
       h('button.small', {
         disabled: (ab.combatOnly && !c.active) || !!enemyBlock(),
-        title: (ab.combatOnly && !c.active ? 'Combat only' : enemyBlock()) ?? ab.description ?? '',
+        title: (ab.combatOnly && !c.active ? 'Combat only' : enemyBlock()) ?? 'Use',
         onclick: () => startAbility({ caster: view(e), ab, entities: () => sceneEntities().map(view), setMode, send, toast: null }),
       }, 'Use'))),
+    e.kind === 'pc' && e.abilities?.length ? h('div.section-title', {}, 'Abilities') : null,
+    ...(e.kind === 'pc' ? e.abilities ?? [] : []).map((ab) => h('div.inv-item', {}, abilityLabel(ab))),
     e.kind !== 'object' ? h('div.section-title', {}, 'Inventory') : null,
     ...(e.kind === 'object' ? [] : e.inventory.length ? e.inventory.map((it) => h('div.inv-item', {}, it.name,
       h('button.small', { title: 'Remove', onclick: () => send({ type: 'item.remove', entityId: id, itemId: it.id }) }, '✕'))) : [h('p.muted', {}, 'Empty')]),

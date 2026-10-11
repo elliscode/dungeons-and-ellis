@@ -43,21 +43,22 @@ export function reduceIncoming(e, amount) {
   return amount;
 }
 
-// Returns the resulting status transition, if any. PCs and NPCs go DOWN at 0 HP and die when a
-// downed creature takes damage >= max HP. Monsters die at 0 HP.
+// HP at which a creature truly dies: monsters at 0, PCs and NPCs at -maxHp.
+export const deathAt = (e) => (e.kind === 'monster' ? 0 : -e.maxHp);
+
+// Returns the resulting status transition, if any. PCs and NPCs go DOWN at 0 HP, keep taking
+// damage into negative HP, and die at -maxHp. Monsters die at 0 HP.
 export function applyDamage(e, amount) {
   amount = Math.max(0, Math.floor(amount));
   const before = e.status;
   if (e.status === 'dead') return { before, after: before };
-  if (e.status === 'down') {
-    if (amount >= e.maxHp) e.status = 'dead';
-  } else {
-    e.hp = Math.max(0, e.hp - amount);
-    if (e.hp === 0) e.status = e.kind === 'monster' ? 'dead' : 'down';
-  }
+  e.hp = Math.max(deathAt(e), e.hp - amount);
+  if (e.hp <= deathAt(e)) e.status = 'dead';
+  else if (e.hp <= 0) e.status = 'down';
   return { before, after: e.status };
 }
 
+// Healing adds onto negative HP, so a downed creature only gets up once HP is back above 0.
 export function applyHeal(e, amount) {
   amount = Math.max(0, Math.floor(amount));
   const before = e.status;
@@ -68,11 +69,12 @@ export function applyHeal(e, amount) {
   return { before, after: e.status, healed: e.hp - old };
 }
 
-// DM override: any HP above 0 brings a downed or dead creature back.
+// DM override: HP above 0 brings a downed or dead creature back; 0 or below downs it; -maxHp kills.
 export function setHp(e, value) {
-  e.hp = Math.max(0, Math.min(e.maxHp, Math.floor(value)));
-  if (e.hp > 0 && e.status !== 'active') e.status = 'active';
-  if (e.hp === 0 && e.status === 'active') e.status = e.kind === 'monster' ? 'dead' : 'down';
+  e.hp = Math.max(deathAt(e), Math.min(e.maxHp, Math.floor(value)));
+  if (e.hp > 0) e.status = 'active';
+  else if (e.hp <= deathAt(e)) e.status = 'dead';
+  else e.status = 'down';
 }
 
 export function revive(e) {
@@ -82,7 +84,7 @@ export function revive(e) {
 
 export function kill(e) {
   e.status = 'dead';
-  e.hp = 0;
+  e.hp = deathAt(e);
 }
 
 // ---------- shared attack / damage / heal pipeline ----------

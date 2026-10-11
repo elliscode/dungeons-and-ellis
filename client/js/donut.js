@@ -51,7 +51,7 @@ export function buildDonut({ tokenSize, ring, disabled = new Set(), active = nul
     t.textContent = 'd20';
     g.append(t);
     const title = el('title', {});
-    title.textContent = 'Roll a d20';
+    title.textContent = 'Bleed-out roll (d20): 18+ get up, 10–17 hold on, 4–9 bleed 10%, 1–3 bleed 25%';
     g.append(title);
     g.addEventListener('pointerdown', (e) => e.stopPropagation());
     g.addEventListener('click', (e) => { e.stopPropagation(); onRoll?.(e); });

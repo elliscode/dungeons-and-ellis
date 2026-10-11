@@ -4,7 +4,7 @@ import {
   PLAYER_COLORS, fail, newId, entityFromDef, entitiesInScene, isFriendly, makeItem, turnFor, areEnemies,
 } from './state.js';
 import { inBounds, ensurePlaced } from './placement.js';
-import { startCombat, advancePhase, endCombat, applyHeal, setHp, revive, kill, dealDamage } from './combat.js';
+import { startCombat, advancePhase, endCombat, applyHeal, applyDamage, setHp, revive, kill, dealDamage, deathAt } from './combat.js';
 import { addEffect, removeEffect, effectsOf, movementAllowance } from './status.js';
 import { activateAbility, strike, checkTaunt, resolveCheck, onPhaseTransition, STATUSES } from './effects.js';
 import {
@@ -266,18 +266,20 @@ def('entity.heal', { who: 'dm', undoable: 'heal' }, (ctx) => {
 });
 
 // DM HP tools. Max HP is applied before HP, so one command can raise both ("20 / 20").
-// HP above max is refused rather than silently capped; blank fields are refused, never 0.
+// HP above max or below the death line (-max HP; 0 for monsters) is refused rather than silently
+// capped; blank fields are refused, never 0.
 function applyHealth(ctx, e, { hp, maxHp }) {
   requireMortal(e);
   if (hp === undefined && maxHp === undefined) fail('Enter HP or max HP');
   const before = { hp: e.hp, maxHp: e.maxHp, status: e.status };
   if (maxHp !== undefined) {
     e.maxHp = int(maxHp, 'Max HP', 1, 100000);
-    e.hp = Math.min(e.hp, e.maxHp);
+    e.hp = Math.max(deathAt(e), Math.min(e.hp, e.maxHp));
   }
   if (hp !== undefined) {
-    const value = int(hp, 'HP', 0, 100000);
+    const value = int(hp, 'HP', -100000, 100000);
     if (value > e.maxHp) fail(`HP can't be more than max HP (${e.maxHp}) — raise max HP too`);
+    if (value < deathAt(e)) fail(`HP can't go below ${deathAt(e)}${e.kind === 'monster' ? ' for a monster' : ` (−max HP)`}`);
     setHp(e, value);
   }
   const t = hpTexts(e);
@@ -321,7 +323,8 @@ def('entity.setStatus', { who: 'dm', undoable: 'status override' }, (ctx) => {
   requireMortal(e);
   e.status = status;
   if (status === 'active') e.hp = Math.max(1, e.hp);
-  else e.hp = 0;
+  else if (status === 'down') e.hp = Math.max(deathAt(e) + 1, Math.min(e.hp, 0));
+  else e.hp = deathAt(e);
   ctx.log('hp', `DM set ${e.name} to ${status.toUpperCase()}`);
 });
 
@@ -498,14 +501,39 @@ def('item.use', { who: 'player', undoable: 'use item' }, (ctx) => {
   ctx.log('item', `${e.name} uses ${item.name}${target && target.id !== e.id ? ` on ${target.name}` : ''}`);
 });
 
-// A downed character's only option: roll a d20 (the DM decides what it means).
+// Bleed-out roll bands, checked in order against a d20. Bleed is a fraction of max HP.
+const DOWN_ROLL = [
+  { max: 3, bleed: 0.25 },
+  { max: 9, bleed: 0.10 },
+  { max: 17, bleed: 0 },
+  { max: 20, getUp: true },
+];
+
+// A downed character's only option: a d20 bleed-out roll. It can get them back up at 1 HP, hold
+// them steady, or bleed HP toward -max HP (true death). The bleed skips tank reduction and shields.
 def('downRoll', { who: 'player' }, (ctx) => {
   const e = controlled(ctx, ctx.cmd.entityId);
   if (e.status !== 'down') fail('Only downed characters make this roll');
   requirePlayerWindow(ctx);
   spendAction(ctx, e);
   const r = rollOrFail('1d20', ctx);
-  ctx.log('roll', `${e.name} (DOWN) rolls a d20: ${r.total}${r.total === 20 ? ' — NATURAL 20!' : r.total === 1 ? ' — natural 1…' : ''}`);
+  const band = DOWN_ROLL.find((b) => r.total <= b.max);
+  const head = `${e.name} (DOWN) rolls ${r.total} —`;
+  let text;
+  if (band.getUp) {
+    const change = applyHeal(e, 1 - e.hp);
+    ctx.fx({ kind: 'heal', entityId: e.id, text: `+${change.healed}`, color: ctx.actorColor });
+    text = `${head} gets back up with 1 HP!`;
+  } else if (band.bleed) {
+    const amount = Math.max(1, Math.ceil(e.maxHp * band.bleed));
+    const change = applyDamage(e, amount);
+    ctx.fx({ kind: 'damage', entityId: e.id, text: `-${amount}`, color: ctx.actorColor });
+    text = `${head} bleeds ${amount}.${statusSuffix(e, change)}`;
+  } else {
+    text = `${head} holds on.`;
+  }
+  const t = hpTexts(e);
+  ctx.log('roll', text + t.pub, { dmText: text + t.dm });
 });
 
 def('roll', { who: 'any' }, (ctx) => {

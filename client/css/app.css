@@ -54,6 +54,12 @@ label.inline { flex-direction: row; align-items: center; gap: 6px; }
   position: fixed; z-index: 50000; min-width: 200px; max-width: 320px; max-height: 70vh; overflow: auto;
   background: var(--bg2); border: 1px solid var(--gold); border-radius: var(--radius); padding: 6px; box-shadow: 0 10px 40px #000a;
 }
+.ab-name.has-tip { cursor: help; text-decoration: underline dotted var(--muted); text-underline-offset: 3px; }
+.ab-tip {
+  position: fixed; z-index: 60000; max-width: 280px; pointer-events: none; font-size: 12px; line-height: 1.4;
+  background: var(--bg2); border: 1px solid var(--gold); border-radius: var(--radius); padding: 8px 10px; box-shadow: 0 10px 40px #000a;
+}
+.ab-tip strong { display: block; color: var(--gold); margin-bottom: 3px; }
 .popup-title { font-family: Georgia, serif; color: var(--gold); padding: 6px 8px 8px; font-size: 15px; }
 .popup-heading { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; padding: 8px 8px 4px; }
 .popup-item { display: flex; flex-direction: column; align-items: flex-start; width: 100%; border: 0; background: none; padding: 7px 8px; border-radius: 6px; text-align: left; }
@@ -96,6 +102,10 @@ label.inline { flex-direction: row; align-items: center; gap: 6px; }
 .spawn-text { fill: #42d4f4; font-weight: bold; }
 .layer { position: absolute; inset: 0; pointer-events: none; }
 .layer.tokens > * { pointer-events: auto; }
+/* Each layer is its own stacking context, so token z-order can never lift a token above HP bars. */
+.layer.tokens { z-index: 1; }
+.layer.hpbars { z-index: 2; }
+.layer.fx { z-index: 3; }
 .board-zoom { position: absolute; right: 10px; bottom: 10px; display: flex; gap: 4px; z-index: 5; }
 .board-zoom button { padding: 4px 10px; background: #000a; }
 .board-empty { position: absolute; inset: 0; display: grid; place-items: center; font-family: Georgia, serif; font-size: 26px; color: var(--muted); text-align: center; padding: 20px; }
@@ -129,7 +139,9 @@ label.inline { flex-direction: row; align-items: center; gap: 6px; }
 .token-badge.down { background: #d63b3b55; font-size: 12px; }
 .token-badge.dead { font-size: 28px; }
 .stack-count { position: absolute; right: -6px; top: -6px; background: var(--gold); color: #000; border-radius: 999px; font-size: 10px; font-weight: bold; padding: 1px 5px; z-index: 3; }
-.hpbar { position: absolute; left: 50%; transform: translateX(-50%); width: max(60px, 100%); height: 12px; background: #000c; border: 1px solid #000; border-radius: 4px; overflow: hidden; z-index: 4; pointer-events: none; }
+.hp-anchor { position: absolute; pointer-events: none; }
+.hpbar { position: absolute; left: 50%; transform: translateX(-50%); width: max(60px, 100%); height: 12px; background: #000c; border: 1px solid #000; border-radius: 4px; overflow: hidden; pointer-events: none; }
+.hpbar.neg { background: #5a0d0b; border-color: var(--bad); }
 .hpfill { height: 100%; transition: width .3s; }
 .hpbar.ok .hpfill { background: var(--good); }
 .hpbar.warn .hpfill { background: var(--warn); }

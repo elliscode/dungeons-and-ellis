@@ -135,12 +135,12 @@ test('tank reduction does not touch healing, set HP, or death override', () => {
   assert.equal(s.state().entities[s.tank].hp, 5);
   ok(s.run(DM, { type: 'entity.heal', entityId: s.tank, amount: 8 }));
   assert.equal(s.state().entities[s.tank].hp, 13);
-  // downed tank (max 42) needs reduced damage >= 42 to die: 167 raw -> 41 stays down, 168 -> 42 dies
+  // downed tank (max 42) dies at -42 HP, counting reduced damage: 167 raw -> 41 (HP -41), 4 raw -> 1 (HP -42)
   ok(s.run(DM, { type: 'entity.setHp', entityId: s.tank, hp: 0 }));
   assert.equal(s.state().entities[s.tank].status, 'down');
   ok(s.run(DM, { type: 'entity.damage', entityId: s.tank, amount: 167 }));
-  assert.equal(s.state().entities[s.tank].status, 'down');
-  ok(s.run(DM, { type: 'entity.damage', entityId: s.tank, amount: 168 }));
+  assert.deepEqual([s.state().entities[s.tank].status, s.state().entities[s.tank].hp], ['down', -41]);
+  ok(s.run(DM, { type: 'entity.damage', entityId: s.tank, amount: 4 }));
   assert.equal(s.state().entities[s.tank].status, 'dead');
   ok(s.run(DM, { type: 'entity.revive', entityId: s.tank }));
   ok(s.run(DM, { type: 'entity.kill', entityId: s.tank }));

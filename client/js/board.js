@@ -26,8 +26,9 @@ export class Board {
     this.grid.classList.add('board-grid');
     this.hlLayer = h('div.layer.highlights');
     this.tokenLayer = h('div.layer.tokens');
+    this.hpLayer = h('div.layer.hpbars'); // above every token, so no token can cover an HP bar
     this.fxLayer = h('div.layer.fx');
-    this.stage.append(this.bg, this.grid, this.hlLayer, this.tokenLayer, this.fxLayer);
+    this.stage.append(this.bg, this.grid, this.hlLayer, this.tokenLayer, this.hpLayer, this.fxLayer);
     this.sizer = h('div.board-sizer');
     this.sizer.append(this.stage);
     this.viewport.append(this.sizer);
@@ -187,6 +188,7 @@ export class Board {
   renderTokens() {
     this.pendingRender = false;
     this.tokenLayer.replaceChildren();
+    this.hpLayer.replaceChildren();
     if (!this.scene) return;
     const c = this.cell;
     const v = this.view;
@@ -202,7 +204,8 @@ export class Board {
       const el = h(`div.token.kind-${t.kind}.status-${t.status ?? 'active'}`, { dataset: { id: t.id } });
       this.placeRect(el, t.position.x, t.position.y, t.size.w, t.size.h);
       // Players always see their own token on top; everyone else sees the shared global z-order.
-      el.style.zIndex = mine ? 1_000_000 : t.z;
+      const z = mine ? 1_000_000 : t.z;
+      el.style.zIndex = z;
       if (mine) el.classList.add('mine');
       if (v.selectedId === t.id) el.classList.add('selected');
       if (v.targetIds?.has(t.id)) el.classList.add('targetable');
@@ -241,12 +244,17 @@ export class Board {
       }
       if (t.hp !== undefined && t.hp !== null && t.maxHp) {
         const pct = Math.max(0, Math.min(1, t.hp / t.maxHp));
-        const bar = h('div.hpbar', { title: `${t.hp}/${t.maxHp} HP` },
+        const bar = h('div.hpbar', {},
           h('div.hpfill', { style: { width: `${pct * 100}%` } }),
           h('span.hptext', {}, `${t.hp}/${t.maxHp}`));
-        bar.classList.add(pct > 0.5 ? 'ok' : pct > 0.25 ? 'warn' : 'bad');
+        bar.classList.add(t.hp < 0 ? 'neg' : pct > 0.5 ? 'ok' : pct > 0.25 ? 'warn' : 'bad');
         bar.style.top = `${-ringOuter - 16}px`;
-        el.append(bar);
+        // The bar lives in hpLayer on an anchor matching the token's rect; drags move both.
+        const anchor = h('div.hp-anchor', {}, bar);
+        this.placeRect(anchor, t.position.x, t.position.y, t.size.w, t.size.h);
+        anchor.style.zIndex = z;
+        el._hpAnchor = anchor;
+        this.hpLayer.append(anchor);
       }
       this.bindToken(el, t);
       this.tokenLayer.append(el);
@@ -270,6 +278,7 @@ export class Board {
       d.moved = true;
       el.classList.add('dragging');
       el.style.transform = `translate(${dx / this.zoom}px, ${dy / this.zoom}px)`;
+      if (el._hpAnchor) el._hpAnchor.style.transform = el.style.transform;
     });
     const end = (e, cancelled) => {
       const d = this.drag;
@@ -277,6 +286,7 @@ export class Board {
       this.drag = null;
       el.classList.remove('dragging');
       el.style.transform = '';
+      if (el._hpAnchor) el._hpAnchor.style.transform = '';
       if (d.moved && !cancelled) {
         // Drop by the token's top-left cell (keeps large tokens anchored where you grabbed them).
         const c = this.cell * this.zoom;
