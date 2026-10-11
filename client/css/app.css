@@ -218,6 +218,16 @@ label.inline { flex-direction: row; align-items: center; gap: 6px; }
 .swatch:disabled { opacity: .2; }
 .me-chip { display: inline-flex; align-items: center; gap: 8px; padding: 4px 10px; border-radius: 999px; background: var(--bg3); border: 1px solid var(--line); cursor: pointer; }
 .me-chip .dot { width: 12px; height: 12px; border-radius: 50%; }
+/* Other players in the top bar: right-aligned, never wrapping; extra chips run off the left edge,
+   which fades out when something is actually clipped. */
+.party-list { flex: 1 1 0; min-width: 0; display: flex; justify-content: flex-end; overflow: hidden; }
+.party-track { display: flex; gap: 6px; flex: none; }
+.party-list.clipped { -webkit-mask-image: linear-gradient(to right, transparent, #000 28px); mask-image: linear-gradient(to right, transparent, #000 28px); }
+.party-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 999px; background: var(--bg3); border: 1px solid var(--line); font-size: 13px; white-space: nowrap; cursor: default; }
+.party-chip .dot, .roster-tip .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.party-chip.away, .roster-row.away { opacity: .45; }
+.roster-tip { position: fixed; z-index: 60000; min-width: 180px; padding: 6px 4px; background: var(--bg2); border: 1px solid var(--gold); border-radius: var(--radius); box-shadow: 0 10px 40px #000a; pointer-events: none; }
+.roster-row { display: flex; align-items: center; gap: 8px; padding: 4px 8px; font-size: 13px; white-space: nowrap; }
 .mode-banner { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); z-index: 6; background: #000c; border: 1px solid var(--gold); border-radius: 999px; padding: 6px 14px; display: flex; gap: 10px; align-items: center; }
 .turn-info { color: var(--muted); font-size: 12px; }
 
