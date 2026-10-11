@@ -9,6 +9,7 @@ import { dealDamage } from '../server/games/combat.js';
 import { addEffect } from '../server/games/status.js';
 import { actionAllowance } from '../server/games/state.js';
 import { stripMarkers } from '../server/games/helpers.js';
+import { movementAllowance } from '../server/games/status.js';
 
 // Deterministic dice: d20 rolls 15 and every other die rolls 1, unless a test queues values.
 const fallback = (sides) => (sides === 20 ? 15 : 1);
@@ -448,4 +449,21 @@ test('DM can remove effects and add statuses; undo restores effects', () => {
 after(() => {
   const missing = EFFECT_TYPES.filter((t) => !handlerCalls.get(t));
   assert.deepEqual(missing, [], `effect types never exercised: ${missing.join(', ')}`);
+});
+
+test('Slowed from an ability (apply_status) costs 2 movement, same as the DM status, and expires', () => {
+  const w = world([['rog', 'shadow-rogue', 2, 2]]);
+  const mummy = w.spawn('mummy', 4, 2);
+  const base = movementAllowance(w.hero('rog'));
+  w.fight();
+  w.next(); // DM phase
+  ok(w.run(DM, { type: 'ability', entityId: mummy, abilityId: 'desiccating-curse', targetId: w.h.rog.id })); // 15+5 hits
+  assert.ok(w.hero('rog').effects.some((fx) => fx.status === 'slowed'));
+  assert.equal(movementAllowance(w.hero('rog')), base - 2);
+  w.next(); // player phase: still slowed
+  assert.equal(movementAllowance(w.hero('rog')), base - 2);
+  w.next(); w.next(); // through the next DM phase: expired
+  assert.equal(movementAllowance(w.hero('rog')), base);
+  ok(w.run(DM, { type: 'effect.addStatus', entityId: w.h.rog.id, status: 'slowed' }));
+  assert.equal(movementAllowance(w.hero('rog')), base - 2, 'DM-applied Slowed matches');
 });

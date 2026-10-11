@@ -14,7 +14,7 @@ export const STATUSES = {
   snared: { label: 'Snared', icon: '🕸️' }, // movement 0
   shaken: { label: 'Shaken', icon: '💢' }, // -2 to hit
   poisoned: { label: 'Poisoned', icon: '🤢' }, // -2 to hit
-  slowed: { label: 'Slowed', icon: '🐌' }, // label for negative movement modifiers
+  slowed: { label: 'Slowed', icon: '🐌', movement: -2 }, // -2 movement; also the label for negative movement modifiers
 };
 
 export const TARGETS = ['self', 'enemy', 'ally', 'ally_or_self', 'cell', 'enemies_in_area', 'allies_in_area', 'hit_enemies', 'checked_enemy', 'target'];
@@ -376,8 +376,10 @@ const HANDLERS = {
 
   apply_status(ctx, act, eff) {
     const st = STATUSES[eff.status];
-    applyLive(ctx, act, { ...eff, status: eff.status, label: eff.label ?? st.label }, targetsFor(ctx, act, eff), {
-      icon: st.icon, duration: 'next_dm_phase', params: { sourceId: act.caster.id },
+    // Slowed is a movement modifier underneath, so movementAllowance() counts it.
+    const slow = st.movement ? { type: 'modify_movement' } : {};
+    applyLive(ctx, act, { ...eff, ...slow, status: eff.status, label: eff.label ?? st.label }, targetsFor(ctx, act, eff), {
+      icon: st.icon, duration: 'next_dm_phase', params: { sourceId: act.caster.id, ...(st.movement ? { amount: st.movement } : {}) },
     });
   },
 

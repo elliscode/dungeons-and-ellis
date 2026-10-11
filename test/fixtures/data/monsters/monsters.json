@@ -28,5 +28,50 @@
       { "id": "bite", "name": "Bite", "attack": "1d20+10", "damage": "2d10+6", "range": 2 },
       { "id": "claw", "name": "Claw", "attack": "1d20+10", "damage": "2d6+6", "range": 1 },
       { "id": "fire-breath", "name": "Fire Breath", "attack": "1d20+8", "damage": "6d6", "range": 6 }
-    ] }
+    ] },
+  {
+    "id": "mummy",
+    "name": "Mummy",
+    "image": "/static/tokens/monster_020.webp",
+    "maxHp": 30,
+    "defense": 14,
+    "movement": 4,
+    "attacks": [
+      {
+        "id": "cursed-wraps",
+        "name": "Cursed Wraps",
+        "attack": "1d20+5",
+        "damage": "1d8+3",
+        "range": 1,
+        "damageType": "necrotic"
+      }
+    ],
+    "abilities": [
+      {
+        "id": "desiccating-curse",
+        "name": "Desiccating Curse",
+        "actionCost": 1,
+        "range": 3,
+        "effects": [
+          {
+            "type": "attack",
+            "target": "enemy",
+            "range": 3,
+            "attack": "1d20+5",
+            "damage": "1d6+3",
+            "damageType": "necrotic"
+          },
+          {
+            "type": "apply_status",
+            "target": "enemy",
+            "status": "slowed",
+            "duration": "next_dm_phase",
+            "when": "attack_hits"
+          }
+        ],
+        "description": "The mummy projects a curse that deals necrotic damage and slows its target on a hit."
+      }
+    ],
+    "description": "An ancient tomb guardian wrapped in stained linen, wielding curses and grasping bandages to halt intruders."
+  }
 ]

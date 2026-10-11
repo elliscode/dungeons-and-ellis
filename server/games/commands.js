@@ -348,8 +348,8 @@ def('effect.addStatus', { who: 'dm', undoable: 'add status' }, (ctx) => {
   if (!st || ctx.cmd.status === 'frightened') fail('Pick poisoned, snared, shaken or slowed');
   if (e.kind === 'object') fail('Objects have no statuses');
   addEffect(ctx.state, e, {
-    type: ctx.cmd.status === 'slowed' ? 'modify_movement' : 'apply_status', status: ctx.cmd.status, label: st.label, icon: st.icon,
-    source: { entityId: null, name: 'DM' }, params: ctx.cmd.status === 'slowed' ? { amount: -2 } : {}, duration: 'next_dm_phase',
+    type: st.movement ? 'modify_movement' : 'apply_status', status: ctx.cmd.status, label: st.label, icon: st.icon,
+    source: { entityId: null, name: 'DM' }, params: st.movement ? { amount: st.movement } : {}, duration: 'next_dm_phase',
   });
   ctx.log('effect', `${e.name} is ${st.label.toLowerCase()}`);
 });
