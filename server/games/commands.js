@@ -8,7 +8,7 @@ import { startCombat, advancePhase, endCombat, applyHeal, applyDamage, setHp, re
 import { addEffect, removeEffect, effectsOf, movementAllowance } from './status.js';
 import { activateAbility, strike, checkTaunt, resolveCheck, onPhaseTransition, STATUSES } from './effects.js';
 import {
-  str, int, hpTexts, statusSuffix, getEntity, onActiveScene, controlled, requireStatus, requirePlayerWindow,
+  str, int, outcome, hpTexts, statusSuffix, getEntity, onActiveScene, controlled, requireStatus, requirePlayerWindow,
   requireActionWindow, budgeted, checkAction, spendAction, rollOrFail, distanceBetween,
 } from './helpers.js';
 
@@ -450,13 +450,13 @@ def('attack', { who: 'any', undoable: 'attack' }, (ctx) => {
   const head = `${e.name} uses ${attack.name} on ${target.name}: ${s.roll.text}`;
   const data = { strikes: [{ targetId: target.id, victimId: s.victim.id, hit: s.hit, crit: s.crit, dealt: s.dealt }] };
   if (!s.hit) {
-    ctx.log('attack', `${head} — MISS`, { dmText: `${head} vs DEF ${s.roll.defense} — MISS`, data });
+    ctx.log('attack', `${head} — ${outcome('MISS')}`, { dmText: `${head} vs DEF ${s.roll.defense} — ${outcome('MISS')}`, data });
     return { hit: false };
   }
   const v = s.victim;
   const via = v !== target ? ` (${s.notes.find((n) => n.startsWith('intercepted')) ?? `hits ${v.name}`})` : '';
   const notes = s.notes.filter((n) => !n.startsWith('intercepted'));
-  const tail = `${s.crit ? 'CRITICAL HIT' : 'HIT'} for ${s.dealt} (${s.dmg.text}${notes.length ? `, ${notes.join(', ')}` : ''})${via}.${s.suffix}`;
+  const tail = `${outcome(s.crit ? 'CRITICAL HIT' : 'HIT')} for ${s.dealt} (${s.dmg.text}${notes.length ? `, ${notes.join(', ')}` : ''})${via}.${s.suffix}`;
   const t = hpTexts(v);
   ctx.log('attack', `${head} — ${tail}${t.pub}`, { dmText: `${head} vs DEF ${s.roll.defense} — ${tail}${t.dm}`, data });
   return { hit: true, crit: s.crit, damage: s.dealt };

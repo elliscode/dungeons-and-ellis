@@ -2,6 +2,12 @@ import { h } from './common.js';
 
 const time = (ts) => new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+// The server wraps real outcome words in \uE000…\uE001 (see outcome() in server/games/helpers.js)
+// and strips those markers from anything players type, so only genuine results become badges.
+const OUTCOMES = { 'CRITICAL HIT': 'crit', CRIT: 'crit', HIT: 'good', SUCCESS: 'good', MISS: 'fail', RESISTED: 'fail', FAILURE: 'fail' };
+const OUTCOME_RE = /\uE000([^\uE000\uE001]+)\uE001/;
+const withBadges = (text) => text.split(OUTCOME_RE).map((part, i) => (i % 2 ? h(`span.outcome.${OUTCOMES[part] ?? 'good'}`, {}, part) : part));
+
 // The Game Feed: chat messages and server events in one chronological list (ordered by the
 // server-assigned id). Rows are de-duplicated by id, so reconnect history never doubles up.
 // Every new entry scrolls the feed to the bottom (after it has rendered). A "Scroll to bottom"
@@ -65,7 +71,7 @@ export class GameFeed {
     if (r.kind === 'chat') el.append(h('span.who', { style: { color: r.color } }, r.name), h('span.text', {}, r.text));
     else {
       if (r.dmOnly) el.append(h('span.dm-tag', { title: 'Only the DM sees this' }, 'DM'));
-      el.append(h('span.text', {}, r.text));
+      el.append(h('span.text', {}, withBadges(r.text)));
     }
     return el;
   }

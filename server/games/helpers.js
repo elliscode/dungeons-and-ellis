@@ -3,8 +3,14 @@ import { fail, isFriendly, footprintDistance, turnFor, actionAllowance } from '.
 
 // Validation and text helpers shared by commands.js and the ability engine (effects.js).
 
+// Outcome words in feed text (HIT, MISS, SUCCESS…) are wrapped in private-use marker characters,
+// and the client badges only marked words. Player-typed text has the markers stripped, so typing
+// "HIT" in a name or custom action can't fake a badge.
+export const outcome = (word) => `\uE000${word}\uE001`;
+export const stripMarkers = (s) => s.replace(/[\uE000\uE001]/g, '');
+
 export const str = (v, max, label) => {
-  const s = typeof v === 'string' ? v.trim() : '';
+  const s = typeof v === 'string' ? stripMarkers(v).trim() : '';
   if (!s) fail(`${label} is required`);
   return s.slice(0, max);
 };

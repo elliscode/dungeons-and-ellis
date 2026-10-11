@@ -213,10 +213,10 @@ export function strike(ctx, { attacker, target, attack, color }) {
 
 // Compact public text for one strike, e.g. "HIT 7" / "CRIT 14" / "MISS".
 function strikeWord(s) {
-  if (!s.hit) return 'MISS';
+  if (!s.hit) return H.outcome('MISS');
   const notes = s.notes?.length ? ` (${s.notes.join(', ')})` : '';
   const via = s.victim !== s.target ? ` → ${s.victim.name}` : '';
-  return `${s.crit ? 'CRIT' : 'HIT'} ${s.dealt}${notes}${via}`;
+  return `${H.outcome(s.crit ? 'CRIT' : 'HIT')} ${s.dealt}${notes}${via}`;
 }
 
 function line(act, pub, dm = pub) {
@@ -429,7 +429,7 @@ const HANDLERS = {
     if (!subjects.length) { line(act, 'no targets'); return; }
     for (const s of subjects) {
       const r = attackRoll(ctx, { source: act.caster, target: s, expr: eff.roll });
-      line(act, `${s.name}: ${r.hit ? 'success' : 'resisted'} (${r.text})`, `${s.name}: ${r.hit ? 'success' : 'resisted'} (${r.text} vs DEF ${r.defense})`);
+      line(act, `${s.name}: ${H.outcome(r.hit ? 'SUCCESS' : 'RESISTED')} (${r.text})`, `${s.name}: ${H.outcome(r.hit ? 'SUCCESS' : 'RESISTED')} (${r.text} vs DEF ${r.defense})`);
       const outcome = r.hit ? eff.onSuccess : eff.onFailure;
       if (outcome?.length) runEffects(ctx, { ...act, checked: s, primary: s }, outcome);
     }
@@ -567,7 +567,7 @@ export function resolveCheck(ctx, checkId, success) {
   const subject = ctx.state.entities[chk.subjectId];
   const caster = ctx.state.entities[chk.casterId];
   const outcome = success ? chk.onSuccess : chk.onFailure;
-  const verdict = `${chk.casterName}'s ${chk.abilityName} vs ${chk.subjectName} (rolled ${chk.total}): ${success ? 'SUCCESS' : 'FAILURE'}`;
+  const verdict = `${chk.casterName}'s ${chk.abilityName} vs ${chk.subjectName} (rolled ${chk.total}): ${H.outcome(success ? 'SUCCESS' : 'FAILURE')}`;
   if (!subject || !caster || !outcome.length || !ctx.state.activeSceneId) {
     ctx.log('ability', verdict);
     return;

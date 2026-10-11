@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { roleRules, setRoleStrength, getRoleStrength, DEFAULT_ROLE_STRENGTH } from '../server/games/roles.js';
 import { loadSettings } from '../server/settings.js';
+import { stripMarkers } from '../server/games/helpers.js';
 
 // d20 → 15, every other die → 1 unless queued.
 const fallback = (sides) => (sides === 20 ? 15 : 1);
@@ -33,7 +34,7 @@ function world(heroes) {
     attack: (k, attackId, targetId) => s.run(h[k].actor, { type: 'attack', entityId: h[k].id, attackId, targetId }),
     // Friendly fire is DM-only, so hero-on-hero shots go through the DM.
     dmAttack: (k, attackId, targetId) => s.run(DM, { type: 'attack', entityId: h[k].id, attackId, targetId }),
-    last: (role = 'player') => s.service.history(s.game.id, role).feed.at(-1).text,
+    last: (role = 'player') => stripMarkers(s.service.history(s.game.id, role).feed.at(-1).text),
   };
 }
 

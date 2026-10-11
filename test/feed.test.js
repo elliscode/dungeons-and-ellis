@@ -9,6 +9,29 @@ import { openDb } from '../server/db.js';
 import { createServer } from '../server/index.js';
 import { setup, ok, DM, FIXTURE_DATA } from './helpers.js';
 
+test('only real outcomes carry badge markers; player-typed text cannot fake one', () => {
+  const s = setup();
+  const fake = '\uE000HIT\uE001';
+  const a = s.join(`${fake} Ana`);
+  ok(s.run(a, { type: 'player.setName', name: `MISS ${fake}` }));
+  ok(s.run(a, { type: 'player.selectCharacter', characterId: 'shadow-rogue' }));
+  const sid = ok(s.run(DM, { type: 'scene.add', templateId: s.tpl.id })).sceneId;
+  ok(s.run(DM, { type: 'scene.activate', sceneId: sid }));
+  const ea = s.state().players[a.playerId].entityId;
+  ok(s.run(a, { type: 'act', entityId: ea, text: `I ${fake} the lever` }));
+  s.service.chat(s.game.id, a, `nice ${fake}`);
+  const gob = ok(s.run(DM, { type: 'entity.spawn', kind: 'monster', defId: 'goblin', x: 1, y: 7 })).entityId;
+  ok(s.run(DM, { type: 'combat.start' }));
+  s.rng.push(1); // natural 1: a real MISS
+  ok(s.run(a, { type: 'attack', entityId: ea, attackId: 'twin-daggers', targetId: gob }));
+  const texts = s.service.history(s.game.id, 'player').feed.map((f) => f.text);
+  const marked = texts.filter((t) => /[\uE000\uE001]/.test(t));
+  assert.equal(marked.length, 1, 'only the attack line is marked');
+  assert.match(marked[0], /\uE000MISS\uE001/);
+  assert.ok(texts.some((t) => t.includes('I HIT the lever')), 'typed HIT stays plain text');
+  assert.equal(s.state().players[a.playerId].name, 'MISS HIT');
+});
+
 test('chat and game events share one chronological feed with stable ids', () => {
   const s = setup();
   const a = s.join('Ana');

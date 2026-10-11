@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { setup, ok, DM } from './helpers.js';
 import { reduceIncoming } from '../server/games/combat.js';
+import { stripMarkers } from '../server/games/helpers.js';
 
 // Ana plays a Paladin (tank), Bo a Ranger (dps). A goblin stands next to both.
 function arena() {
@@ -121,7 +122,7 @@ test('tank reduction applies to attacks and DM damage, and reports the damage de
   const r = ok(s.run(DM, { type: 'attack', entityId: s.gob, attackId: 'scimitar', targetId: s.tank }));
   assert.equal(r.damage, 2);
   assert.equal(s.state().entities[s.tank].hp, hp0 - 4);
-  const log = s.service.history(s.game.id, 'player').feed.map((x) => x.text).join('\n');
+  const log = s.service.history(s.game.id, 'player').feed.map((x) => stripMarkers(x.text)).join('\n');
   assert.match(log, /takes 2 damage \(10, reduced by Tank\)/);
   assert.match(log, /HIT for 2 \(\[6\]\+2 = 8, reduced by Tank\)/);
   // non-tank takes full damage

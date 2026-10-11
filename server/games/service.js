@@ -5,6 +5,7 @@ import { handlers } from './commands.js';
 import { GameError, DM_COLOR, newId, createGameState } from './state.js';
 import { ensurePlaced } from './placement.js';
 import { feedForRole } from './project.js';
+import { stripMarkers } from './helpers.js';
 
 const UNDO_LIMIT = 20;
 const HISTORY_LIMIT = 300;
@@ -243,7 +244,7 @@ export class GameService extends EventEmitter {
   chat(gameId, actor, text) {
     const game = this.get(gameId);
     if (!game) return { ok: false, error: 'Game not found' };
-    const msg = String(text ?? '').trim().slice(0, CHAT_MAX);
+    const msg = stripMarkers(String(text ?? '')).trim().slice(0, CHAT_MAX);
     if (!msg) return { ok: false, error: 'Empty message' };
     const roll = msg.match(/^\/r(?:oll)?\s+(.+)$/i);
     if (roll) return this.dispatch(gameId, actor, { type: 'roll', expr: roll[1] });

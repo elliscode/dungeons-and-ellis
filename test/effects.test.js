@@ -8,6 +8,7 @@ import { EFFECT_TYPES, handlerCalls, validateAbility } from '../server/games/eff
 import { dealDamage } from '../server/games/combat.js';
 import { addEffect } from '../server/games/status.js';
 import { actionAllowance } from '../server/games/state.js';
+import { stripMarkers } from '../server/games/helpers.js';
 
 // Deterministic dice: d20 rolls 15 and every other die rolls 1, unless a test queues values.
 const fallback = (sides) => (sides === 20 ? 15 : 1);
@@ -34,7 +35,7 @@ function world(heroes = [], { cols = 14, rows = 10 } = {}) {
     use: (key, abilityId, extra = {}) => s.run(h[key].actor, { type: 'ability', entityId: h[key].id, abilityId, ...extra }),
     dmAttack: (id, attackId, targetId) => s.run(DM, { type: 'attack', entityId: id, attackId, targetId }),
     feed: (role = 'player') => s.service.history(s.game.id, role).feed,
-    last: (role = 'player') => s.service.history(s.game.id, role).feed.at(-1).text,
+    last: (role = 'player') => stripMarkers(s.service.history(s.game.id, role).feed.at(-1).text),
     fight: () => ok(s.run(DM, { type: 'combat.start' })),
     extraAction: (key) => ok(s.run(DM, { type: 'entity.grantAction', entityId: h[key].id })),
     next: () => ok(s.run(DM, { type: 'combat.advance' })),
