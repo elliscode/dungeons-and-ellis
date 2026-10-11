@@ -34,7 +34,7 @@
     "abilities": [
       { "id": "rally-the-crew", "name": "Rally the Crew", "actionCost": 1, "range": 6,
         "effects": [{ "type": "grant_roll_bonus", "target": "ally", "bonus": "1d4", "range": 6, "label": "Rallied" }],
-        "description": "Barks an order at an ally within 6, who adds 1d4 to their next attack or check." }
+        "description": "Barks an order at an ally within 6, who adds 1d4 to their next attack roll." }
     ],
     "inventory": ["spyglass", "ships-log", "coin-purse"],
     "description": "Commands a ship and its crew. Can rally allies in a fight." },
@@ -46,7 +46,7 @@
     "abilities": [
       { "id": "rally-the-crew", "name": "Rally the Crew", "actionCost": 1, "range": 6,
         "effects": [{ "type": "grant_roll_bonus", "target": "ally", "bonus": "1d4", "range": 6, "label": "Rallied" }],
-        "description": "Barks an order at an ally within 6, who adds 1d4 to their next attack or check." }
+        "description": "Barks an order at an ally within 6, who adds 1d4 to their next attack roll." }
     ],
     "inventory": ["spyglass", "ships-log", "coin-purse"],
     "description": "Commands a ship and its crew. Can rally allies in a fight." },
@@ -58,7 +58,7 @@
     "abilities": [
       { "id": "rally-the-crew", "name": "Rally the Crew", "actionCost": 1, "range": 6,
         "effects": [{ "type": "grant_roll_bonus", "target": "ally", "bonus": "1d4", "range": 6, "label": "Rallied" }],
-        "description": "Barks an order at an ally within 6, who adds 1d4 to their next attack or check." }
+        "description": "Barks an order at an ally within 6, who adds 1d4 to their next attack roll." }
     ],
     "inventory": ["spyglass", "ships-log", "coin-purse"],
     "description": "Commands a ship and its crew. Can rally allies in a fight." },

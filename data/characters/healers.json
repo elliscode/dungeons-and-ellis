@@ -104,7 +104,7 @@
         "actionCost": 1,
         "range": 6,
         "effects": [{ "type": "grant_roll_bonus", "target": "ally", "bonus": "1d6", "range": 6, "label": "Inspired" }],
-        "description": "Give an ally an inspiration die to add to a future roll."
+        "description": "Give an ally an inspiration die (1d6) to add to their next attack roll."
       }
     ],
     "inventory": ["lute", "healing-potion", "disguise-kit"]
@@ -136,7 +136,6 @@
         "actionCost": 1,
         "range": 6,
         "effects": [
-          { "type": "narrative", "roll": "1d20+4" },
           {
             "type": "discourage_attacks",
             "target": "ally_or_self",
@@ -195,7 +194,6 @@
         "actionCost": 1,
         "range": 2,
         "effects": [
-          { "type": "narrative", "roll": "1d20+3" },
           {
             "type": "healing_aura",
             "target": "cell",
@@ -246,7 +244,6 @@
         "actionCost": 1,
         "range": 0,
         "effects": [
-          { "type": "narrative", "roll": "1d20+4" },
           {
             "type": "defense_bonus",
             "target": "self",
@@ -292,6 +289,7 @@
         "id": "beacon-of-grace",
         "name": "Beacon of Grace",
         "actionCost": 0,
+        "usesPerPhase": 1,
         "range": 6,
         "effects": [
           {
@@ -302,7 +300,7 @@
             "label": "Beacon of Grace"
           }
         ],
-        "description": "Bless an ally; your next healing ability on them restores a little extra health."
+        "description": "Bless an ally; your next healing ability on them restores 3 extra health. Free action, once per phase."
       }
     ],
     "inventory": ["holy-symbol", "healing-potion", "silver-shield"]
@@ -401,7 +399,6 @@
         "actionCost": 1,
         "range": 4,
         "effects": [
-          { "type": "narrative", "roll": "1d20+4" },
           { "type": "absorb_next_hit", "target": "ally_or_self", "range": 4, "label": "Warding Rune" }
         ],
         "description": "Place a glowing rune that shields an ally from the next harmful strike."
@@ -420,7 +417,7 @@
             "label": "Foresight"
           }
         ],
-        "description": "Read a flicker of possible futures and grant an ally a bonus on their next roll."
+        "description": "Read a flicker of possible futures and grant an ally 1d6 on their next attack roll."
       }
     ],
     "inventory": ["astral-focus", "chalk-runes", "mana-potion"]
@@ -526,10 +523,10 @@
             "target": "ally",
             "bonus": 2,
             "range": 3,
-            "duration": "until_next_player_phase"
+            "duration": "until_used"
           }
         ],
-        "description": "Bless an ally within 3 squares, adding +2 to their next attack or check roll."
+        "description": "Bless an ally within 3 squares, adding +2 to their next attack roll."
       },
       {
         "id": "dawnstride-purifying-touch",
@@ -749,7 +746,7 @@
             "duration": "until_used"
           }
         ],
-        "description": "Surround an ally within 4 squares with radiant protection, halving their next incoming hit and granting +2 to their next attack or check roll."
+        "description": "Surround an ally within 4 squares with radiant protection, halving their next incoming hit and granting +2 to their next attack roll."
       }
     ],
     "inventory": [

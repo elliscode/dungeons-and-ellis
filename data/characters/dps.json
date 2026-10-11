@@ -100,7 +100,7 @@
             "onSuccess": [{ "type": "mark_target", "target": "checked_enemy", "bonus": "1d6", "label": "Hunter's Mark" }]
           }
         ],
-        "description": "Mark a visible target; your next hit against it deals extra damage."
+        "description": "Mark a target within 10 squares. If your roll meets its Defense, your next hit against it deals an extra 1d6 damage."
       },
       {
         "id": "pinning-shot",
@@ -221,7 +221,7 @@
             "damageType": "thunder"
           }
         ],
-        "description": "Release a close-range burst of thunder that can stagger nearby foes."
+        "description": "Release a close-range burst of thunder, attacking every enemy within 2 squares."
       }
     ],
     "inventory": ["storm-totem", "mana-potion", "copper-wire"]
@@ -1063,10 +1063,10 @@
             "type": "defense_bonus",
             "target": "self",
             "amount": 2,
-            "duration": "current_turn"
+            "duration": "next_dm_phase"
           }
         ],
-        "description": "Dash an additional 3 squares and gain +2 Defense for the remainder of the current turn."
+        "description": "Dash an additional 3 squares this turn and gain +2 Defense through the next DM phase."
       }
     ],
     "inventory": [
@@ -1553,10 +1553,10 @@
             "type": "defense_bonus",
             "target": "self",
             "amount": 2,
-            "duration": "current_turn"
+            "duration": "next_dm_phase"
           }
         ],
-        "description": "Gain 3 additional movement squares and +2 Defense for the current turn."
+        "description": "Gain 3 additional movement squares this turn and +2 Defense through the next DM phase."
       }
     ],
     "inventory": [
@@ -1601,7 +1601,7 @@
             "target": "enemy",
             "attack": "1d20+6",
             "damage": "2d6+3",
-            "range": 1,
+            "range": 5,
             "damageType": "slashing"
           }
         ],
@@ -1685,7 +1685,7 @@
             "duration": "until_used"
           }
         ],
-        "description": "Build a dangerous rhythm, gaining +2 on your next attack or check roll."
+        "description": "Build a dangerous rhythm, gaining +2 on your next attack roll."
       }
     ],
     "inventory": [
@@ -2099,7 +2099,7 @@
             "duration": "until_used"
           }
         ],
-        "description": "Focus your aim, gaining +2 on your next attack or check roll."
+        "description": "Focus your aim, gaining +2 on your next attack roll."
       }
     ],
     "inventory": [

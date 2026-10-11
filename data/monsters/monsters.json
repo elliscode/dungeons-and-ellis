@@ -1519,10 +1519,10 @@
         "range": 0,
         "usesPerPhase": 1,
         "effects": [
-          { "type": "defense_bonus", "target": "self", "amount": 4, "label": "Withdrawn" },
+          { "type": "defense_bonus", "target": "self", "amount": 4, "duration": "next_dm_phase", "label": "Withdrawn" },
           { "type": "grant_protection", "target": "self", "fraction": 0.5, "label": "Shell" }
         ],
-        "description": "Pulls into its shell: +4 Defense until the next player phase, and its next hit taken is halved."
+        "description": "Pulls into its shell: +4 Defense through the next DM phase, and its next hit taken is halved."
       }
     ],
     "description": "Slow and nearly impossible to hurt. Blocks a path more than it hunts; use Withdraw when it's badly hurt."

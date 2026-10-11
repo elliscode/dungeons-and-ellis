@@ -312,7 +312,10 @@ const HANDLERS = {
   },
 
   modify_healing(ctx, act, eff) {
-    applyLive(ctx, act, eff, targetsFor(ctx, act, eff), { icon: '💛', trigger: 'until_next_heal_by_caster', params: { amount: eff.amount } });
+    const targets = targetsFor(ctx, act, eff);
+    // Recasting refreshes rather than stacks: one bonus per caster per target.
+    for (const t of targets) for (const fx of effectsOf(t, 'modify_healing')) if (fx.source?.entityId === act.caster.id) removeEffect(t, fx.id);
+    applyLive(ctx, act, eff, targets, { icon: '💛', trigger: 'until_next_heal_by_caster', params: { amount: eff.amount } });
   },
 
   grant_protection(ctx, act, eff) {

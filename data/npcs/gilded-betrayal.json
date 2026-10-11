@@ -79,9 +79,9 @@
         "usesPerPhase": 1,
         "effects": [
           { "type": "teleport", "target": "cell", "distance": 6 },
-          { "type": "defense_bonus", "target": "self", "amount": 2, "label": "Vanishing Act" }
+          { "type": "defense_bonus", "target": "self", "amount": 2, "duration": "next_dm_phase", "label": "Vanishing Act" }
         ],
-        "description": "Voss steps through a fold of gold light to a square within 6 and gains +2 Defense until the next player phase. Once per phase."
+        "description": "Voss steps through a fold of gold light to a square within 6 and gains +2 Defense through the next DM phase. Once per phase."
       }
     ],
     "inventory": ["court-papers", "quill-and-inkwell", "heavy-coin-purse"],
