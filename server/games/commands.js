@@ -9,7 +9,7 @@ import { addEffect, removeEffect, effectsOf, movementAllowance } from './status.
 import { activateAbility, strike, checkTaunt, resolveCheck, onPhaseTransition, STATUSES } from './effects.js';
 import {
   str, int, outcome, hpTexts, statusSuffix, getEntity, onActiveScene, controlled, requireStatus, requirePlayerWindow,
-  requireActionWindow, budgeted, checkAction, spendAction, rollOrFail, distanceBetween,
+  requireActionWindow, budgeted, checkAction, spendAction, rollOrFail, distanceBetween, frightenedBy,
 } from './helpers.js';
 
 // Handler options:
@@ -406,16 +406,8 @@ def('move', { who: 'any', undoable: 'move' }, (ctx) => {
       }
       t.moved += dist;
     }
-    for (const fx of e.effects ?? []) {
-      if (fx.status !== 'frightened') continue;
-      const src = ctx.state.entities[fx.params.sourceId];
-      if (!src?.positions[scene.id]) continue;
-      const before = distanceBetween(ctx, e, src);
-      const sp = src.positions[scene.id];
-      const dx = Math.max(0, sp.x - (x + e.size.w - 1), x - (sp.x + src.size.w - 1));
-      const dy = Math.max(0, sp.y - (y + e.size.h - 1), y - (sp.y + src.size.h - 1));
-      if (Math.max(dx, dy) < before) fail(`${e.name} is frightened of ${src.name} and can't move closer${ctx.actor.role === 'dm' ? ' (Shift-drag to force)' : ''}`);
-    }
+    const src = frightenedBy(ctx, e, scene.id, x, y);
+    if (src) fail(`${e.name} is frightened of ${src.name} and can't move closer${ctx.actor.role === 'dm' ? ' (Shift-drag to force)' : ''}`);
   }
   if (from && from.x === x && from.y === y) return;
   e.positions[scene.id] = { x, y };

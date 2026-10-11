@@ -1,7 +1,7 @@
 import { describe, test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { setup, scriptedRng, ok, DM } from './helpers.js';
-import { EFFECT_TYPES } from '../server/games/effects.js';
+import { EFFECT_TYPES, targetingOf } from '../server/games/effects.js';
 import { dealDamage } from '../server/games/combat.js';
 import { movementAllowance } from '../server/games/status.js';
 import { stripMarkers } from '../server/games/helpers.js';
@@ -630,6 +630,58 @@ suite('teleport', () => {
     assert.deepEqual(w.ent(w.W).positions[w.sid], { x: 5, y: 5 });
     assert.match(w.use(w.W, 'blink', { cell: { x: 9, y: 5 } }).error, /out of range/);
     assert.match(w.use(w.W, 'blink', { cell: { x: 99, y: 5 } }).error, /square on the map/);
+  });
+});
+
+suite('dash', () => {
+  const lunge = [
+    { type: 'dash', target: 'cell', distance: 5 },
+    { type: 'attack', target: 'enemy', attack: '1d20+10', damage: '1d4', range: 1 },
+  ];
+
+  test('asks for a square, then a target measured from that square', () => {
+    assert.deepEqual(targetingOf({ id: 'l', name: 'L', range: 5, effects: lunge }), { kind: 'cell', range: 5, then: { kind: 'enemy', range: 1, chain: null } });
+    assert.deepEqual(targetingOf({ id: 't', name: 'T', range: 4, effects: [{ type: 'teleport', target: 'cell', distance: 4 }] }), { kind: 'cell', range: 4 }, 'a plain teleport is unchanged');
+  });
+
+  test('moves the caster to the square, then strikes an enemy next to it', () => {
+    const w = arena();
+    const gob = w.spawn('goblin', 7, 2);
+    w.give(w.W, 'lunge', lunge);
+    w.fight();
+    assert.match(w.use(w.W, 'lunge', { cell: { x: 2, y: 5 }, targetId: gob }).error, /out of range \(1 from that square\)/);
+    assert.deepEqual(w.ent(w.W).positions[w.sid], { x: 2, y: 2 }, 'a refused lunge does not move');
+    assert.match(w.use(w.W, 'lunge', { cell: { x: 8, y: 2 }, targetId: gob }).error, /square is out of range \(5\)/);
+    const r = ok(w.use(w.W, 'lunge', { cell: { x: 6, y: 2 }, targetId: gob }));
+    assert.deepEqual(w.ent(w.W).positions[w.sid], { x: 6, y: 2 });
+    assert.equal(r.strikes.length, 1);
+    assert.equal(w.ent(gob).hp, 8);
+    assert.match(w.last(), /dashes/);
+  });
+
+  test("doesn't spend movement", () => {
+    const w = arena();
+    const gob = w.spawn('goblin', 7, 2);
+    w.give(gob, 'lunge', lunge);
+    w.fight();
+    w.next(); // the goblin acts in the DM phase
+    ok(w.use(gob, 'lunge', { cell: { x: 3, y: 3 }, targetId: w.W }));
+    assert.equal(w.state().turn[gob]?.moved ?? 0, 0);
+    ok(w.run(DM, { type: 'move', entityId: gob, x: 3, y: 8 }), 'full 6 movement still available after the lunge');
+  });
+
+  test("snared can't dash; frightened can't dash closer to its source", () => {
+    const w = arena();
+    const gob = w.spawn('goblin', 7, 2);
+    w.give(w.W, 'lunge', lunge);
+    w.give(w.O, 'snare', [{ type: 'apply_status', target: 'enemy', status: 'snared' }]);
+    w.give(gob, 'fear', [{ type: 'apply_status', target: 'enemy', status: 'frightened' }]);
+    w.fight();
+    w.next(); // DM phase: the enemies curse W
+    ok(w.use(gob, 'fear', { targetId: w.W }));
+    assert.match(w.use(w.W, 'lunge', { cell: { x: 6, y: 2 }, targetId: gob }).error, /frightened of Goblin/);
+    ok(w.use(w.O, 'snare', { targetId: w.W }));
+    assert.match(w.use(w.W, 'lunge', { cell: { x: 1, y: 2 }, targetId: gob }).error, /snared/);
   });
 });
 

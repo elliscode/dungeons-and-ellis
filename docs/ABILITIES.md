@@ -64,11 +64,12 @@ Older loose fields (`attack`/`damage`, `heal`, `roll`, `free`, `grantsActions`) 
 | `taunt` | optional `radius` | While the taunter is a valid target, the taunted enemy's attacks must target the taunter. |
 | `reduce_actions` | `amount` | Lowers the target's action allowance. It never goes below 0. |
 | `mark_target` | `bonus` (dice) | The caster's next hit on the target adds `bonus` (Hunter's Mark). |
-| `grant_roll_bonus` | `bonus` (dice or number) | Added to the holder's next attack or check roll (Inspire, Foresight). |
+| `grant_roll_bonus` | `bonus` (dice or number) | Added to the holder's next attack roll, including roll-to-apply rolls (Inspire, Foresight). |
 | `apply_status` / `remove_status` | `status` | Statuses: `frightened` (can't move closer to its source), `snared` (movement 0), `shaken` and `poisoned` (−2 to hit), `slowed`. |
 | `discourage_attacks` | `penalty` (default 5) | Attacks against the holder take −penalty (Sanctuary). |
 | `grant_actions` | `amount` | Extra actions this phase. The ability must set `usesPerPhase`, and it can grant at most `actionCost + 1`. |
 | `teleport` | `distance` | Moves the caster to the picked square. |
+| `dash` | `distance` | Moves the caster on foot to the picked square without spending movement. Snared creatures can't dash; frightened ones can't dash closer to their source. Follow it with a targeted effect (e.g. an attack with `range: 1`) and the player picks the square first, then the target measured from that square (Predator's Lunge). |
 | `narrative` | optional `roll` | Records the use and the roll; the DM decides the outcome. |
 | `create_barrier` | `name`, `duration` | A temporary object token on the picked square. It's visual cover; the DM adjudicates. |
 | `healing_aura` | `heal`, `radius`, `pulses` | A totem token. At the start of each PLAYER PHASE it heals friendlies within `radius`, for `pulses` phases. |

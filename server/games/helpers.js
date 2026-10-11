@@ -71,6 +71,18 @@ export function distanceBetween(ctx, a, b) {
   return footprintDistance(pa, a.size, pb, b.size);
 }
 
+// The creature `e` is frightened of and would end up closer to by standing at (x, y), or null.
+export function frightenedBy(ctx, e, sceneId, x, y) {
+  for (const fx of e.effects ?? []) {
+    if (fx.status !== 'frightened') continue;
+    const src = ctx.state.entities[fx.params.sourceId];
+    const sp = src?.positions[sceneId];
+    if (!sp) continue;
+    if (footprintDistance({ x, y }, e.size, sp, src.size) < distanceBetween(ctx, e, src)) return src;
+  }
+  return null;
+}
+
 // The entity the acting player controls (DM may act through any entity).
 export function controlled(ctx, entityId) {
   const e = getEntity(ctx, entityId);

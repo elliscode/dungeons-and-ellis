@@ -1597,15 +1597,20 @@
         "range": 5,
         "effects": [
           {
+            "type": "dash",
+            "target": "cell",
+            "distance": 5
+          },
+          {
             "type": "attack",
             "target": "enemy",
             "attack": "1d20+6",
             "damage": "2d6+3",
-            "range": 5,
+            "range": 1,
             "damageType": "slashing"
           }
         ],
-        "description": "Lunge at an enemy within 5 squares and strike it in melee for heavy damage."
+        "description": "Dash up to 5 squares, then strike an adjacent enemy for heavy damage. The dash is free movement, but not while snared or toward what frightens you."
       },
       {
         "id": "wolfscar-hunters-mark",

@@ -24,6 +24,7 @@ export const SAMPLES = {
   discourage_attacks: { range: 4, effects: [{ type: 'discourage_attacks', target: 'ally', penalty: 5, range: 4 }] },
   grant_actions: { range: 0, actionCost: 0, usesPerPhase: 1, effects: [{ type: 'grant_actions', amount: 1 }] },
   teleport: { range: 4, actionCost: 0, usesPerPhase: 1, effects: [{ type: 'teleport', target: 'cell', distance: 4 }] },
+  dash: { range: 5, effects: [{ type: 'dash', target: 'cell', distance: 5 }, { type: 'attack', target: 'enemy', attack: '1d20+6', damage: '2d6+3', range: 1 }] },
   narrative: { range: 0, actionCost: 0, effects: [{ type: 'narrative', roll: '1d20+2' }] },
   create_barrier: { range: 3, effects: [{ type: 'create_barrier', target: 'cell', name: 'Ice Wall', duration: 'until_next_player_phase', range: 3 }] },
   healing_aura: { range: 4, effects: [{ type: 'healing_aura', heal: '1d4+1', radius: 2, pulses: 2, range: 4 }] },

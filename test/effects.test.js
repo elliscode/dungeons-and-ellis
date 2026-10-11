@@ -240,6 +240,21 @@ test('enemy action reduction integrates with allowances, never negative, and res
   ok(w.dmAttack(gob, 'scimitar', w.h.breaker.id));
 });
 
+test('dash (Predator\'s Lunge): a player picks a square, then an enemy next to it; one action, no movement spent', () => {
+  const w = world([['monk', 'x-wind-monk', 0, 0]]);
+  const gob = w.spawn('goblin', 5, 0);
+  w.hero('monk').abilities.push({ id: 'lunge', name: 'Lunge', range: 5, effects: [
+    { type: 'dash', target: 'cell', distance: 5 }, { type: 'attack', target: 'enemy', attack: '1d20+6', damage: '2d6+3', range: 1 },
+  ] });
+  w.fight();
+  ok(w.use('monk', 'lunge', { cell: { x: 4, y: 0 }, targetId: gob }));
+  assert.deepEqual(w.hero('monk').positions[w.sid], { x: 4, y: 0 });
+  assert.equal(w.ent(gob).status, 'dead');
+  assert.equal(w.state().turn[w.h.monk.id].actions, 1);
+  assert.equal(w.state().turn[w.h.monk.id].moved, 0);
+  assert.match(w.use('monk', 'lunge', { cell: { x: 4, y: 1 }, targetId: gob }).error, /no actions left|is dead/);
+});
+
 test('teleport validates distance and bounds; once per phase in combat', () => {
   const w = world([['sorc', 'x-frost-sorcerer', 0, 0]]);
   assert.match(w.use('sorc', 'blink-step', { cell: { x: 9, y: 0 } }).error, /out of range/);

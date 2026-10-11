@@ -1,5 +1,5 @@
 // Client side of the ability engine: summaries for menus and the targeting flow. The server
-// sends each ability's `targeting` ({ kind: enemy|ally|cell|none, range, includeSelf, chain });
+// sends each ability's `targeting` ({ kind: enemy|ally|cell|none, range, includeSelf, chain, then });
 // the client only collects the picks and the server validates and resolves everything.
 
 export const sideOf = (e) => (!e || e.kind === 'object' ? null : e.kind === 'pc' || (e.kind === 'npc' && !e.hostile) ? 'party' : 'foe');
@@ -19,6 +19,7 @@ const EFFECT_WORDS = {
   heal: (e) => `heal ${e.heal}`,
   chain_heal: (e) => `chain heal +${e.jumps}: ${e.heal}`,
   teleport: (e) => `teleport ${e.distance}`,
+  dash: (e) => `dash ${e.distance}`,
   grant_actions: (e) => `+${e.amount} action`,
   absorb_next_hit: () => 'absorb next hit',
   grant_protection: () => 'halve next hit',
@@ -50,36 +51,47 @@ export function startAbility({ caster, ab, entities, setMode, send, toast }) {
   const t = ab.targeting ?? { kind: 'none' };
   const base = { type: 'ability', entityId: caster.id, abilityId: ab.id };
   if (t.kind === 'none') return send(base);
+  const mySide = sideOf(caster);
+
+  // Picks an enemy or ally within t.range of `origin`, then sends with `extra` merged in.
+  const pickTarget = (t, origin, extra, label) => {
+    const wantAlly = t.kind === 'ally';
+    const valid = (e) => e.status !== 'dead' && sideOf(e) && (wantAlly ? sideOf(e) === mySide && (e.id !== caster.id || t.includeSelf) : sideOf(e) !== mySide);
+    setMode({
+      type: 'target', label: label ?? `${ab.name}: choose ${wantAlly ? (t.includeSelf ? 'an ally or yourself' : 'an ally') : 'an enemy'}`,
+      range: t.range, origin, filter: valid,
+      onTarget: (target) => {
+        if (!t.chain) return send({ ...base, ...extra, targetId: target.id });
+        // Chains: the player picks each jump (never chosen silently), each within jumpRange of the last.
+        const picks = [];
+        const finish = () => send({ ...base, ...extra, targetId: target.id, picks });
+        const next = (from) => {
+          if (picks.length >= t.chain.jumps) return finish();
+          const chainValid = (e) => valid(e) && e.id !== target.id && !picks.includes(e.id)
+            && (!wantAlly || e.hp === undefined || e.hp < e.maxHp); // NPC HP is hidden: allow, server skips unwounded
+          if (!entities().some((e) => chainValid(e) && distance(from, e) <= t.chain.jumpRange)) return finish();
+          setMode({
+            type: 'target', label: `${ab.name}: pick the next ${wantAlly ? 'wounded ally' : 'enemy'} (${picks.length + 1}/${t.chain.jumps}) or finish`,
+            range: t.chain.jumpRange, origin: from, filter: chainValid,
+            onTarget: (e2) => { picks.push(e2.id); next(e2); },
+            onDone: finish,
+          });
+        };
+        next(target);
+      },
+    });
+  };
+
   if (t.kind === 'cell') {
     return setMode({
       type: 'cell', label: `${ab.name}: pick a square (range ${t.range})`, range: t.range, origin: caster,
-      onCell: (cell) => send({ ...base, cell }),
+      // Dash + strike: then pick the target, measured from the chosen square. That origin has no
+      // id, so the board doesn't snap it back to where the caster stands now.
+      onCell: (cell) => (t.then
+        ? pickTarget(t.then, { position: cell, size: caster.size }, { cell }, `${ab.name}: choose ${t.then.kind === 'ally' ? 'an ally' : 'an enemy'} in reach of that square`)
+        : send({ ...base, cell })),
     });
   }
-  const mySide = sideOf(caster);
-  const wantAlly = t.kind === 'ally';
-  const valid = (e) => e.status !== 'dead' && sideOf(e) && (wantAlly ? sideOf(e) === mySide && (e.id !== caster.id || t.includeSelf) : sideOf(e) !== mySide);
-  setMode({
-    type: 'target', label: `${ab.name}: choose ${wantAlly ? (t.includeSelf ? 'an ally or yourself' : 'an ally') : 'an enemy'}`,
-    range: t.range, origin: caster, filter: valid,
-    onTarget: (target) => {
-      if (!t.chain) return send({ ...base, targetId: target.id });
-      // Chains: the player picks each jump (never chosen silently), each within jumpRange of the last.
-      const picks = [];
-      const next = (from) => {
-        if (picks.length >= t.chain.jumps) return send({ ...base, targetId: target.id, picks });
-        const chainValid = (e) => valid(e) && e.id !== target.id && !picks.includes(e.id)
-          && (!wantAlly || e.hp === undefined || e.hp < e.maxHp); // NPC HP is hidden: allow, server skips unwounded
-        if (!entities().some((e) => chainValid(e) && distance(from, e) <= t.chain.jumpRange)) return send({ ...base, targetId: target.id, picks });
-        setMode({
-          type: 'target', label: `${ab.name}: pick the next ${wantAlly ? 'wounded ally' : 'enemy'} (${picks.length + 1}/${t.chain.jumps}) or finish`,
-          range: t.chain.jumpRange, origin: from, filter: chainValid,
-          onTarget: (e2) => { picks.push(e2.id); next(e2); },
-          onDone: () => send({ ...base, targetId: target.id, picks }),
-        });
-      };
-      next(target);
-    },
-  });
+  pickTarget(t, caster, {});
   toast?.(`${ab.name}: click a target on the map`);
 }

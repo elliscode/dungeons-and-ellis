@@ -449,6 +449,9 @@
           "$ref": "#/$defs/effect_teleport"
         },
         {
+          "$ref": "#/$defs/effect_dash"
+        },
+        {
           "$ref": "#/$defs/effect_narrative"
         },
         {
@@ -1519,6 +1522,33 @@
       "properties": {
         "type": {
           "const": "teleport"
+        },
+        "target": {
+          "enum": [
+            "cell"
+          ]
+        },
+        "distance": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 30
+        },
+        "when": {
+          "$ref": "#/$defs/when"
+        }
+      }
+    },
+    "effect_dash": {
+      "type": "object",
+      "description": "Moves the caster on foot to the square the player picks, up to `distance` away, without spending movement. Snared creatures can't dash, and frightened ones can't dash closer to what frightens them. Put a targeted effect after it (e.g. an attack with range 1) and the player then picks the target, measured from the new square. Set the ability range equal to distance.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "distance"
+      ],
+      "properties": {
+        "type": {
+          "const": "dash"
         },
         "target": {
           "enum": [

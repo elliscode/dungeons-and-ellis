@@ -1,7 +1,7 @@
 import { rollDice, isValidDice } from '../dice.js';
 import { fail, newId, areEnemies, areAllies, sideOf, footprintDistance, turnFor } from './state.js';
 import { inBounds } from './placement.js';
-import { addEffect, effectsOf, removeEffect, isValidDuration, TRIGGERS, tickEffects, computeExpiry } from './status.js';
+import { addEffect, effectsOf, hasStatus, removeEffect, isValidDuration, TRIGGERS, tickEffects, computeExpiry } from './status.js';
 import { attackRoll, dealDamage, healTarget } from './combat.js';
 import * as H from './helpers.js';
 
@@ -47,6 +47,7 @@ export const SPECS = {
   discourage_attacks: { target: 'ally_or_self', nums: { penalty: R(1, 10), range: R(0, 30) } },
   grant_actions: { target: 'self', required: ['amount'], nums: { amount: R(1, 3) } },
   teleport: { target: 'cell', required: ['distance'], nums: { distance: R(1, 30) } },
+  dash: { target: 'cell', required: ['distance'], nums: { distance: R(1, 30) } },
   narrative: { target: 'self', dice: ['roll'] },
   create_barrier: { target: 'cell', nums: { range: R(0, 10) } },
   healing_aura: { target: 'cell', dice: ['heal'], required: ['heal'], nums: { radius: R(0, 10), pulses: R(1, 10), range: R(0, 10) } },
@@ -129,19 +130,34 @@ export function dealsDamage(raw) {
 
 const effTarget = (eff) => eff.target ?? SPECS[eff.type]?.target ?? 'self';
 
-// What the client must pick before activating: an enemy, an ally, a cell, or nothing.
-export function targetingOf(raw) {
-  const a = normalizeAbility(raw);
-  for (const eff of a.effects) {
+const MOVE_EFFECTS = new Set(['teleport', 'dash']);
+
+function pickOf(a, effects) {
+  for (const eff of effects) {
     const t = effTarget(eff);
     const range = eff.range ?? a.range ?? 1;
     const chain = eff.type === 'chain_attack' || eff.type === 'chain_heal' ? { jumps: eff.jumps, jumpRange: eff.jumpRange ?? 3 } : null;
     if (t === 'enemy' || t === 'target' || (eff.type === 'area_attack' && eff.center === 'target')) return { kind: 'enemy', range, chain };
     if (t === 'ally') return { kind: 'ally', range, includeSelf: false, chain };
     if (t === 'ally_or_self') return { kind: 'ally', range, includeSelf: true, chain };
-    if (t === 'cell') return { kind: 'cell', range: eff.distance ?? eff.range ?? a.range ?? 1 };
+    if (t === 'cell') {
+      const pick = { kind: 'cell', range: eff.distance ?? eff.range ?? a.range ?? 1 };
+      // Move first, then pick a target measured from the new square (Predator's Lunge).
+      if (MOVE_EFFECTS.has(eff.type)) {
+        const then = pickOf(a, effects.slice(effects.indexOf(eff) + 1).filter((e) => effTarget(e) !== 'cell'));
+        if (then.kind !== 'none') pick.then = then;
+      }
+      return pick;
+    }
   }
   return { kind: 'none', range: 0 };
+}
+
+// What the client must pick before activating: an enemy, an ally, a cell, or nothing. A
+// teleport or dash followed by a targeted effect asks for the square, then the target (`then`).
+export function targetingOf(raw) {
+  const a = normalizeAbility(raw);
+  return pickOf(a, a.effects);
 }
 
 // ---------- target helpers ----------
@@ -411,6 +427,15 @@ const HANDLERS = {
     line(act, `${act.caster.name} teleports`);
   },
 
+  // A physical move to the picked square: free (no movement spent), but snared and frightened
+  // creatures are held back (checked in activateAbility before anything is spent).
+  dash(ctx, act, eff) {
+    const c = act.cell;
+    act.caster.positions[act.scene.id] = { x: c.x, y: c.y };
+    act.caster.z = ++ctx.state.zCounter;
+    line(act, `${act.caster.name} dashes`);
+  },
+
   narrative(ctx, act, eff) {
     if (!eff.roll) return;
     const r = H.rollOrFail(eff.roll, ctx);
@@ -517,8 +542,9 @@ export function activateAbility(ctx) {
   H.checkAction(ctx, e, ab.actionCost);
 
   const act = { caster: e, ability: ab, scene, primary: null, cell: null, picks: ctx.cmd.picks ?? [], checked: null, hitEnemies: [], lastHit: null, lines: [], data: { abilityId: ab.id, strikes: [] } };
-  const tg = targetingOf(ab);
-  if (tg.kind === 'enemy' || tg.kind === 'ally') {
+  // Validates the picked target; range is measured from `from` (a square the caster is about
+  // to move to) or from where the caster stands.
+  const pickTarget = (tg, from = null) => {
     const targetId = ctx.cmd.targetId ?? (tg.kind === 'ally' && tg.includeSelf ? e.id : null);
     if (!targetId) fail(`${ab.name} needs a target`);
     const target = H.getEntity(ctx, targetId);
@@ -529,17 +555,28 @@ export function activateAbility(ctx) {
       if (target === e && !tg.includeSelf) fail(`${ab.name} must target an ally`);
       if (target !== e && !areAllies(e, target)) fail(`${target.name} is not an ally`);
     }
-    if (H.distanceBetween(ctx, e, target) > tg.range) fail(`${target.name} is out of range (${tg.range})`);
+    const dist = from ? footprintDistance(from, e.size, target.positions[scene.id], target.size) : H.distanceBetween(ctx, e, target);
+    if (dist > tg.range) fail(`${target.name} is out of range (${tg.range}${from ? ' from that square' : ''})`);
     checkTaunt(ctx, e, target);
     act.primary = target;
     if (target !== e) act.data.targetId = target.id;
+  };
+  const tg = targetingOf(ab);
+  if (tg.kind === 'enemy' || tg.kind === 'ally') {
+    pickTarget(tg);
   } else if (tg.kind === 'cell') {
     const x = Number(ctx.cmd.cell?.x), y = Number(ctx.cmd.cell?.y);
     if (!inBounds(scene, x, y, { w: 1, h: 1 })) fail('Pick a square on the map');
     const pos = e.positions[scene.id];
     if (footprintDistance(pos, e.size, { x, y }, { w: 1, h: 1 }) > tg.range) fail(`That square is out of range (${tg.range})`);
-    if (ab.effects.some((x2) => x2.type === 'teleport') && !inBounds(scene, x, y, e.size)) fail('You would not fit there');
+    if (ab.effects.some((x2) => MOVE_EFFECTS.has(x2.type)) && !inBounds(scene, x, y, e.size)) fail('You would not fit there');
+    if (ab.effects.some((x2) => x2.type === 'dash')) {
+      if (hasStatus(e, 'snared')) fail(`${e.name} is snared and can't move`);
+      const src = H.frightenedBy(ctx, e, scene.id, x, y);
+      if (src) fail(`${e.name} is frightened of ${src.name} and can't move closer`);
+    }
     act.cell = { x, y };
+    if (tg.then) pickTarget(tg.then, act.cell);
   }
 
   H.spendAction(ctx, e, ab.actionCost);
