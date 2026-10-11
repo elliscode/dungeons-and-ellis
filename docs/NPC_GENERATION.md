@@ -47,9 +47,10 @@ Rules:
   NPCs (companions, mages, rivals) get abilities.
 - Stay inside the "Typical" ranges in the field descriptions. An NPC meant to fight the party
   should be sized like a monster.
-- Pick image "/static/tokens/token_NNN.webp" (001–213) for people, or
-  "/static/tokens/monster_NNN.webp" (001–071) for creatures.
+- For image, use the token path given in the request. If none is given, use the placeholder
+  "/static/tokens/token_NNN.webp" exactly as written.
 
+Token: <path such as /static/tokens/token_273.webp, or leave blank>
 NPC request:
 <describe the NPC: who they are, where they're found, whether they fight, anything specific>
 ```

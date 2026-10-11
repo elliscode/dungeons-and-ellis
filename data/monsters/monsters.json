@@ -1368,5 +1368,226 @@
       }
     ],
     "description": "A colossal black dragon with obsidian scales and glowing red eyes. It corrodes its enemies with acid breath and tears through armor with its claws."
+  },
+  {
+    "id": "bog-gator",
+    "name": "Bog Gator",
+    "image": "/static/tokens/monster_114.webp",
+    "maxHp": 30,
+    "defense": 13,
+    "movement": 5,
+    "attacks": [
+      { "id": "bite", "name": "Bite", "attack": "1d20+5", "damage": "2d6+3", "range": 1, "damageType": "piercing" },
+      { "id": "tail-swipe", "name": "Tail Swipe", "attack": "1d20+4", "damage": "1d6+3", "range": 1, "damageType": "bludgeoning" }
+    ],
+    "abilities": [
+      {
+        "id": "clamping-jaws",
+        "name": "Clamping Jaws",
+        "actionCost": 1,
+        "range": 1,
+        "usesPerPhase": 1,
+        "effects": [
+          { "type": "attack", "target": "enemy", "attack": "1d20+5", "damage": "2d6+3", "range": 1, "damageType": "piercing" },
+          { "type": "apply_status", "target": "hit_enemies", "status": "snared", "when": "attack_hits", "label": "Clamped" }
+        ],
+        "description": "Bites an adjacent foe for 2d6+3. On a hit, the jaws lock and the foe can't move through the next DM phase."
+      }
+    ],
+    "description": "Lurks just under the surface. Best placed in water near the party's path for an ambush."
+  },
+  {
+    "id": "mudbank-gator",
+    "name": "Mudbank Gator",
+    "image": "/static/tokens/monster_116.webp",
+    "maxHp": 30,
+    "defense": 13,
+    "movement": 5,
+    "attacks": [
+      { "id": "bite", "name": "Bite", "attack": "1d20+5", "damage": "2d6+3", "range": 1, "damageType": "piercing" },
+      { "id": "tail-swipe", "name": "Tail Swipe", "attack": "1d20+4", "damage": "1d6+3", "range": 1, "damageType": "bludgeoning" }
+    ],
+    "abilities": [
+      {
+        "id": "clamping-jaws",
+        "name": "Clamping Jaws",
+        "actionCost": 1,
+        "range": 1,
+        "usesPerPhase": 1,
+        "effects": [
+          { "type": "attack", "target": "enemy", "attack": "1d20+5", "damage": "2d6+3", "range": 1, "damageType": "piercing" },
+          { "type": "apply_status", "target": "hit_enemies", "status": "snared", "when": "attack_hits", "label": "Clamped" }
+        ],
+        "description": "Bites an adjacent foe for 2d6+3. On a hit, the jaws lock and the foe can't move through the next DM phase."
+      }
+    ],
+    "description": "Same stats as the Bog Gator. Gators hunt in groups: pair them up."
+  },
+  {
+    "id": "blackwater-crocodile",
+    "name": "Blackwater Crocodile",
+    "image": "/static/tokens/monster_115.webp",
+    "size": { "w": 2, "h": 2 },
+    "maxHp": 65,
+    "defense": 14,
+    "movement": 5,
+    "attacks": [
+      { "id": "bite", "name": "Bite", "attack": "1d20+6", "damage": "2d8+4", "range": 1, "damageType": "piercing" }
+    ],
+    "abilities": [
+      {
+        "id": "death-roll",
+        "name": "Death Roll",
+        "actionCost": 1,
+        "range": 1,
+        "usesPerPhase": 1,
+        "effects": [
+          { "type": "attack", "target": "enemy", "attack": "1d20+6", "damage": "3d8+4", "range": 1, "damageType": "piercing" },
+          { "type": "apply_status", "target": "hit_enemies", "status": "snared", "when": "attack_hits", "label": "Dragged Under" }
+        ],
+        "description": "Seizes an adjacent foe and rolls, dealing 3d8+4. On a hit, the foe is dragged under and can't move through the next DM phase."
+      },
+      {
+        "id": "tail-sweep",
+        "name": "Tail Sweep",
+        "actionCost": 1,
+        "range": 0,
+        "usesPerPhase": 1,
+        "effects": [
+          { "type": "area_attack", "target": "enemies_in_area", "center": "self", "radius": 1, "attack": "1d20+5", "damage": "1d8+4", "damageType": "bludgeoning" }
+        ],
+        "description": "Thrashes its tail, attacking every foe adjacent to it for 1d8+4."
+      }
+    ],
+    "description": "The swamp's apex predator. Larger and meaner than any gator; a mini-boss on its own."
+  },
+  {
+    "id": "mire-serpent",
+    "name": "Mire Serpent",
+    "image": "/static/tokens/monster_117.webp",
+    "size": { "w": 2, "h": 2 },
+    "maxHp": 45,
+    "defense": 14,
+    "movement": 6,
+    "attacks": [
+      { "id": "fangs", "name": "Fangs", "attack": "1d20+6", "damage": "1d8+3", "range": 2, "damageType": "piercing" }
+    ],
+    "abilities": [
+      {
+        "id": "venomous-bite",
+        "name": "Venomous Bite",
+        "actionCost": 1,
+        "range": 2,
+        "usesPerPhase": 1,
+        "effects": [
+          { "type": "attack", "target": "enemy", "attack": "1d20+6", "damage": "1d8+3", "range": 2, "damageType": "poison" },
+          { "type": "apply_status", "target": "hit_enemies", "status": "poisoned", "when": "attack_hits" }
+        ],
+        "description": "Strikes a foe within 2 for 1d8+3 poison damage. On a hit, the foe is poisoned (−2 to hit) through the next DM phase."
+      },
+      {
+        "id": "constrict",
+        "name": "Constrict",
+        "actionCost": 1,
+        "range": 1,
+        "usesPerPhase": 1,
+        "effects": [
+          { "type": "attack", "target": "enemy", "attack": "1d20+6", "damage": "2d6+3", "range": 1, "damageType": "bludgeoning" },
+          { "type": "apply_status", "target": "hit_enemies", "status": "snared", "when": "attack_hits", "label": "Constricted" }
+        ],
+        "description": "Coils around an adjacent foe for 2d6+3. On a hit, the foe is squeezed tight and can't move through the next DM phase."
+      }
+    ],
+    "description": "A huge swamp snake that drops from the trees. Alternate Venomous Bite and Constrict."
+  },
+  {
+    "id": "ironshell-snapper",
+    "name": "Ironshell Snapper",
+    "image": "/static/tokens/monster_118.webp",
+    "size": { "w": 2, "h": 2 },
+    "maxHp": 50,
+    "defense": 18,
+    "movement": 3,
+    "attacks": [
+      { "id": "snapping-beak", "name": "Snapping Beak", "attack": "1d20+5", "damage": "2d10+3", "range": 1, "damageType": "piercing" }
+    ],
+    "abilities": [
+      {
+        "id": "withdraw",
+        "name": "Withdraw",
+        "actionCost": 1,
+        "range": 0,
+        "usesPerPhase": 1,
+        "effects": [
+          { "type": "defense_bonus", "target": "self", "amount": 4, "label": "Withdrawn" },
+          { "type": "grant_protection", "target": "self", "fraction": 0.5, "label": "Shell" }
+        ],
+        "description": "Pulls into its shell: +4 Defense until the next player phase, and its next hit taken is halved."
+      }
+    ],
+    "description": "Slow and nearly impossible to hurt. Blocks a path more than it hunts; use Withdraw when it's badly hurt."
+  },
+  {
+    "id": "mossmaw",
+    "name": "Mossmaw",
+    "image": "/static/tokens/monster_119.webp",
+    "maxHp": 40,
+    "defense": 12,
+    "movement": 4,
+    "attacks": [
+      { "id": "slam", "name": "Slam", "attack": "1d20+5", "damage": "1d10+3", "range": 1, "damageType": "bludgeoning" }
+    ],
+    "abilities": [
+      {
+        "id": "grasping-moss",
+        "name": "Grasping Moss",
+        "actionCost": 1,
+        "range": 0,
+        "usesPerPhase": 1,
+        "effects": [
+          {
+            "type": "roll_to_apply",
+            "target": "enemies_in_area",
+            "radius": 2,
+            "roll": "1d20+5",
+            "onSuccess": [{ "type": "apply_status", "target": "checked_enemy", "status": "snared", "label": "Entangled" }]
+          }
+        ],
+        "description": "Moss and roots surge from its body. Each foe within 2 that doesn't resist is entangled and can't move through the next DM phase."
+      },
+      {
+        "id": "regrowth",
+        "name": "Regrowth",
+        "actionCost": 1,
+        "range": 0,
+        "usesPerPhase": 1,
+        "effects": [{ "type": "heal", "target": "self", "heal": "2d6+3" }],
+        "description": "Fresh moss knits over its wounds, healing 2d6+3."
+      }
+    ],
+    "description": "Looks like a mossy mound until it moves. Entangle the party, then Regrowth when hurt; fire is the obvious weakness to describe."
+  },
+  {
+    "id": "razorfin-mudskipper",
+    "name": "Razorfin Mudskipper",
+    "image": "/static/tokens/monster_120.webp",
+    "maxHp": 16,
+    "defense": 14,
+    "movement": 8,
+    "attacks": [
+      { "id": "gnashing-bite", "name": "Gnashing Bite", "attack": "1d20+5", "damage": "1d8+3", "range": 1, "damageType": "piercing" }
+    ],
+    "abilities": [
+      {
+        "id": "mud-leap",
+        "name": "Mud Leap",
+        "actionCost": 0,
+        "range": 4,
+        "usesPerPhase": 1,
+        "effects": [{ "type": "teleport", "target": "cell", "distance": 4 }],
+        "description": "Springs up to 4 squares across mud and water. Free action, once per phase."
+      }
+    ],
+    "description": "A fish that walks, and bites. Fast and fragile: leap in, bite, and let the party chase it. Best in groups of 2–4."
   }
 ]

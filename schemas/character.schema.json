@@ -39,7 +39,7 @@
     "image": {
       "type": "string",
       "pattern": "^/static/tokens/[A-Za-z0-9_.-]+\\.(?:webp|png|svg|jpg|jpeg)$",
-      "description": "Token image. Use \"/static/tokens/token_NNN.webp\" with NNN from 001 to 213 (zero-padded) unless told otherwise."
+      "description": "Token image. Use the exact token path given in the request, e.g. \"/static/tokens/token_114.webp\". If none is given, use the literal placeholder \"/static/tokens/token_NNN.webp\" (the DM swaps in the real token later). Do not invent a numbered token."
     },
     "maxHp": {
       "type": "integer",

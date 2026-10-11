@@ -27,7 +27,7 @@
     "image": {
       "type": "string",
       "pattern": "^/static/(?:tokens|images)/[A-Za-z0-9_.-]+\\.(?:webp|png|svg|jpg|jpeg|gif)$",
-      "description": "Token image. Use \"/static/tokens/monster_NNN.webp\" with NNN from 001 to 071. Large monsters scale the image to their `size`."
+      "description": "Token image. Use the exact token path given in the request, e.g. \"/static/tokens/monster_114.webp\". If none is given, use the literal placeholder \"/static/tokens/monster_NNN.webp\" (the DM swaps in the real token later). Do not invent a numbered token. Large monsters scale the image to their `size`."
     },
     "maxHp": {
       "type": "integer",

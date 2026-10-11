@@ -58,7 +58,7 @@ export function buildNpcSchema(character) {
       image: {
         type: 'string',
         pattern: '^/static/(?:tokens|images)/[A-Za-z0-9_.-]+\\.(?:webp|png|svg|jpg|jpeg|gif)$',
-        description: 'Token image. Use "/static/tokens/token_NNN.webp" (NNN 001–213) for people, or "/static/tokens/monster_NNN.webp" (NNN 001–071) for creatures.',
+        description: 'Token image. Use the exact token path given in the request, e.g. "/static/tokens/token_273.webp". If none is given, use the literal placeholder "/static/tokens/token_NNN.webp" (the DM swaps in the real token later). Do not invent a numbered token.',
       },
       maxHp: {
         type: 'integer', minimum: 1, maximum: 9999,

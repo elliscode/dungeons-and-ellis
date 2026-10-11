@@ -15,5 +15,161 @@
     ],
     "inventory": ["walking-stick", "suspicious-map"] },
   { "id": "mysterious-wizard", "name": "Mysterious Wizard", "image": "/static/tokens/token_156.webp", "maxHp": 40, "defense": 15, "movement": 6,
-    "attacks": [ { "id": "arcane-blast", "name": "Arcane Blast", "attack": "1d20+7", "damage": "2d8+3", "range": 10 } ] }
+    "attacks": [ { "id": "arcane-blast", "name": "Arcane Blast", "attack": "1d20+7", "damage": "2d8+3", "range": 10 } ] },
+  { "id": "visored-guard", "name": "Visored Guard", "image": "/static/tokens/token_273.webp", "maxHp": 11, "defense": 16, "movement": 6,
+    "attacks": [
+      { "id": "spear", "name": "Spear", "attack": "1d20+3", "damage": "1d6+1", "range": 1, "damageType": "piercing" }
+    ],
+    "description": "A member of the town watch. Same stats as the Town Guard." },
+  { "id": "bearded-guard", "name": "Bearded Guard", "image": "/static/tokens/token_274.webp", "maxHp": 11, "defense": 16, "movement": 6,
+    "attacks": [
+      { "id": "spear", "name": "Spear", "attack": "1d20+3", "damage": "1d6+1", "range": 1, "damageType": "piercing" }
+    ],
+    "description": "A member of the town watch. Same stats as the Town Guard." },
+  { "id": "naval-captain", "name": "Naval Captain", "image": "/static/tokens/token_275.webp", "maxHp": 30, "defense": 14, "movement": 6,
+    "attacks": [
+      { "id": "cutlass", "name": "Cutlass", "attack": "1d20+5", "damage": "1d8+3", "range": 1, "damageType": "slashing" },
+      { "id": "flintlock-pistol", "name": "Flintlock Pistol", "attack": "1d20+5", "damage": "1d10+2", "range": 6, "damageType": "piercing" }
+    ],
+    "abilities": [
+      { "id": "rally-the-crew", "name": "Rally the Crew", "actionCost": 1, "range": 6,
+        "effects": [{ "type": "grant_roll_bonus", "target": "ally", "bonus": "1d4", "range": 6, "label": "Rallied" }],
+        "description": "Barks an order at an ally within 6, who adds 1d4 to their next attack or check." }
+    ],
+    "inventory": ["spyglass", "ships-log", "coin-purse"],
+    "description": "Commands a ship and its crew. Can rally allies in a fight." },
+  { "id": "weathered-captain", "name": "Weathered Captain", "image": "/static/tokens/token_276.webp", "maxHp": 30, "defense": 14, "movement": 6,
+    "attacks": [
+      { "id": "cutlass", "name": "Cutlass", "attack": "1d20+5", "damage": "1d8+3", "range": 1, "damageType": "slashing" },
+      { "id": "flintlock-pistol", "name": "Flintlock Pistol", "attack": "1d20+5", "damage": "1d10+2", "range": 6, "damageType": "piercing" }
+    ],
+    "abilities": [
+      { "id": "rally-the-crew", "name": "Rally the Crew", "actionCost": 1, "range": 6,
+        "effects": [{ "type": "grant_roll_bonus", "target": "ally", "bonus": "1d4", "range": 6, "label": "Rallied" }],
+        "description": "Barks an order at an ally within 6, who adds 1d4 to their next attack or check." }
+    ],
+    "inventory": ["spyglass", "ships-log", "coin-purse"],
+    "description": "Commands a ship and its crew. Can rally allies in a fight." },
+  { "id": "corsair-captain", "name": "Corsair Captain", "image": "/static/tokens/token_282.webp", "maxHp": 30, "defense": 14, "movement": 6,
+    "attacks": [
+      { "id": "cutlass", "name": "Cutlass", "attack": "1d20+5", "damage": "1d8+3", "range": 1, "damageType": "slashing" },
+      { "id": "flintlock-pistol", "name": "Flintlock Pistol", "attack": "1d20+5", "damage": "1d10+2", "range": 6, "damageType": "piercing" }
+    ],
+    "abilities": [
+      { "id": "rally-the-crew", "name": "Rally the Crew", "actionCost": 1, "range": 6,
+        "effects": [{ "type": "grant_roll_bonus", "target": "ally", "bonus": "1d4", "range": 6, "label": "Rallied" }],
+        "description": "Barks an order at an ally within 6, who adds 1d4 to their next attack or check." }
+    ],
+    "inventory": ["spyglass", "ships-log", "coin-purse"],
+    "description": "Commands a ship and its crew. Can rally allies in a fight." },
+  { "id": "deckhand", "name": "Deckhand", "image": "/static/tokens/token_277.webp", "maxHp": 11, "defense": 12, "movement": 6,
+    "attacks": [
+      { "id": "cutlass", "name": "Cutlass", "attack": "1d20+3", "damage": "1d6+1", "range": 1, "damageType": "slashing" },
+      { "id": "thrown-knife", "name": "Thrown Knife", "attack": "1d20+3", "damage": "1d4+1", "range": 5, "damageType": "piercing" }
+    ],
+    "inventory": ["rope", "ration-of-rum"],
+    "description": "A working sailor. Same stats as the other sailors." },
+  { "id": "rigger", "name": "Rigger", "image": "/static/tokens/token_278.webp", "maxHp": 11, "defense": 12, "movement": 6,
+    "attacks": [
+      { "id": "cutlass", "name": "Cutlass", "attack": "1d20+3", "damage": "1d6+1", "range": 1, "damageType": "slashing" },
+      { "id": "thrown-knife", "name": "Thrown Knife", "attack": "1d20+3", "damage": "1d4+1", "range": 5, "damageType": "piercing" }
+    ],
+    "inventory": ["rope", "ration-of-rum"],
+    "description": "A working sailor. Same stats as the other sailors." },
+  { "id": "bosuns-mate", "name": "Bosun's Mate", "image": "/static/tokens/token_279.webp", "maxHp": 11, "defense": 12, "movement": 6,
+    "attacks": [
+      { "id": "cutlass", "name": "Cutlass", "attack": "1d20+3", "damage": "1d6+1", "range": 1, "damageType": "slashing" },
+      { "id": "thrown-knife", "name": "Thrown Knife", "attack": "1d20+3", "damage": "1d4+1", "range": 5, "damageType": "piercing" }
+    ],
+    "inventory": ["rope", "ration-of-rum"],
+    "description": "A working sailor. Same stats as the other sailors." },
+  { "id": "gunner", "name": "Gunner", "image": "/static/tokens/token_280.webp", "maxHp": 11, "defense": 12, "movement": 6,
+    "attacks": [
+      { "id": "cutlass", "name": "Cutlass", "attack": "1d20+3", "damage": "1d6+1", "range": 1, "damageType": "slashing" },
+      { "id": "thrown-knife", "name": "Thrown Knife", "attack": "1d20+3", "damage": "1d4+1", "range": 5, "damageType": "piercing" }
+    ],
+    "inventory": ["rope", "ration-of-rum"],
+    "description": "A working sailor. Same stats as the other sailors." },
+  { "id": "lookout", "name": "Lookout", "image": "/static/tokens/token_285.webp", "maxHp": 11, "defense": 12, "movement": 6,
+    "attacks": [
+      { "id": "cutlass", "name": "Cutlass", "attack": "1d20+3", "damage": "1d6+1", "range": 1, "damageType": "slashing" },
+      { "id": "thrown-knife", "name": "Thrown Knife", "attack": "1d20+3", "damage": "1d4+1", "range": 5, "damageType": "piercing" }
+    ],
+    "inventory": ["rope", "ration-of-rum"],
+    "description": "A working sailor. Same stats as the other sailors." },
+  { "id": "ships-cook", "name": "Ship's Cook", "image": "/static/tokens/token_286.webp", "maxHp": 11, "defense": 12, "movement": 6,
+    "attacks": [
+      { "id": "cutlass", "name": "Cutlass", "attack": "1d20+3", "damage": "1d6+1", "range": 1, "damageType": "slashing" },
+      { "id": "thrown-knife", "name": "Thrown Knife", "attack": "1d20+3", "damage": "1d4+1", "range": 5, "damageType": "piercing" }
+    ],
+    "inventory": ["rope", "ration-of-rum"],
+    "description": "A working sailor. Same stats as the other sailors." },
+  { "id": "grizzled-sailor", "name": "Grizzled Sailor", "image": "/static/tokens/token_281.webp", "maxHp": 18, "defense": 13, "movement": 5,
+    "attacks": [
+      { "id": "harpoon", "name": "Harpoon", "attack": "1d20+4", "damage": "1d8+2", "range": 2, "damageType": "piercing" },
+      { "id": "thrown-harpoon", "name": "Thrown Harpoon", "attack": "1d20+4", "damage": "1d8+2", "range": 6, "damageType": "piercing" }
+    ],
+    "inventory": ["harpoon-line", "pipe"],
+    "description": "A veteran of many voyages who has seen it all." },
+  { "id": "sailor-brute", "name": "Sailor Brute", "image": "/static/tokens/token_283.webp", "maxHp": 28, "defense": 12, "movement": 5,
+    "attacks": [
+      { "id": "haymaker", "name": "Haymaker", "attack": "1d20+5", "damage": "1d8+3", "range": 1, "damageType": "bludgeoning" }
+    ],
+    "abilities": [
+      { "id": "bear-hug", "name": "Bear Hug", "actionCost": 1, "range": 1, "usesPerPhase": 1,
+        "effects": [
+          { "type": "attack", "target": "enemy", "attack": "1d20+5", "damage": "1d6+3", "range": 1, "damageType": "bludgeoning" },
+          { "type": "apply_status", "target": "hit_enemies", "status": "snared", "when": "attack_hits", "label": "Grappled" }
+        ],
+        "description": "Grabs an adjacent foe for 1d6+3. On a hit, the foe is grappled and can't move through the next DM phase. Once per phase." }
+    ],
+    "inventory": ["anchor-chain"],
+    "description": "A huge sailor who settles arguments with his fists." },
+  { "id": "pub-worker", "name": "Pub Worker", "image": "/static/tokens/token_284.webp", "maxHp": 7, "defense": 10, "movement": 5,
+    "attacks": [
+      { "id": "bottle", "name": "Bottle", "attack": "1d20+2", "damage": "1d4", "range": 1, "damageType": "bludgeoning" }
+    ],
+    "inventory": ["ale", "bar-rag"],
+    "description": "Serves drinks and hears every rumor in the pub." },
+  { "id": "vagrant", "name": "Vagrant", "image": "/static/tokens/token_287.webp", "maxHp": 6, "defense": 10, "movement": 5,
+    "attacks": [
+      { "id": "rusty-shiv", "name": "Rusty Shiv", "attack": "1d20+2", "damage": "1d4", "range": 1, "damageType": "piercing" }
+    ],
+    "inventory": ["tin-cup"],
+    "description": "Lives on the streets and notices things others miss." },
+  { "id": "drifter", "name": "Drifter", "image": "/static/tokens/token_290.webp", "maxHp": 6, "defense": 10, "movement": 5,
+    "attacks": [
+      { "id": "rusty-shiv", "name": "Rusty Shiv", "attack": "1d20+2", "damage": "1d4", "range": 1, "damageType": "piercing" }
+    ],
+    "inventory": ["tin-cup"],
+    "description": "Lives on the streets and notices things others miss. Same stats as the Vagrant." },
+  { "id": "armorer", "name": "Armorer", "image": "/static/tokens/token_288.webp", "maxHp": 16, "defense": 15, "movement": 5,
+    "attacks": [
+      { "id": "smiths-hammer", "name": "Smith's Hammer", "attack": "1d20+4", "damage": "1d8+2", "range": 1, "damageType": "bludgeoning" }
+    ],
+    "inventory": ["chain-shirt", "shield", "armor-repair-kit"],
+    "description": "Sells and repairs armor." },
+  { "id": "thug", "name": "Thug", "image": "/static/tokens/token_289.webp", "maxHp": 16, "defense": 12, "movement": 6, "hostile": true,
+    "attacks": [
+      { "id": "cudgel", "name": "Cudgel", "attack": "1d20+4", "damage": "1d6+2", "range": 1, "damageType": "bludgeoning" }
+    ],
+    "inventory": ["brass-knuckles", "coin-purse"],
+    "description": "Muscle for hire. Starts hostile; mark friendly if he can be bought off." },
+  { "id": "thief", "name": "Thief", "image": "/static/tokens/token_291.webp", "maxHp": 12, "defense": 14, "movement": 7, "hostile": true,
+    "attacks": [
+      { "id": "dagger", "name": "Dagger", "attack": "1d20+5", "damage": "1d4+3", "range": 1, "damageType": "piercing" },
+      { "id": "thrown-dagger", "name": "Thrown Dagger", "attack": "1d20+5", "damage": "1d4+3", "range": 5, "damageType": "piercing" }
+    ],
+    "abilities": [
+      { "id": "slip-away", "name": "Slip Away", "actionCost": 0, "range": 0, "usesPerPhase": 1,
+        "effects": [{ "type": "modify_movement", "target": "self", "amount": 3, "duration": "current_turn", "label": "Slip Away" }],
+        "description": "Ducks into the crowd. Free action: +3 movement this phase. Once per phase." }
+    ],
+    "inventory": ["lockpicks", "stolen-coin-purse"],
+    "description": "A pickpocket and burglar. Starts hostile." },
+  { "id": "ships-dog", "name": "Ship's Dog", "image": "/static/tokens/token_292.webp", "maxHp": 9, "defense": 12, "movement": 8,
+    "attacks": [
+      { "id": "bite", "name": "Bite", "attack": "1d20+4", "damage": "1d6+2", "range": 1, "damageType": "piercing" }
+    ],
+    "description": "A salty old mastiff who guards the docks and the ships." }
 ]

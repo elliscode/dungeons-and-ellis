@@ -54,8 +54,10 @@ Rules:
 - Most monsters have 1–2 weapon attacks and no abilities. Bosses may have actions: 2 and 1–2 abilities.
 - Resistible debuffs on heroes go inside roll_to_apply (roll vs the target's Defense).
 - Large creatures set size (2×2 or 3×3) and usually reach 2 with melee.
-- Pick image "/static/tokens/monster_NNN.webp" with NNN between 001 and 071.
+- For image, use the token path given in the request. If none is given, use the placeholder
+  "/static/tokens/monster_NNN.webp" exactly as written.
 
+Token: <path such as /static/tokens/monster_114.webp, or leave blank>
 Monster request:
 <describe the monster: theme, threat level, how it fights, anything specific>
 ```

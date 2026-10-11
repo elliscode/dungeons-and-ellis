@@ -36,8 +36,10 @@ Rules:
 - Resistible debuffs on enemies go inside roll_to_apply (roll vs the target's Defense).
 - Follow-up effects that should only happen on a hit use "when": "attack_hits", and target
   "hit_enemies" (or "self" for self-heals/buffs).
-- Pick image "/static/tokens/token_NNN.webp" with NNN between 001 and 213.
+- For image, use the token path given in the request. If none is given, use the placeholder
+  "/static/tokens/token_NNN.webp" exactly as written.
 
+Token: <path such as /static/tokens/token_271.webp, or leave blank>
 Character request:
 <describe the hero: role, theme, playstyle, anything specific>
 ```
