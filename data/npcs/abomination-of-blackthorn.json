@@ -1,0 +1,235 @@
+[
+  {
+    "id": "blackthorn-abomination",
+    "name": "The Abomination",
+    "image": "/static/tokens/token_293.webp",
+    "maxHp": 220,
+    "defense": 15,
+    "movement": 6,
+    "actions": 2,
+    "attacks": [
+      { "id": "crushing-fist", "name": "Crushing Fist", "attack": "1d20+8", "damage": "2d10+5", "range": 1, "damageType": "bludgeoning" },
+      { "id": "hurled-debris", "name": "Hurled Debris", "attack": "1d20+6", "damage": "2d6+4", "range": 6, "damageType": "bludgeoning" }
+    ],
+    "abilities": [
+      {
+        "id": "frenzied-rampage",
+        "name": "Frenzied Rampage",
+        "actionCost": 1,
+        "range": 1,
+        "usesPerPhase": 1,
+        "effects": [
+          { "type": "multi_attack", "target": "enemy", "count": 3, "attack": "1d20+8", "damage": "1d10+4", "range": 1, "damageType": "bludgeoning" }
+        ],
+        "description": "Flails at an adjacent foe in a frenzy: three separate strikes for 1d10+4 each. Once per phase."
+      },
+      {
+        "id": "crushing-grip",
+        "name": "Crushing Grip",
+        "actionCost": 1,
+        "range": 1,
+        "usesPerPhase": 1,
+        "effects": [
+          { "type": "attack", "target": "enemy", "attack": "1d20+8", "damage": "2d6+4", "range": 1, "damageType": "bludgeoning" },
+          { "type": "apply_status", "target": "hit_enemies", "status": "snared", "when": "attack_hits", "label": "Pinned" }
+        ],
+        "description": "Seizes an adjacent foe for 2d6+4. On a hit, the foe is pinned and can't move through the next DM phase. Once per phase."
+      },
+      {
+        "id": "graveyard-slam",
+        "name": "Graveyard Slam",
+        "actionCost": 1,
+        "range": 0,
+        "usesPerPhase": 1,
+        "effects": [
+          { "type": "area_attack", "target": "enemies_in_area", "center": "self", "radius": 1, "attack": "1d20+7", "damage": "2d8+4", "damageType": "bludgeoning" }
+        ],
+        "description": "Brings both fists down on the floor, attacking every foe within 1 for 2d8+4. Once per phase."
+      },
+      {
+        "id": "stitched-flesh",
+        "name": "Stitched Flesh",
+        "actionCost": 1,
+        "range": 0,
+        "usesPerPhase": 1,
+        "effects": [
+          { "type": "modify_damage_received", "target": "self", "amount": -4, "duration": "next_dm_phase", "label": "Stitched Flesh" }
+        ],
+        "description": "Dead flesh barely feels pain: every hit it takes is reduced by 4 through the next DM phase. Once per phase."
+      },
+      {
+        "id": "furious-bellow",
+        "name": "Furious Bellow",
+        "actionCost": 1,
+        "range": 0,
+        "usesPerPhase": 1,
+        "effects": [
+          {
+            "type": "roll_to_apply",
+            "target": "enemies_in_area",
+            "radius": 3,
+            "roll": "1d20+8",
+            "onSuccess": [{ "type": "taunt", "target": "checked_enemy", "duration": "next_dm_phase" }]
+          }
+        ],
+        "description": "Lets out a furious bellow. Each foe within 3 that doesn't resist must attack it while it can, through the next DM phase. Once per phase."
+      }
+    ],
+    "inventory": ["tattered-clothes"],
+    "description": "The necromancer's rogue creation, loose in Blackthorn and unusually cunning for an undead. Mark hostile when the party fights it."
+  },
+  {
+    "id": "blackthorn-necromancer",
+    "name": "The Necromancer",
+    "image": "/static/tokens/token_295.webp",
+    "maxHp": 150,
+    "defense": 16,
+    "movement": 6,
+    "actions": 3,
+    "attacks": [
+      { "id": "grave-bolt", "name": "Grave Bolt", "attack": "1d20+9", "damage": "2d8+4", "range": 10, "damageType": "necrotic" },
+      { "id": "bone-dagger", "name": "Bone Dagger", "attack": "1d20+7", "damage": "1d6+3", "range": 1, "damageType": "piercing" }
+    ],
+    "abilities": [
+      {
+        "id": "raise-thralls",
+        "name": "Raise Thralls",
+        "actionCost": 1,
+        "range": 0,
+        "usesPerPhase": 1,
+        "effects": [
+          { "type": "narrative", "roll": "1d4" }
+        ],
+        "description": "Calls the dead to rise. Rolls 1d4: the DM raises that many thralls (zombies, skeletons or spirits) nearby. Once per phase."
+      },
+      {
+        "id": "deathly-pall",
+        "name": "Deathly Pall",
+        "actionCost": 1,
+        "range": 8,
+        "usesPerPhase": 1,
+        "effects": [
+          { "type": "area_attack", "target": "enemies_in_area", "center": "target", "radius": 2, "range": 8, "attack": "1d20+8", "damage": "2d8+3", "damageType": "necrotic" }
+        ],
+        "description": "A cloud of grave-cold mist bursts around a foe within 8, attacking every foe within 2 of it for 2d8+3. Once per phase."
+      },
+      {
+        "id": "life-siphon",
+        "name": "Life Siphon",
+        "actionCost": 1,
+        "range": 8,
+        "effects": [
+          { "type": "attack", "target": "enemy", "attack": "1d20+9", "damage": "2d6+4", "range": 8, "damageType": "necrotic" },
+          { "type": "heal", "target": "self", "heal": "2d6+4", "when": "attack_hits" }
+        ],
+        "description": "Draws the life out of a foe within 8 for 2d6+4. On a hit, she heals 2d6+4."
+      },
+      {
+        "id": "soul-shackle",
+        "name": "Soul Shackle",
+        "actionCost": 1,
+        "range": 6,
+        "usesPerPhase": 1,
+        "effects": [
+          {
+            "type": "roll_to_apply",
+            "target": "enemy",
+            "roll": "1d20+9",
+            "range": 6,
+            "onSuccess": [
+              { "type": "apply_status", "target": "checked_enemy", "status": "snared", "label": "Shackled" },
+              { "type": "reduce_actions", "target": "checked_enemy", "amount": 1, "label": "Soul Shackled" }
+            ]
+          }
+        ],
+        "description": "Spectral chains seize a foe within 6. If it doesn't resist, it can't move and loses 1 action through the next DM phase. Once per phase."
+      },
+      {
+        "id": "bone-ward",
+        "name": "Bone Ward",
+        "actionCost": 1,
+        "range": 0,
+        "usesPerPhase": 1,
+        "effects": [
+          { "type": "absorb_next_hit", "target": "self", "label": "Bone Ward" }
+        ],
+        "description": "A lattice of bone snaps up around the necromancer and absorbs the next hit she takes. Once per phase."
+      }
+    ],
+    "inventory": ["grimoire-of-the-unquiet", "bone-wand", "vial-of-grave-dust"],
+    "description": "A local necromancer experimenting with raising the dead as intelligent thralls. Raise Thralls is a roll: place the thralls yourself. Mark hostile when the party fights her."
+  },
+  {
+    "id": "constable-huxley",
+    "name": "Constable Huxley",
+    "image": "/static/tokens/token_294.webp",
+    "maxHp": 36,
+    "defense": 16,
+    "movement": 6,
+    "attacks": [
+      { "id": "longsword", "name": "Longsword", "attack": "1d20+6", "damage": "1d8+3", "range": 1, "damageType": "slashing" },
+      { "id": "hand-crossbow", "name": "Hand Crossbow", "attack": "1d20+5", "damage": "1d6+3", "range": 8, "damageType": "piercing" }
+    ],
+    "abilities": [
+      {
+        "id": "shield-bash",
+        "name": "Shield Bash",
+        "actionCost": 1,
+        "range": 1,
+        "effects": [
+          { "type": "attack", "target": "enemy", "attack": "1d20+6", "damage": "1d6+2", "range": 1, "damageType": "bludgeoning" },
+          { "type": "apply_status", "target": "hit_enemies", "status": "shaken", "when": "attack_hits" }
+        ],
+        "description": "Rams an adjacent foe with a watch shield for 1d6+2. On a hit, the foe is shaken (−2 to hit) through the next DM phase."
+      }
+    ],
+    "inventory": ["constables-badge", "manacles", "case-notes"],
+    "description": "Blackthorn's constable, a veteran who regularly hires the party as bounty hunters. Gives the opening briefing on the rogue abomination. Wants the city safe and the job done quietly."
+  },
+  {
+    "id": "blackthorn-baker",
+    "name": "The Baker",
+    "image": "/static/tokens/token_296.webp",
+    "maxHp": 8,
+    "defense": 10,
+    "movement": 5,
+    "attacks": [
+      { "id": "rolling-pin", "name": "Rolling Pin", "attack": "1d20+2", "damage": "1d4", "range": 1, "damageType": "bludgeoning" }
+    ],
+    "inventory": ["sack-of-flour", "fresh-loaf"],
+    "description": "Runs a bakery in Blackthorn. A witness to one of the creature's sightings."
+  },
+  {
+    "id": "mortuary-worker",
+    "name": "Mortuary Worker",
+    "image": "/static/tokens/token_297.webp",
+    "maxHp": 7,
+    "defense": 10,
+    "movement": 4,
+    "attacks": [],
+    "inventory": ["mortuary-ledger", "ring-of-keys"],
+    "description": "Keeps the city morgue and its records."
+  },
+  {
+    "id": "june-steeman",
+    "name": "June Steeman",
+    "image": "/static/tokens/token_298.webp",
+    "maxHp": 8,
+    "defense": 10,
+    "movement": 5,
+    "attacks": [],
+    "inventory": ["hotel-room-key", "family-locket"],
+    "description": "A visitor to Blackthorn, staying at a hotel in town with her son James."
+  },
+  {
+    "id": "james-steeman",
+    "name": "James Steeman",
+    "image": "/static/tokens/token_299.webp",
+    "maxHp": 5,
+    "defense": 10,
+    "movement": 5,
+    "attacks": [],
+    "inventory": ["wooden-toy-boat"],
+    "description": "June's young son, visiting Blackthorn with her."
+  }
+]
