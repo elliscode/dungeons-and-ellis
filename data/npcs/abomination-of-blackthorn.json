@@ -231,5 +231,323 @@
     "attacks": [],
     "inventory": ["wooden-toy-boat"],
     "description": "June's young son, visiting Blackthorn with her."
-  }
+  },
+  { "id": "silas-grey", "name": "Silas Grey", "image": "/static/tokens/token_320.webp", "maxHp": 85, "defense": 16, "movement": 6, "actions": 2,
+    "attacks": [
+      { "id": "rapier", "name": "Rapier", "attack": "1d20+7", "damage": "1d8+4", "range": 1, "damageType": "piercing" },
+      { "id": "hidden-blade", "name": "Hidden Blade", "attack": "1d20+6", "damage": "1d6+3", "range": 6, "damageType": "piercing" }
+    ],
+    "abilities": [
+      { "id": "twin-blades", "name": "Twin Blades", "actionCost": 1, "range": 1, "usesPerPhase": 1,
+        "effects": [{ "type": "multi_attack", "target": "enemy", "count": 2, "attack": "1d20+7", "damage": "1d8+3", "range": 1, "damageType": "piercing" }],
+        "description": "Rapier and parrying dagger strike an adjacent foe: two separate attacks for 1d8+3 each. Once per phase." },
+      { "id": "call-the-guild", "name": "Call the Guild", "actionCost": 1, "range": 0, "usesPerPhase": 1,
+        "effects": [{ "type": "narrative", "roll": "1d4" }],
+        "description": "A sharp whistle. Rolls 1d4: the DM brings in that many thieves from the shadows. Once per phase." },
+      { "id": "smoke-and-mirrors", "name": "Smoke and Mirrors", "actionCost": 1, "range": 4, "usesPerPhase": 1,
+        "effects": [
+          { "type": "teleport", "target": "cell", "distance": 4 },
+          { "type": "defense_bonus", "target": "self", "amount": 2, "duration": "next_dm_phase", "label": "Smoke and Mirrors" }
+        ],
+        "description": "Vanishes in a puff of smoke and reappears up to 4 squares away with +2 Defense through the next DM phase. Once per phase." }
+    ],
+    "inventory": ["guildmasters-signet", "ledger-of-debts", "lockpicks"],
+    "description": "Guildmaster of the thieves who run the Blind Eye Tavern. Old, patient and polite; never fights fair and never fights alone." },
+  { "id": "mira-vex", "name": "Mira Vex", "image": "/static/tokens/token_301.webp", "maxHp": 40, "defense": 15, "movement": 6,
+    "attacks": [
+      { "id": "stiletto", "name": "Stiletto", "attack": "1d20+6", "damage": "1d6+3", "range": 1, "damageType": "piercing" },
+      { "id": "hand-crossbow", "name": "Hand Crossbow", "attack": "1d20+6", "damage": "1d6+3", "range": 8, "damageType": "piercing" }
+    ],
+    "abilities": [
+      { "id": "blinding-powder", "name": "Blinding Powder", "actionCost": 1, "range": 3, "usesPerPhase": 1,
+        "effects": [{ "type": "roll_to_apply", "target": "enemy", "roll": "1d20+6", "range": 3,
+          "onSuccess": [{ "type": "apply_status", "target": "checked_enemy", "status": "shaken", "label": "Blinded" }] }],
+        "description": "Flings powder into a foe's eyes within 3. If it doesn't resist, it is shaken (−2 to hit) through the next DM phase. Once per phase." }
+    ],
+    "inventory": ["coded-letters", "lockpicks", "gold-earrings"],
+    "description": "The guild's spymaster and Silas's right hand. Knows everyone's secrets in Blackthorn and trades them carefully." },
+  { "id": "kane-enforcer", "name": "Kane", "image": "/static/tokens/token_313.webp", "maxHp": 45, "defense": 14, "movement": 6,
+    "attacks": [
+      { "id": "short-sword", "name": "Short Sword", "attack": "1d20+6", "damage": "1d10+3", "range": 1, "damageType": "slashing" }
+    ],
+    "abilities": [
+      { "id": "hamstring", "name": "Hamstring", "actionCost": 1, "range": 1,
+        "effects": [
+          { "type": "attack", "target": "enemy", "attack": "1d20+6", "damage": "1d8+3", "range": 1, "damageType": "slashing" },
+          { "type": "apply_status", "target": "hit_enemies", "status": "slowed", "when": "attack_hits", "label": "Hamstrung" }
+        ],
+        "description": "A low cut at an adjacent foe's legs for 1d8+3. On a hit, the foe is slowed (−2 movement) through the next DM phase." }
+    ],
+    "inventory": ["whetstone", "coin-purse"],
+    "description": "The guild's enforcer. Quiet, disciplined and utterly loyal to Silas Grey. Collects debts that others can't." },
+  { "id": "brother-grim", "name": "Brother Grim", "image": "/static/tokens/token_318.webp", "maxHp": 50, "defense": 13, "movement": 5,
+    "attacks": [
+      { "id": "iron-knuckles", "name": "Iron Knuckles", "attack": "1d20+6", "damage": "1d10+4", "range": 1, "damageType": "bludgeoning" }
+    ],
+    "abilities": [
+      { "id": "haymaker", "name": "Haymaker", "actionCost": 1, "range": 1, "usesPerPhase": 1,
+        "effects": [
+          { "type": "attack", "target": "enemy", "attack": "1d20+5", "damage": "2d6+4", "range": 1, "damageType": "bludgeoning" },
+          { "type": "reduce_actions", "target": "hit_enemies", "amount": 1, "when": "attack_hits", "label": "Dazed" }
+        ],
+        "description": "A huge swing at an adjacent foe for 2d6+4. On a hit, the foe is dazed and loses 1 action through the next DM phase. Once per phase." }
+    ],
+    "inventory": ["prayer-beads", "iron-knuckles"],
+    "description": "A defrocked monk turned guild bruiser. Covered in scars and old prayers; speaks rarely and hits very hard." },
+  { "id": "nightshade", "name": "Nightshade", "image": "/static/tokens/token_322.webp", "maxHp": 38, "defense": 15, "movement": 6,
+    "attacks": [
+      { "id": "needle-dagger", "name": "Needle Dagger", "attack": "1d20+6", "damage": "1d6+2", "range": 1, "damageType": "piercing" },
+      { "id": "blowgun", "name": "Blowgun", "attack": "1d20+6", "damage": "1d4+2", "range": 8, "damageType": "piercing" }
+    ],
+    "abilities": [
+      { "id": "envenomed-dart", "name": "Envenomed Dart", "actionCost": 1, "range": 8,
+        "effects": [
+          { "type": "attack", "target": "enemy", "attack": "1d20+6", "damage": "1d6+3", "range": 8, "damageType": "poison" },
+          { "type": "apply_status", "target": "hit_enemies", "status": "poisoned", "when": "attack_hits" }
+        ],
+        "description": "A poisoned dart at a foe within 8 for 1d6+3. On a hit, the foe is poisoned (−2 to hit) through the next DM phase." }
+    ],
+    "inventory": ["poison-kit", "blowgun-darts", "black-choker"],
+    "description": "The guild's poisoner. Charming, theatrical and fond of her work. Never drinks anything she didn't pour herself." },
+  { "id": "masked-cutpurse", "name": "Masked Cutpurse", "image": "/static/tokens/token_300.webp", "maxHp": 16, "defense": 14, "movement": 7,
+    "attacks": [
+      { "id": "dagger", "name": "Dagger", "attack": "1d20+5", "damage": "1d6+2", "range": 1, "damageType": "piercing" },
+      { "id": "thrown-dagger", "name": "Thrown Dagger", "attack": "1d20+5", "damage": "1d4+2", "range": 5, "damageType": "piercing" }
+    ],
+    "abilities": [
+      { "id": "backstab", "name": "Backstab", "actionCost": 1, "range": 1,
+        "effects": [{ "type": "attack", "target": "enemy", "attack": "1d20+5", "damage": "2d6+2", "range": 1, "damageType": "piercing" }],
+        "description": "A vicious stab at an adjacent foe for 2d6+2." }
+    ],
+    "inventory": ["lockpicks", "stolen-trinkets"],
+    "description": "A faceless guild thief. Says nothing, takes everything." },
+  { "id": "wren", "name": "Wren", "image": "/static/tokens/token_303.webp", "maxHp": 16, "defense": 15, "movement": 7,
+    "attacks": [
+      { "id": "short-sword", "name": "Short Sword", "attack": "1d20+5", "damage": "1d6+2", "range": 1, "damageType": "slashing" },
+      { "id": "shortbow", "name": "Shortbow", "attack": "1d20+5", "damage": "1d6+2", "range": 10, "damageType": "piercing" }
+    ],
+    "abilities": [
+      { "id": "melt-into-shadow", "name": "Melt into Shadow", "actionCost": 0, "range": 3, "usesPerPhase": 1,
+        "effects": [{ "type": "teleport", "target": "cell", "distance": 3 }],
+        "description": "Slips into the shadows and reappears up to 3 squares away. Free action, once per phase." }
+    ],
+    "inventory": ["grappling-hook", "lockpicks"],
+    "description": "A young guild burglar, quick and quiet. Climbs anything." },
+  { "id": "dashiell-crane", "name": "Dashiell Crane", "image": "/static/tokens/token_304.webp", "maxHp": 16, "defense": 14, "movement": 7,
+    "attacks": [
+      { "id": "knife", "name": "Knife", "attack": "1d20+5", "damage": "1d6+2", "range": 1, "damageType": "piercing" }
+    ],
+    "abilities": [
+      { "id": "quick-fingers", "name": "Quick Fingers", "actionCost": 1, "range": 1,
+        "effects": [{ "type": "narrative", "roll": "1d20+6" }],
+        "description": "Tries to lift an item from an adjacent creature. Rolls 1d20+6; the DM decides what, if anything, is taken." }
+    ],
+    "inventory": ["coin-purse", "stolen-pocket-watch"],
+    "description": "\"Dash\" to his friends. A charming pickpocket who talks fast and runs faster." },
+  { "id": "imani-sol", "name": "Imani Sol", "image": "/static/tokens/token_305.webp", "maxHp": 16, "defense": 14, "movement": 6,
+    "attacks": [
+      { "id": "punch-dagger", "name": "Punch Dagger", "attack": "1d20+5", "damage": "1d6+2", "range": 1, "damageType": "piercing" }
+    ],
+    "abilities": [
+      { "id": "tip-off", "name": "Tip-Off", "actionCost": 1, "range": 6,
+        "effects": [{ "type": "grant_roll_bonus", "target": "ally", "bonus": "1d4", "range": 6, "label": "Tipped Off" }],
+        "description": "Signals a weak spot to an ally within 6, who adds 1d4 to their next attack roll." }
+    ],
+    "inventory": ["marked-cards", "loaded-dice", "coin-purse"],
+    "description": "Runs the card tables at the Blind Eye. Never loses a hand she doesn't mean to." },
+  { "id": "nix", "name": "Nix", "image": "/static/tokens/token_314.webp", "maxHp": 16, "defense": 14, "movement": 7,
+    "attacks": [
+      { "id": "throwing-knife", "name": "Throwing Knife", "attack": "1d20+6", "damage": "1d6+2", "range": 6, "damageType": "piercing" },
+      { "id": "knife", "name": "Knife", "attack": "1d20+5", "damage": "1d4+2", "range": 1, "damageType": "slashing" }
+    ],
+    "abilities": [
+      { "id": "fan-of-knives", "name": "Fan of Knives", "actionCost": 1, "range": 5, "usesPerPhase": 1,
+        "effects": [{ "type": "area_attack", "target": "enemies_in_area", "center": "target", "radius": 1, "range": 5, "attack": "1d20+5", "damage": "1d4+2", "damageType": "piercing" }],
+        "description": "Throws a spread of knives at a foe within 5, attacking every foe within 1 of it for 1d4+2. Once per phase." }
+    ],
+    "inventory": ["bandolier-of-knives"],
+    "description": "A tattooed knife-thrower with a mean streak. Practices on the tavern's dartboard, and sometimes on its patrons." },
+  { "id": "valeria", "name": "Valeria", "image": "/static/tokens/token_319.webp", "maxHp": 16, "defense": 14, "movement": 6,
+    "attacks": [
+      { "id": "hidden-dagger", "name": "Hidden Dagger", "attack": "1d20+5", "damage": "1d6+2", "range": 1, "damageType": "piercing" }
+    ],
+    "abilities": [
+      { "id": "distracting-patter", "name": "Distracting Patter", "actionCost": 1, "range": 4, "usesPerPhase": 1,
+        "effects": [{ "type": "roll_to_apply", "target": "enemy", "roll": "1d20+6", "range": 4,
+          "onSuccess": [{ "type": "reduce_actions", "target": "checked_enemy", "amount": 1, "label": "Distracted" }] }],
+        "description": "Sweet talk and misdirection at a foe within 4. If it doesn't resist, it loses 1 action through the next DM phase. Once per phase." }
+    ],
+    "inventory": ["forged-letters", "perfume", "coin-purse"],
+    "description": "The guild's con artist. Can be anyone's long-lost cousin by the end of a conversation." },
+  { "id": "old-bram", "name": "Old Bram", "image": "/static/tokens/token_302.webp", "maxHp": 30, "defense": 13, "movement": 5,
+    "attacks": [
+      { "id": "cudgel", "name": "Cudgel", "attack": "1d20+5", "damage": "1d8+3", "range": 1, "damageType": "bludgeoning" }
+    ],
+    "abilities": [
+      { "id": "headlock", "name": "Headlock", "actionCost": 1, "range": 1,
+        "effects": [
+          { "type": "attack", "target": "enemy", "attack": "1d20+5", "damage": "1d6+2", "range": 1, "damageType": "bludgeoning" },
+          { "type": "apply_status", "target": "hit_enemies", "status": "snared", "when": "attack_hits", "label": "Headlocked" }
+        ],
+        "description": "Grabs an adjacent foe for 1d6+2. On a hit, the foe is held and can't move through the next DM phase." }
+    ],
+    "inventory": ["tavern-keys", "flask-of-rum"],
+    "description": "Ex-sailor and the Blind Eye's bouncer. Decides who gets through the back door to the guild." },
+  { "id": "barlow-lookout", "name": "Barlow", "image": "/static/tokens/token_315.webp", "maxHp": 14, "defense": 13, "movement": 6,
+    "attacks": [
+      { "id": "light-crossbow", "name": "Light Crossbow", "attack": "1d20+5", "damage": "1d8+2", "range": 10, "damageType": "piercing" },
+      { "id": "club", "name": "Club", "attack": "1d20+3", "damage": "1d4+2", "range": 1, "damageType": "bludgeoning" }
+    ],
+    "abilities": [
+      { "id": "sound-the-alarm", "name": "Sound the Alarm", "actionCost": 1, "range": 0,
+        "effects": [{ "type": "narrative", "roll": "1d20+3" }],
+        "description": "A coded whistle to warn the guild. Rolls 1d20+3; the DM decides who hears it and comes running." }
+    ],
+    "inventory": ["whistle", "crossbow-bolts"],
+    "description": "Watches the street outside the Blind Eye. Sees who comes and goes, and remembers faces." },
+  { "id": "red-maggie", "name": "Red Maggie", "image": "/static/tokens/token_317.webp", "maxHp": 18, "defense": 12, "movement": 5,
+    "attacks": [
+      { "id": "thrown-bottle", "name": "Thrown Bottle", "attack": "1d20+4", "damage": "1d4+2", "range": 4, "damageType": "bludgeoning" }
+    ],
+    "abilities": [
+      { "id": "stiff-drink", "name": "Stiff Drink", "actionCost": 1, "range": 1,
+        "effects": [{ "type": "heal", "target": "ally_or_self", "heal": "1d6+2", "range": 1 }],
+        "description": "Pours something strong for herself or an adjacent ally, healing 1d6+2." }
+    ],
+    "inventory": ["bar-rag", "tavern-ledger", "bottle-of-whiskey"],
+    "description": "Keeps the bar at the Blind Eye Tavern, the guild's front. Hears everything, repeats only what's paid for." },
+  { "id": "don-aurelio-falcone", "name": "Don Aurelio Falcone", "image": "/static/tokens/token_307.webp", "maxHp": 160, "defense": 16, "movement": 5, "actions": 3,
+    "attacks": [
+      { "id": "iron-capped-cane", "name": "Iron-Capped Cane", "attack": "1d20+8", "damage": "2d8+5", "range": 1, "damageType": "bludgeoning" },
+      { "id": "gilded-pistol", "name": "Gilded Pistol", "attack": "1d20+7", "damage": "1d10+4", "range": 6, "damageType": "piercing" }
+    ],
+    "abilities": [
+      { "id": "crushing-embrace", "name": "Crushing Embrace", "actionCost": 1, "range": 1, "usesPerPhase": 1,
+        "effects": [
+          { "type": "attack", "target": "enemy", "attack": "1d20+8", "damage": "2d10+4", "range": 1, "damageType": "bludgeoning" },
+          { "type": "apply_status", "target": "hit_enemies", "status": "snared", "when": "attack_hits", "label": "Crushed" }
+        ],
+        "description": "Pulls an adjacent foe into a bone-cracking embrace for 2d10+4. On a hit, the foe can't move through the next DM phase. Once per phase." },
+      { "id": "sweeping-cane", "name": "Sweeping Cane", "actionCost": 1, "range": 0, "usesPerPhase": 1,
+        "effects": [{ "type": "area_attack", "target": "enemies_in_area", "center": "self", "radius": 1, "attack": "1d20+7", "damage": "2d6+5", "damageType": "bludgeoning" }],
+        "description": "A heavy sweep of the cane, attacking every foe within 1 for 2d6+5. Once per phase." },
+      { "id": "an-offer-you-cant-refuse", "name": "An Offer You Can't Refuse", "actionCost": 1, "range": 4, "usesPerPhase": 1,
+        "effects": [{ "type": "roll_to_apply", "target": "enemy", "roll": "1d20+8", "range": 4,
+          "onSuccess": [
+            { "type": "apply_status", "target": "checked_enemy", "status": "frightened" },
+            { "type": "apply_status", "target": "checked_enemy", "status": "shaken" }
+          ] }],
+        "description": "A quiet word and a cold stare at a foe within 4. If it doesn't resist, it is frightened (can't move closer to him) and shaken (−2 to hit) through the next DM phase. Once per phase." },
+      { "id": "immovable", "name": "Immovable", "actionCost": 1, "range": 0, "usesPerPhase": 1,
+        "effects": [{ "type": "modify_damage_received", "target": "self", "amount": -3, "duration": "next_dm_phase", "label": "Immovable" }],
+        "description": "Sets his considerable weight and shrugs off blows: every hit he takes is reduced by 3 through the next DM phase. Once per phase." },
+      { "id": "call-the-family", "name": "Call the Family", "actionCost": 1, "range": 0, "usesPerPhase": 1,
+        "effects": [{ "type": "narrative", "roll": "1d4" }],
+        "description": "Snaps his fingers. Rolls 1d4: the DM brings in that many syndicate soldiers. Once per phase." }
+    ],
+    "inventory": ["gold-chain", "family-signet-ring", "cigar-case", "ledger-of-favors"],
+    "description": "Head of the Falcone crime family, which runs Blackthorn's rackets. Soft-spoken, courteous and enormous; prefers to settle things with an offer, but is far more dangerous in a fight than he looks." },
+  { "id": "rafael-falcone", "name": "Rafael Falcone", "image": "/static/tokens/token_309.webp", "maxHp": 55, "defense": 16, "movement": 6,
+    "attacks": [
+      { "id": "sabre", "name": "Sabre", "attack": "1d20+7", "damage": "1d8+4", "range": 1, "damageType": "slashing" },
+      { "id": "pistol", "name": "Pistol", "attack": "1d20+6", "damage": "1d10+3", "range": 6, "damageType": "piercing" }
+    ],
+    "abilities": [
+      { "id": "flourish", "name": "Flourish", "actionCost": 1, "range": 1, "usesPerPhase": 1,
+        "effects": [{ "type": "multi_attack", "target": "enemy", "count": 2, "attack": "1d20+7", "damage": "1d8+3", "range": 1, "damageType": "slashing" }],
+        "description": "A showy duelist's combination at an adjacent foe: two separate strikes for 1d8+3 each. Once per phase." }
+    ],
+    "inventory": ["silver-cufflinks", "dueling-gloves"],
+    "description": "The Don's son and underboss. Vain, quick-tempered and an excellent swordsman; eager to prove himself to his father." },
+  { "id": "sofia-falcone", "name": "Sofia Falcone", "image": "/static/tokens/token_308.webp", "maxHp": 30, "defense": 14, "movement": 6,
+    "attacks": [
+      { "id": "derringer", "name": "Derringer", "attack": "1d20+6", "damage": "1d8+2", "range": 5, "damageType": "piercing" }
+    ],
+    "abilities": [
+      { "id": "leverage", "name": "Leverage", "actionCost": 1, "range": 5, "usesPerPhase": 1,
+        "effects": [{ "type": "roll_to_apply", "target": "enemy", "roll": "1d20+7", "range": 5,
+          "onSuccess": [{ "type": "reduce_actions", "target": "checked_enemy", "amount": 1, "label": "Leveraged" }] }],
+        "description": "Reminds a foe within 5 of something it would rather keep quiet. If it doesn't resist, it hesitates and loses 1 action through the next DM phase. Once per phase." }
+    ],
+    "inventory": ["account-books", "fountain-pen", "derringer"],
+    "description": "The Don's daughter, who keeps the family's books. The sharpest mind in the room, and she knows it. Negotiates for the family." },
+  { "id": "marcus-vane", "name": "Marcus Vane", "image": "/static/tokens/token_321.webp", "maxHp": 50, "defense": 15, "movement": 6,
+    "attacks": [
+      { "id": "longsword", "name": "Longsword", "attack": "1d20+7", "damage": "1d10+3", "range": 1, "damageType": "slashing" },
+      { "id": "pistol", "name": "Pistol", "attack": "1d20+6", "damage": "1d10+2", "range": 6, "damageType": "piercing" }
+    ],
+    "abilities": [
+      { "id": "capos-command", "name": "Capo's Command", "actionCost": 1, "range": 6,
+        "effects": [{ "type": "grant_roll_bonus", "target": "ally", "bonus": "1d6", "range": 6, "label": "Ordered" }],
+        "description": "Barks an order at an ally within 6, who adds 1d6 to their next attack roll." }
+    ],
+    "inventory": ["pocket-watch", "list-of-collections"],
+    "description": "The family's capo, who runs the soldiers on the street. Cold, efficient and loyal to the Don above all." },
+  { "id": "big-tomas", "name": "Big Tomas", "image": "/static/tokens/token_310.webp", "maxHp": 75, "defense": 13, "movement": 5,
+    "attacks": [
+      { "id": "massive-fists", "name": "Massive Fists", "attack": "1d20+7", "damage": "2d6+5", "range": 1, "damageType": "bludgeoning" }
+    ],
+    "abilities": [
+      { "id": "human-shield", "name": "Human Shield", "actionCost": 1, "range": 1,
+        "effects": [{ "type": "redirect_next_hit", "target": "ally", "range": 1, "label": "Human Shield" }],
+        "description": "Steps in front of an adjacent ally (usually the Don) and takes the next hit meant for them." },
+      { "id": "bear-hug", "name": "Bear Hug", "actionCost": 1, "range": 1, "usesPerPhase": 1,
+        "effects": [
+          { "type": "attack", "target": "enemy", "attack": "1d20+7", "damage": "1d10+4", "range": 1, "damageType": "bludgeoning" },
+          { "type": "apply_status", "target": "hit_enemies", "status": "snared", "when": "attack_hits", "label": "Bear Hug" }
+        ],
+        "description": "Wraps up an adjacent foe for 1d10+4. On a hit, the foe can't move through the next DM phase. Once per phase." }
+    ],
+    "inventory": ["brass-knuckles"],
+    "description": "The Don's personal bodyguard. A mountain of a man who never leaves his boss's side and rarely says a word." },
+  { "id": "grigor-the-anvil", "name": "Grigor \"the Anvil\"", "image": "/static/tokens/token_306.webp", "maxHp": 70, "defense": 14, "movement": 5,
+    "attacks": [
+      { "id": "warhammer", "name": "Warhammer", "attack": "1d20+7", "damage": "2d8+4", "range": 1, "damageType": "bludgeoning" }
+    ],
+    "abilities": [
+      { "id": "skull-crack", "name": "Skull Crack", "actionCost": 1, "range": 1, "usesPerPhase": 1,
+        "effects": [
+          { "type": "attack", "target": "enemy", "attack": "1d20+6", "damage": "2d6+4", "range": 1, "damageType": "bludgeoning" },
+          { "type": "reduce_actions", "target": "hit_enemies", "amount": 1, "when": "attack_hits", "label": "Dazed" }
+        ],
+        "description": "Brings the hammer down on an adjacent foe's head for 2d6+4. On a hit, the foe is dazed and loses 1 action through the next DM phase. Once per phase." }
+    ],
+    "inventory": ["warhammer", "tally-of-debts"],
+    "description": "The family's leg-breaker. Tattooed, patient and very thorough. Visits people who are late with payments." },
+  { "id": "one-eye-corvo", "name": "One-Eye Corvo", "image": "/static/tokens/token_312.webp", "maxHp": 40, "defense": 15, "movement": 6,
+    "attacks": [
+      { "id": "long-pistol", "name": "Long Pistol", "attack": "1d20+7", "damage": "2d6+3", "range": 8, "damageType": "piercing" },
+      { "id": "knife", "name": "Knife", "attack": "1d20+6", "damage": "1d6+3", "range": 1, "damageType": "piercing" }
+    ],
+    "abilities": [
+      { "id": "execution-shot", "name": "Execution Shot", "actionCost": 1, "range": 8, "usesPerPhase": 1,
+        "effects": [{ "type": "attack", "target": "enemy", "attack": "1d20+7", "damage": "2d8+4", "range": 8, "defenseReduction": 3, "damageType": "piercing" }],
+        "description": "A careful, deadly shot at a foe within 8 for 2d8+4, treating its Defense as 3 lower. Once per phase." }
+    ],
+    "inventory": ["powder-horn", "spare-eyepatch"],
+    "description": "The family's hired gun. Lost the eye in a duel he still won. Never misses twice." },
+  { "id": "lucia-of-the-knives", "name": "Lucia", "image": "/static/tokens/token_311.webp", "maxHp": 30, "defense": 15, "movement": 7,
+    "attacks": [
+      { "id": "stiletto", "name": "Stiletto", "attack": "1d20+6", "damage": "1d6+3", "range": 1, "damageType": "piercing" },
+      { "id": "thrown-knife", "name": "Thrown Knife", "attack": "1d20+6", "damage": "1d4+3", "range": 5, "damageType": "piercing" }
+    ],
+    "abilities": [
+      { "id": "dance-of-knives", "name": "Dance of Knives", "actionCost": 1, "range": 1, "usesPerPhase": 1,
+        "effects": [{ "type": "multi_attack", "target": "enemy", "count": 3, "attack": "1d20+6", "damage": "1d4+2", "range": 1, "damageType": "slashing" }],
+        "description": "A whirl of blades at an adjacent foe: three separate strikes for 1d4+2 each. Once per phase." }
+    ],
+    "inventory": ["set-of-stilettos", "fence-ledger", "gold-earrings"],
+    "description": "Fences the family's goods and handles quiet problems with a knife. Smiles a great deal." },
+  { "id": "old-hatch", "name": "Old Hatch", "image": "/static/tokens/token_316.webp", "maxHp": 32, "defense": 13, "movement": 5,
+    "attacks": [
+      { "id": "long-rifle", "name": "Long Rifle", "attack": "1d20+7", "damage": "1d10+4", "range": 12, "damageType": "piercing" },
+      { "id": "rifle-butt", "name": "Rifle Butt", "attack": "1d20+4", "damage": "1d6+2", "range": 1, "damageType": "bludgeoning" }
+    ],
+    "abilities": [
+      { "id": "steady-aim", "name": "Steady Aim", "actionCost": 1, "range": 0,
+        "effects": [{ "type": "grant_roll_bonus", "target": "self", "bonus": 3, "label": "Steady Aim" }],
+        "description": "Takes his time lining up the shot: +3 on his next attack roll." }
+    ],
+    "inventory": ["long-rifle", "tobacco-pouch", "wagon-keys"],
+    "description": "The family's old hand: driver, lookout and marksman. Has worked for the Falcones since before the Don was Don." }
 ]
