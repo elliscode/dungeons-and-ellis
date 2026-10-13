@@ -777,11 +777,10 @@
             "type": "apply_status",
             "target": "hit_enemies",
             "status": "poisoned",
-            "duration": "next_dm_phase",
             "when": "attack_hits"
           }
         ],
-        "description": "Launch a venomous spine at an enemy within 5 squares. On a hit, deal damage and poison the target, imposing −2 to hit through the next DM phase."
+        "description": "Launch a venomous spine at an enemy within 5 squares. On a hit, deal damage and poison the target, imposing −2 to hit for 5 rounds."
       }
     ],
     "inventory": [

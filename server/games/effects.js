@@ -1,7 +1,7 @@
 import { rollDice, isValidDice } from '../dice.js';
 import { fail, newId, areEnemies, areAllies, sideOf, footprintDistance, turnFor } from './state.js';
 import { inBounds } from './placement.js';
-import { addEffect, effectsOf, hasStatus, removeEffect, isValidDuration, TRIGGERS, tickEffects, computeExpiry } from './status.js';
+import { addEffect, clearStatus, effectsOf, hasStatus, removeEffect, isValidDuration, TRIGGERS, tickEffects, computeExpiry } from './status.js';
 import { attackRoll, dealDamage, healTarget } from './combat.js';
 import * as H from './helpers.js';
 
@@ -13,7 +13,9 @@ export const STATUSES = {
   frightened: { label: 'Frightened', icon: '😨' }, // can't move closer to its source
   snared: { label: 'Snared', icon: '🕸️' }, // movement 0
   shaken: { label: 'Shaken', icon: '💢' }, // -2 to hit
-  poisoned: { label: 'Poisoned', icon: '🤢' }, // -2 to hit
+  // -2 to hit for the rest of the current phase plus 5 full rounds (10 phases). The status owns its
+  // duration (an ability's `duration` is ignored), and re-poisoning refreshes rather than stacks.
+  poisoned: { label: 'Poisoned', icon: '🤢', duration: { phases: 11 } },
   slowed: { label: 'Slowed', icon: '🐌', movement: -2 }, // -2 movement; also the label for negative movement modifiers
 };
 
@@ -397,15 +399,16 @@ const HANDLERS = {
     const st = STATUSES[eff.status];
     // Slowed is a movement modifier underneath, so movementAllowance() counts it.
     const slow = st.movement ? { type: 'modify_movement' } : {};
-    applyLive(ctx, act, { ...eff, ...slow, status: eff.status, label: eff.label ?? st.label }, targetsFor(ctx, act, eff), {
+    const targets = targetsFor(ctx, act, eff);
+    if (st.duration) for (const t of targets) clearStatus(t, eff.status);
+    applyLive(ctx, act, { ...eff, ...slow, status: eff.status, label: eff.label ?? st.label, duration: st.duration ?? eff.duration }, targets, {
       icon: st.icon, duration: 'next_dm_phase', params: { sourceId: act.caster.id, ...(st.movement ? { amount: st.movement } : {}) },
     });
   },
 
   remove_status(ctx, act, eff) {
     for (const t of targetsFor(ctx, act, eff)) {
-      const gone = (t.effects ?? []).filter((fx) => fx.status === eff.status);
-      for (const fx of gone) removeEffect(t, fx.id);
+      const gone = clearStatus(t, eff.status);
       line(act, gone.length ? `${t.name} is no longer ${STATUSES[eff.status].label.toLowerCase()}` : `${t.name} wasn't ${STATUSES[eff.status].label.toLowerCase()}`);
     }
   },

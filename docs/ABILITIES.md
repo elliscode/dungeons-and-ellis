@@ -65,7 +65,7 @@ Older loose fields (`attack`/`damage`, `heal`, `roll`, `free`, `grantsActions`) 
 | `reduce_actions` | `amount` | Lowers the target's action allowance. It never goes below 0. |
 | `mark_target` | `bonus` (dice) | The caster's next hit on the target adds `bonus` (Hunter's Mark). |
 | `grant_roll_bonus` | `bonus` (dice or number) | Added to the holder's next attack roll, including roll-to-apply rolls (Inspire, Foresight). |
-| `apply_status` / `remove_status` | `status` | Statuses: `frightened` (can't move closer to its source), `snared` (movement 0), `shaken` and `poisoned` (−2 to hit), `slowed`. |
+| `apply_status` / `remove_status` | `status` | Statuses: `frightened` (can't move closer to its source), `snared` (movement 0), `shaken` (−2 to hit), `poisoned` (−2 to hit for the rest of the current phase plus 5 full rounds; ignores `duration`, and re-poisoning refreshes instead of stacking), `slowed`. |
 | `discourage_attacks` | `penalty` (default 5) | Attacks against the holder take −penalty (Sanctuary). |
 | `grant_actions` | `amount` | Extra actions this phase. The ability must set `usesPerPhase`, and it can grant at most `actionCost + 1`. |
 | `teleport` | `distance` | Moves the caster to the picked square. |

@@ -69,6 +69,13 @@ export function removeEffect(e, id) {
   return i < 0 ? null : e.effects.splice(i, 1)[0];
 }
 
+// Removes every live effect carrying `status` from the entity; returns the removed effects.
+export function clearStatus(e, status) {
+  const gone = (e?.effects ?? []).filter((x) => x.status === status);
+  for (const fx of gone) removeEffect(e, fx.id);
+  return gone;
+}
+
 // Phase-counter bookkeeping for one transition. Returns [{ entity, effect }] that expired.
 export function tickEffects(state, transition) {
   const expired = [];

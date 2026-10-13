@@ -570,6 +570,33 @@ suite('apply_status', () => {
     w.next();
     assert.ok(!w.has(w.O, (fx) => fx.status === 'snared'));
   });
+
+  test('poisoned: lasts 5 full rounds whatever the ability says', () => {
+    const w = arena();
+    w.give(w.W, 'venom', [{ type: 'apply_status', target: 'enemy', status: 'poisoned', duration: 'next_dm_phase' }]);
+    w.fight();
+    ok(w.use(w.W, 'venom', { targetId: w.O }));
+    for (let i = 0; i < 10; i++) {
+      w.next();
+      assert.ok(w.has(w.O, (fx) => fx.status === 'poisoned'), `still poisoned after ${i + 1} phases`);
+    }
+    w.next();
+    assert.ok(!w.has(w.O, (fx) => fx.status === 'poisoned'));
+  });
+
+  test('poisoned: re-poisoning refreshes instead of stacking', () => {
+    const w = arena();
+    w.give(w.W, 'sick', [{ type: 'apply_status', target: 'self', status: 'poisoned' }]);
+    w.give(w.W, 'bolt', [{ type: 'attack', target: 'enemy', attack: '1d20', damage: '1d4' }]);
+    w.fight();
+    ok(w.use(w.W, 'sick'));
+    w.next();
+    w.next();
+    ok(w.use(w.W, 'sick'));
+    assert.equal(w.ent(w.W).effects.filter((fx) => fx.status === 'poisoned').length, 1);
+    w.rng.push(13); // 11 vs 11: one −2, not −4
+    assert.equal(ok(w.use(w.W, 'bolt', { targetId: w.O })).strikes[0].hit, true);
+  });
 });
 
 suite('remove_status', () => {

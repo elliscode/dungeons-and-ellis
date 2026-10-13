@@ -137,7 +137,6 @@
             "type": "apply_status",
             "target": "enemy",
             "status": "poisoned",
-            "duration": "next_dm_phase",
             "when": "attack_hits"
           }
         ],
@@ -1453,7 +1452,7 @@
           { "type": "attack", "target": "enemy", "attack": "1d20+6", "damage": "1d8+3", "range": 2, "damageType": "poison" },
           { "type": "apply_status", "target": "hit_enemies", "status": "poisoned", "when": "attack_hits" }
         ],
-        "description": "Strikes a foe within 2 for 1d8+3 poison damage. On a hit, the foe is poisoned (−2 to hit) through the next DM phase."
+        "description": "Strikes a foe within 2 for 1d8+3 poison damage. On a hit, the foe is poisoned (−2 to hit) for 5 rounds."
       },
       {
         "id": "constrict",

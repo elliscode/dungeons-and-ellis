@@ -305,7 +305,7 @@
           { "type": "attack", "target": "enemy", "attack": "1d20+6", "damage": "1d6+3", "range": 8, "damageType": "poison" },
           { "type": "apply_status", "target": "hit_enemies", "status": "poisoned", "when": "attack_hits" }
         ],
-        "description": "A poisoned dart at a foe within 8 for 1d6+3. On a hit, the foe is poisoned (−2 to hit) through the next DM phase." }
+        "description": "A poisoned dart at a foe within 8 for 1d6+3. On a hit, the foe is poisoned (−2 to hit) for 5 rounds." }
     ],
     "inventory": ["poison-kit", "blowgun-darts", "black-choker"],
     "description": "The guild's poisoner. Charming, theatrical and fond of her work. Never drinks anything she didn't pour herself." },

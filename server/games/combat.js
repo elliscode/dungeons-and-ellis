@@ -118,7 +118,12 @@ export function attackRoll(ctx, { source, target, expr, attackBonus = 0, defense
       mods.push({ label: fx.label, value: b });
       removeEffect(source, fx.id);
     }
-    for (const fx of source.effects ?? []) if (STATUS_TO_HIT[fx.status]) mods.push({ label: fx.label, value: STATUS_TO_HIT[fx.status] });
+    const penalized = new Set(); // each status counts once, however many copies are on the source
+    for (const fx of source.effects ?? []) {
+      if (!STATUS_TO_HIT[fx.status] || penalized.has(fx.status)) continue;
+      penalized.add(fx.status);
+      mods.push({ label: fx.label, value: STATUS_TO_HIT[fx.status] });
+    }
   }
   for (const fx of effectsOf(target, 'discourage_attacks')) mods.push({ label: fx.label, value: -(fx.params.penalty ?? 5) });
   const defense = effectiveDefense(target, defenseReduction);

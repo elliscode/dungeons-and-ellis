@@ -5,7 +5,7 @@ import {
 } from './state.js';
 import { inBounds, ensurePlaced } from './placement.js';
 import { startCombat, advancePhase, endCombat, applyHeal, applyDamage, setHp, revive, kill, dealDamage, deathAt } from './combat.js';
-import { addEffect, removeEffect, effectsOf, movementAllowance } from './status.js';
+import { addEffect, clearStatus, removeEffect, effectsOf, movementAllowance } from './status.js';
 import { activateAbility, strike, checkTaunt, resolveCheck, onPhaseTransition, STATUSES } from './effects.js';
 import {
   str, int, outcome, hpTexts, statusSuffix, getEntity, onActiveScene, controlled, requireStatus, requirePlayerWindow,
@@ -347,9 +347,10 @@ def('effect.addStatus', { who: 'dm', undoable: 'add status' }, (ctx) => {
   const st = STATUSES[ctx.cmd.status];
   if (!st || ctx.cmd.status === 'frightened') fail('Pick poisoned, snared, shaken or slowed');
   if (e.kind === 'object') fail('Objects have no statuses');
+  if (st.duration) clearStatus(e, ctx.cmd.status);
   addEffect(ctx.state, e, {
     type: st.movement ? 'modify_movement' : 'apply_status', status: ctx.cmd.status, label: st.label, icon: st.icon,
-    source: { entityId: null, name: 'DM' }, params: st.movement ? { amount: st.movement } : {}, duration: 'next_dm_phase',
+    source: { entityId: null, name: 'DM' }, params: st.movement ? { amount: st.movement } : {}, duration: st.duration ?? 'next_dm_phase',
   });
   ctx.log('effect', `${e.name} is ${st.label.toLowerCase()}`);
 });

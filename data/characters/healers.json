@@ -363,8 +363,7 @@
             "type": "apply_status",
             "target": "hit_enemies",
             "status": "poisoned",
-            "when": "attack_hits",
-            "duration": "next_dm_phase"
+            "when": "attack_hits"
           }
         ],
         "description": "Hurl a flask that bursts in a cloud of stinging alchemical fumes."
