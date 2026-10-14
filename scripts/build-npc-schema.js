@@ -95,7 +95,7 @@ export function buildNpcSchema(character) {
         description: 'Optional special abilities (same effect engine as heroes). For a friendly NPC, "ally" targets are heroes and friendly NPCs and "enemy" targets are monsters. Use a "narrative" effect for roleplay or utility abilities with no mechanics.',
       },
       inventory: {
-        type: 'array', maxItems: 10, items: { $ref: '#/$defs/id', description: 'Item id, kebab-case, e.g. "room-key".' },
+        type: 'array', maxItems: 10, items: { $ref: '#/$defs/id', description: 'Item id, kebab-case, e.g. "room-key". Ids that appear in data/items.json (e.g. "healing-potion") get that item\'s ability.' },
         description: 'Optional items the NPC carries, sells or can hand over. Only the DM sees an NPC\'s inventory.',
       },
       description: { type: 'string', minLength: 1, maxLength: 300, description: 'Optional note for the DM (personality, what they know, what they want). Not shown to players and not used by the game.' },

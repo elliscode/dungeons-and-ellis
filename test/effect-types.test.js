@@ -200,13 +200,14 @@ suite('heal', () => {
     assert.match(w.use(w.W, 'mend', { targetId: w.O }).error, /not an ally/);
   });
 
-  test('a downed creature at negative HP heals onto the negative number', () => {
+  test('a downed creature at negative HP gets up with the full heal', () => {
     const w = arena();
     w.give(w.W, 'mend', [{ type: 'heal', target: 'ally_or_self', heal: '1d4+2' }]);
     w.dmg(w.A, 45);
     assert.deepEqual([w.ent(w.A).status, w.ent(w.A).hp], ['down', -5]);
-    ok(w.use(w.W, 'mend', { targetId: w.A }));
-    assert.deepEqual([w.ent(w.A).status, w.ent(w.A).hp], ['down', -2]);
+    ok(w.use(w.W, 'mend', { targetId: w.A })); // 1 + 2 = 3: −5 → 0 → 3
+    assert.deepEqual([w.ent(w.A).status, w.ent(w.A).hp], ['active', 3]);
+    assert.match(w.last(), /\+3\b/);
   });
 });
 

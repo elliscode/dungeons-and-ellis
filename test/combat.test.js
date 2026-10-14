@@ -79,9 +79,10 @@ test('crit doubles damage dice', () => {
   assert.equal(state().entities[gob].status, 'dead');
 });
 
-test('down at 0 HP, damage goes negative, death at -max HP, heal adds onto negative', () => {
-  const { run, a, ea, b, eb, state, rng } = arena();
+test('down at 0 HP, damage goes negative, death at -max HP, healing resets negative HP to 0 first', () => {
+  const { run, a, ea, b, eb, state, rng, service, game } = arena();
   const e = () => state().entities[ea];
+  const lastFeed = () => service.history(game.id, 'dm').feed.at(-1).text;
   assert.equal(e().maxHp, 32);
   ok(run(DM, { type: 'entity.damage', entityId: ea, amount: 32 }));
   assert.equal(e().status, 'down');
@@ -91,12 +92,17 @@ test('down at 0 HP, damage goes negative, death at -max HP, heal adds onto negat
   rng.push(12);
   ok(run(a, { type: 'downRoll', entityId: ea }));
   assert.equal(e().hp, 0, 'a stable roll changes nothing');
-  ok(run(DM, { type: 'entity.damage', entityId: ea, amount: 31 }));
+  ok(run(DM, { type: 'entity.damage', entityId: ea, amount: 20 }));
+  rng.push(19);
+  ok(run(a, { type: 'downRoll', entityId: ea }));
+  assert.deepEqual([e().status, e().hp], ['active', 1], 'getting up from −20 lands on exactly 1 HP');
+  ok(run(DM, { type: 'entity.damage', entityId: ea, amount: 32 }));
   assert.deepEqual([e().status, e().hp], ['down', -31]);
   ok(run(DM, { type: 'entity.heal', entityId: ea, amount: 5 }));
-  assert.deepEqual([e().status, e().hp], ['down', -26], 'healing adds onto negative HP');
+  assert.deepEqual([e().status, e().hp], ['active', 5], 'negative HP resets to 0, then the full heal applies');
+  assert.match(lastFeed(), /healed for 5\b/);
   ok(run(DM, { type: 'entity.heal', entityId: ea, amount: 40 }));
-  assert.deepEqual([e().status, e().hp], ['active', 14]);
+  assert.deepEqual([e().status, e().hp], ['active', 32], 'capped at max HP');
   ok(run(DM, { type: 'entity.setHp', entityId: ea, hp: 0 }));
   assert.equal(e().status, 'down');
   ok(run(DM, { type: 'entity.damage', entityId: ea, amount: 32 }));

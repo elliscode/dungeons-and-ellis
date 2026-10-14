@@ -51,7 +51,7 @@ Older loose fields (`attack`/`damage`, `heal`, `roll`, `free`, `grantsActions`) 
 | `multi_attack` | `count` + attack fields | `count` independent strikes, each with its own attack roll and damage roll. One activation pays `actionCost` once. Strikes stop if the target dies. |
 | `area_attack` | `center` (`self`/`target`), `radius` + attack fields | Each enemy within `radius` of the center gets its own roll. |
 | `chain_attack` | `jumps`, `jumpRange` + attack fields | The primary target plus up to `jumps` targets picked by the player. Each jump is within `jumpRange` of the previous target, with no repeats. |
-| `heal` | `heal` | Rolls, then heals through the shared heal path. Capped at max HP. Dead targets, dummies, and objects can't be healed. |
+| `heal` | `heal` | Rolls, then heals through the shared heal path. `heal` may also be a whole number (1–1000) for a flat heal. Capped at max HP. Dead targets, dummies, and objects can't be healed. |
 | `chain_heal` | `heal`, `jumps`, `jumpRange` | Like a chain attack, but jumps must go to wounded allies. Each heal is rolled separately. |
 | `modify_healing` | `amount` | The caster's next heal on the target gets `+amount` (Beacon of Grace). |
 | `grant_protection` | `fraction` (default 0.5) or `amount` | The holder's next hit is reduced by that fraction or amount. |
@@ -110,8 +110,7 @@ Healing runs through `healTarget()` in this order:
 1. The heal is rolled.
 2. A Heal-role hero's healing is multiplied by n.
 3. Flat bonuses from the caster are added (Beacon of Grace; consumed).
-4. The result is capped at max HP.
-5. The heal is applied. A downed target gets back up; dead targets can't be healed.
+4. The heal is applied. Negative HP is reset to 0 first, so a downed target always gets back up with the full amount (−20 HP healed for 8 → 8 HP). The result is capped at max HP. Dead targets can't be healed.
 
 Healing totems count as their caster's healing.
 
@@ -143,6 +142,16 @@ Attack rolls (`attackRoll()`) include `attackBonus`, one-shot roll bonuses (whic
 - Players get their allowance (default 1 action) each PLAYER PHASE. Monsters and hostile NPCs get theirs each DM PHASE and can only act then. Friendly NPCs and the DM's own tools are unlimited.
 - The allowance is the definition's `actions`, plus granted actions, minus `reduce_actions`. It never goes below 0.
 - Movement is separate from actions. In combat, players and enemies spend movement after modifiers; a snared creature can't move. The DM can **Shift-drag** to force a move past budgets and frightened restrictions.
+
+## Item abilities
+
+`data/items.json` is the item catalog: `{ id, name, description?, ability? }`, where `ability` uses the same schema as a character ability. An inventory entry matches a catalog item by its id (`"healing-potion"` in a definition's `inventory`) or, failing that, by name, so items the DM adds by name ("Healing Potion") match too.
+
+- Using an item with an ability goes through the normal targeting flow and the shared effect engine. The item is removed only once the ability resolves. If the target is out of range or invalid, or the user has no actions left, the item is kept.
+- It costs the ability's `actionCost` (default 1). Item abilities don't count toward `usesPerPhase`.
+- Item heals skip the Heal role bonus, so a Healing Potion heals a flat 25 whoever uses it.
+- Items without an ability are used up in one click, as before.
+- Healing Potion: `range: 1`, `heal: 25`, targets yourself or an adjacent ally (a downed ally gets up at 25).
 
 ## Training Dummy
 

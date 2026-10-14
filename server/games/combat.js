@@ -58,11 +58,14 @@ export function applyDamage(e, amount) {
   return { before, after: e.status };
 }
 
-// Healing adds onto negative HP, so a downed creature only gets up once HP is back above 0.
+// Negative HP is only a buffer before true death: any real heal first resets it to 0, then adds
+// the full amount, so a downed creature always gets up with exactly what it was healed for.
+// `healed` counts from 0, not from the negative number.
 export function applyHeal(e, amount) {
   amount = Math.max(0, Math.floor(amount));
   const before = e.status;
   if (e.status === 'dead') return { before, after: before, healed: 0 };
+  if (amount > 0 && e.hp < 0) e.hp = 0;
   const old = e.hp;
   e.hp = Math.min(e.maxHp, e.hp + amount);
   if (e.status === 'down' && e.hp > 0) e.status = 'active';
@@ -226,14 +229,16 @@ export function dealDamage(ctx, { source = null, target, raw, damageType = null,
 }
 
 // Healing order: rolled amount → ×n if the healer is a Heal-role player character → flat bonuses
-// from the caster (Beacon of Grace; consumed) → clamp to max HP → applyHeal (downed recovery).
-// Dead targets, training dummies and objects can't be healed.
-export function healTarget(ctx, { source = null, target, amount, color = null }) {
+// from the caster (Beacon of Grace; consumed) → applyHeal (negative HP resets to 0, clamp to max HP,
+// downed recovery).
+// Dead targets, training dummies and objects can't be healed. roleBonus: false skips the Heal
+// role multiplier (item heals such as potions are flat).
+export function healTarget(ctx, { source = null, target, amount, color = null, roleBonus = true }) {
   if (target.immortal || target.kind === 'object' || target.maxHp === null) return { healed: 0, skipped: `${target.name} can't be healed` };
   if (target.status === 'dead') return { healed: 0, skipped: `${target.name} is dead` };
   const notes = [];
   let total = Math.max(0, Math.floor(amount));
-  const mult = roleOf(source)?.healingDoneMultiplier;
+  const mult = roleBonus ? roleOf(source)?.healingDoneMultiplier : null;
   if (mult > 1 && total > 0) {
     total = Math.floor(total * mult);
     notes.push(`×${mult} Heal`);

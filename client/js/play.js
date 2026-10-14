@@ -83,6 +83,14 @@ function availability() {
   return { me, c, t, allowance, actionLeft, actionsLeft, dmPhase, moveLeft, canAct: me.status === 'active' && !dmPhase && actionLeft };
 }
 
+// The item catalog entry for an inventory entry: by defId, else by name (mirrors findItem() on
+// the server).
+function itemDef(it) {
+  const name = String(it.name ?? '').trim().toLowerCase();
+  const items = content.items ?? [];
+  return (it.defId && items.find((d) => d.id === it.defId)) || items.find((d) => d.name.trim().toLowerCase() === name) || null;
+}
+
 function cellsWithin(origin, size, range) {
   const g = state.scene.grid, out = [];
   for (let y = 0; y < g.rows; y++) for (let x = 0; x < g.cols; x++) {
@@ -190,10 +198,22 @@ function onSegment(seg, t, e) {
     return;
   }
   if (seg === 'inventory') {
-    const items = a.me.inventory.map((it) => ({
-      label: it.name, sub: a.c.active ? 'Use (costs your action)' : 'Use', disabled: !!why,
-      onClick: () => send({ type: 'item.use', entityId: a.me.id, itemId: it.id }),
-    }));
+    const items = a.me.inventory.map((it) => {
+      const def = itemDef(it);
+      const cost = a.c.active ? 'costs your action' : '';
+      // Items with an ability (Healing Potion) ask for a target first; cancelling keeps the item.
+      if (def?.ability) {
+        const ab = { ...def.ability, id: it.id, name: it.name };
+        return {
+          label: it.name, sub: [def.description, abilitySummary(ab), cost].filter(Boolean).join(' — '), disabled: !!why,
+          onClick: () => startAbility({ caster: a.me, ab, entities: () => state.entities, setMode, send: (cmd) => send({ ...cmd, type: 'item.use', itemId: it.id }), toast: null }),
+        };
+      }
+      return {
+        label: it.name, sub: [def?.description, cost ? `Use (${cost})` : 'Use'].filter(Boolean).join(' — '), disabled: !!why,
+        onClick: () => send({ type: 'item.use', entityId: a.me.id, itemId: it.id }),
+      };
+    });
     popupMenu(at.x + 60, at.y + 20, why ? `Inventory — ${why}` : 'Inventory', items.length ? items : [{ label: 'Empty', disabled: true }]);
     return;
   }

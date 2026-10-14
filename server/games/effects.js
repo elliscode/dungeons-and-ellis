@@ -68,7 +68,13 @@ function validateEffect(eff, at, errors, depth = 0) {
   if (!isValidDuration(eff.duration)) err('duration must be current_turn, until_next_player_phase, next_dm_phase, combat, until_used or { "phases": N }');
   if (eff.trigger !== undefined && !TRIGGERS.includes(eff.trigger)) err(`trigger must be one of ${TRIGGERS.join(', ')}`);
   for (const k of spec.required ?? []) if (eff[k] === undefined || eff[k] === null || eff[k] === '') err(`${k} is required`);
-  for (const k of spec.dice ?? []) if (eff[k] !== undefined && eff[k] !== null && !isValidDice(eff[k])) err(`${k} "${eff[k]}" is not valid dice`);
+  for (const k of spec.dice ?? []) {
+    if (eff[k] === undefined || eff[k] === null) continue;
+    // Heals may be a flat amount instead of dice (Healing Potion: 25).
+    if (k === 'heal' && typeof eff[k] === 'number') {
+      if (!Number.isInteger(eff[k]) || eff[k] < 1 || eff[k] > 1000) err('heal must be dice (e.g. 2d8+3) or a whole number from 1 to 1000');
+    } else if (!isValidDice(eff[k])) err(`${k} "${eff[k]}" is not valid dice`);
+  }
   if (eff.type === 'grant_roll_bonus' && eff.bonus !== undefined && !isValidDice(String(eff.bonus)) && !Number.isInteger(eff.bonus)) err('bonus must be dice (e.g. 1d6) or a whole number');
   for (const [k, r] of Object.entries(spec.nums ?? {})) {
     if (eff[k] === undefined) continue;
@@ -489,8 +495,9 @@ for (const t of EFFECT_TYPES) if (!HANDLERS[t]) throw new Error(`effect type ${t
 export const HANDLED_TYPES = Object.keys(HANDLERS);
 
 function healOne(ctx, act, eff, t) {
-  const r = H.rollOrFail(eff.heal, ctx);
-  const h = healTarget(ctx, { source: act.caster, target: t, amount: r.total, color: ctx.actorColor });
+  const r = typeof eff.heal === 'number' ? { total: eff.heal, text: String(eff.heal) } : H.rollOrFail(eff.heal, ctx);
+  // Item heals (potions) are flat: the Heal role bonus belongs to the healer's own spells.
+  const h = healTarget(ctx, { source: act.caster, target: t, amount: r.total, color: ctx.actorColor, roleBonus: !act.item });
   if (h.skipped) { line(act, `${h.skipped}`); return; }
   const notes = h.notes.length ? ` (${h.notes.join(', ')})` : '';
   const ht = H.hpTexts(t);
@@ -530,21 +537,28 @@ const usesThisPhase = (t, id) => (t?.abilitiesUsed ?? []).filter((x) => x === id
 
 export function activateAbility(ctx) {
   const e = H.controlled(ctx, ctx.cmd.entityId);
-  const scene = H.onActiveScene(ctx, e);
   H.requireStatus(e, 'use abilities');
   H.requireActionWindow(ctx, e);
   const raw = (e.abilities ?? []).find((a) => a.id === ctx.cmd.abilityId);
   if (!raw) fail('Unknown ability');
+  return runAbility(ctx, e, raw);
+}
+
+// Validates the picks in ctx.cmd (targetId, cell, picks), spends the action and resolves `raw`
+// for `e`. `item` is set when the ability comes from an inventory item: items are consumed by
+// the caller instead of counting toward usesPerPhase, and their heals skip the Heal role bonus.
+export function runAbility(ctx, e, raw, { item = null } = {}) {
+  const scene = H.onActiveScene(ctx, e);
   const ab = normalizeAbility(raw);
   if (!ctx.state.combat.active && dealsDamage(ab)) fail(`${ab.name} deals damage and is only available in combat`);
   const budget = H.budgeted(ctx, e);
   const t = budget ? turnFor(ctx.state, e.id) : null;
-  if (t && ab.usesPerPhase && usesThisPhase(t, ab.id) >= ab.usesPerPhase) {
+  if (t && !item && ab.usesPerPhase && usesThisPhase(t, ab.id) >= ab.usesPerPhase) {
     fail(`${ab.name} can only be used ${ab.usesPerPhase === 1 ? 'once' : `${ab.usesPerPhase} times`} per phase`);
   }
   H.checkAction(ctx, e, ab.actionCost);
 
-  const act = { caster: e, ability: ab, scene, primary: null, cell: null, picks: ctx.cmd.picks ?? [], checked: null, hitEnemies: [], lastHit: null, lines: [], data: { abilityId: ab.id, strikes: [] } };
+  const act = { caster: e, ability: ab, item: !!item, scene, primary: null, cell: null, picks: ctx.cmd.picks ?? [], checked: null, hitEnemies: [], lastHit: null, lines: [], data: { abilityId: ab.id, strikes: [] } };
   // Validates the picked target; range is measured from `from` (a square the caster is about
   // to move to) or from where the caster stands.
   const pickTarget = (tg, from = null) => {
@@ -583,7 +597,7 @@ export function activateAbility(ctx) {
   }
 
   H.spendAction(ctx, e, ab.actionCost);
-  if (t) t.abilitiesUsed.push(ab.id);
+  if (t && !item) t.abilitiesUsed.push(ab.id);
   runEffects(ctx, act, ab.effects);
 
   const on = act.primary && act.primary !== e ? ` on ${act.primary.name}` : '';

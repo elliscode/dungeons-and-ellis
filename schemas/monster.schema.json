@@ -105,7 +105,7 @@
       "maxItems": 10,
       "items": {
         "$ref": "#/$defs/id",
-        "description": "Item id, kebab-case, e.g. \"rusty-key\"."
+        "description": "Item id, kebab-case, e.g. \"rusty-key\". Ids that appear in data/items.json (e.g. \"healing-potion\") get that item's ability."
       },
       "description": "Optional loot or carried items. Only the DM sees a hostile monster's inventory."
     },

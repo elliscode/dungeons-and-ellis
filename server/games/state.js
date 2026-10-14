@@ -65,8 +65,9 @@ export function prettyItemName(id) {
   return String(id).replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-export function makeItem(name) {
-  return { id: newId('i'), name: String(name).trim().slice(0, 60) };
+// defId links the entry to the item catalog (data/items.json) when it came from a definition id.
+export function makeItem(name, defId = null) {
+  return { id: newId('i'), name: String(name).trim().slice(0, 60), ...(defId ? { defId } : {}) };
 }
 
 // Builds a live entity instance from a bank/character definition. The definition is
@@ -89,7 +90,7 @@ export function entityFromDef(def, kind, extra = {}) {
     movement: Number.isFinite(def.movement) ? def.movement : 6,
     attacks: structuredClone(def.attacks ?? []),
     abilities: structuredClone(def.abilities ?? []),
-    inventory: (def.inventory ?? []).map((i) => makeItem(typeof i === 'string' ? prettyItemName(i) : i.name)),
+    inventory: (def.inventory ?? []).map((i) => (typeof i === 'string' ? makeItem(prettyItemName(i), i) : makeItem(i.name, i.id))),
     // Actions per combat phase (movement is separate). Definitions may set "actions".
     actionsPerPhase: Number.isInteger(def.actions) && def.actions >= 0 ? def.actions : 1,
     ...(immortal ? { immortal: true, damageTaken: 0, hits: 0 } : {}),

@@ -6,7 +6,7 @@ import {
 import { inBounds, ensurePlaced } from './placement.js';
 import { startCombat, advancePhase, endCombat, applyHeal, applyDamage, setHp, revive, kill, dealDamage, deathAt } from './combat.js';
 import { addEffect, clearStatus, removeEffect, effectsOf, movementAllowance } from './status.js';
-import { activateAbility, strike, checkTaunt, resolveCheck, onPhaseTransition, STATUSES } from './effects.js';
+import { activateAbility, runAbility, strike, checkTaunt, resolveCheck, onPhaseTransition, STATUSES } from './effects.js';
 import {
   str, int, outcome, hpTexts, statusSuffix, getEntity, onActiveScene, controlled, requireStatus, requirePlayerWindow,
   requireActionWindow, budgeted, checkAction, spendAction, rollOrFail, distanceBetween, frightenedBy,
@@ -490,6 +490,9 @@ def('act', { who: 'any', undoable: 'act' }, (ctx) => {
 // All abilities (heroes, NPCs, monsters) run through the shared effect engine.
 def('ability', { who: 'any', undoable: 'ability' }, (ctx) => activateAbility(ctx));
 
+// Items with a catalog ability (data/items.json) run it with the picked target, and are only
+// consumed once it resolves; any failure (range, target, actions) keeps the item. Other items are
+// simply used up.
 def('item.use', { who: 'player', undoable: 'use item' }, (ctx) => {
   const e = controlled(ctx, ctx.cmd.entityId);
   onActiveScene(ctx, e);
@@ -497,6 +500,13 @@ def('item.use', { who: 'player', undoable: 'use item' }, (ctx) => {
   requirePlayerWindow(ctx);
   const idx = e.inventory.findIndex((i) => i.id === ctx.cmd.itemId);
   if (idx < 0) fail('Item not found');
+  const catalog = ctx.content.item(e.inventory[idx]);
+  if (catalog?.ability) {
+    const item = e.inventory[idx];
+    const result = runAbility(ctx, e, { ...catalog.ability, id: catalog.id, name: item.name }, { item });
+    e.inventory.splice(e.inventory.indexOf(item), 1);
+    return result;
+  }
   spendAction(ctx, e);
   const [item] = e.inventory.splice(idx, 1);
   const target = ctx.cmd.targetId ? ctx.state.entities[ctx.cmd.targetId] : null;
@@ -523,7 +533,7 @@ def('downRoll', { who: 'player' }, (ctx) => {
   const head = `${e.name} (DOWN) rolls ${r.total} —`;
   let text;
   if (band.getUp) {
-    const change = applyHeal(e, 1 - e.hp);
+    const change = applyHeal(e, 1);
     ctx.fx({ kind: 'heal', entityId: e.id, text: `+${change.healed}`, color: ctx.actorColor });
     text = `${head} gets back up with 1 HP!`;
   } else if (band.bleed) {

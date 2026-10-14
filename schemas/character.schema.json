@@ -109,7 +109,7 @@
       "maxItems": 10,
       "items": {
         "$ref": "#/$defs/id",
-        "description": "Item id, kebab-case, e.g. \"healing-potion\"."
+        "description": "Item id, kebab-case, e.g. \"healing-potion\". Ids that appear in data/items.json (e.g. \"healing-potion\") get that item's ability."
       },
       "description": "Flavor items. Roster heroes carry 3, usually including \"healing-potion\"."
     }
