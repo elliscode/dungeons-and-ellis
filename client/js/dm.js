@@ -288,12 +288,12 @@ function renderPlayers() {
             }))),
           }]),
         }),
-        h('span.name', {}, h('b', { style: { color: p.color } }, p.name), h('br'), h('span.muted', {}, hero ? `${hero.name} (${ROLE_LABELS[hero.role]})` : 'choosing a hero…')),
+        h('span.name', {}, h('b', { style: { color: p.color } }, p.name), h('br'), h('span.muted', {}, hero ? `${p.heroName ?? hero.name} (${ROLE_LABELS[hero.role]})` : 'choosing a hero…')),
         p.entityId ? h('button.small', { title: 'Select token', onclick: () => select(p.entityId) }, '◎') : null,
         h('button.small', {
           title: 'Reset Player / Release Character',
           disabled: !p.characterId,
-          onclick: () => confirm(`Release ${hero?.name} from ${p.name}? They will pick a hero again.`) && send({ type: 'dm.resetPlayer', playerId: p.id }),
+          onclick: () => confirm(`Release ${p.heroName ?? hero?.name} from ${p.name}? They will pick a hero again.`) && send({ type: 'dm.resetPlayer', playerId: p.id }),
         }, 'Release'),
         h('button.small.danger', {
           title: 'Remove this seat (the old browser cannot rejoin as this player)',

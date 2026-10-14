@@ -13,10 +13,11 @@ function allowances(state, e) {
   return { actions: actionAllowance(e, t), movement: movementAllowance(e) };
 }
 
-function publicPlayer(p, presence) {
+// heroName: the live name of the hero they play (players can rename it), shown on its token anyway.
+function publicPlayer(p, presence, state) {
   return {
     id: p.id, name: p.name, color: p.color, characterId: p.characterId, entityId: p.entityId,
-    presence: presence(p.id),
+    heroName: state.entities[p.entityId]?.name ?? null, presence: presence(p.id),
   };
 }
 
@@ -31,7 +32,7 @@ export function projectForDm(state, presence) {
   return {
     role: 'dm',
     ...view,
-    players: Object.values(players).map((p) => publicPlayer(p, presence)),
+    players: Object.values(players).map((p) => publicPlayer(p, presence, state)),
   };
 }
 
@@ -67,8 +68,8 @@ export function projectForPlayer(state, playerId, presence) {
   return {
     role: 'player',
     game: { id: state.id, name: state.name },
-    me: me ? publicPlayer(me, presence) : null,
-    players: Object.values(state.players).map((p) => publicPlayer(p, presence)),
+    me: me ? publicPlayer(me, presence, state) : null,
+    players: Object.values(state.players).map((p) => publicPlayer(p, presence, state)),
     takenCharacters: taken,
     combat: structuredClone(state.combat),
     turn: me?.entityId ? structuredClone(state.turn[me.entityId] ?? null) : null,

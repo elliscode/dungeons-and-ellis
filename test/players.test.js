@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { setup, ok, DM } from './helpers.js';
 import { PLAYER_COLORS } from '../server/games/state.js';
+import { projectForDm, projectForPlayer } from '../server/games/project.js';
 
 test('two players cannot claim the same character', () => {
   const { join, run } = setup();
@@ -75,4 +76,50 @@ test('players cannot run DM commands or touch other characters', () => {
   assert.equal(run(a, { type: 'combat.start' }).error, 'Not allowed');
   assert.equal(run(a, { type: 'undo' }).error, 'Not allowed');
   assert.equal(run(a, { type: 'combat.timerExpired' }).error, 'Not allowed');
+});
+
+test('players can rename the hero they play', () => {
+  const { join, run, state, service, game } = setup();
+  const a = join('Ana'), b = join('Bo');
+  assert.equal(run(a, { type: 'player.renameCharacter', name: 'Tabasco' }).error, 'Pick a hero first');
+  ok(run(a, { type: 'player.selectCharacter', characterId: 'fire-mage' }));
+  ok(run(b, { type: 'player.selectCharacter', characterId: 'paladin' }));
+  const ea = state().players[a.playerId].entityId;
+  const eb = state().players[b.playerId].entityId;
+  const paladin = state().entities[eb].name;
+
+  ok(run(a, { type: 'player.renameCharacter', name: '  Tabasco Habanero ' }));
+  assert.equal(state().entities[ea].name, 'Tabasco Habanero');
+  assert.equal(state().entities[eb].name, paladin, 'only your own hero');
+  const feed = () => service.history(game.id, 'dm').feed;
+  assert.match(feed().at(-1).text, /Ana's Fire Mage is now known as Tabasco Habanero/);
+
+  // Everyone sees the new name: DM and player views.
+  const presence = () => 'online';
+  assert.equal(projectForDm(state(), presence).players.find((p) => p.id === a.playerId).heroName, 'Tabasco Habanero');
+  const bView = projectForPlayer(state(), b.playerId, presence);
+  assert.equal(bView.players.find((p) => p.id === a.playerId).heroName, 'Tabasco Habanero');
+  assert.equal(projectForPlayer(state(), a.playerId, presence).me.heroName, 'Tabasco Habanero');
+
+  const rows = feed().length;
+  ok(run(a, { type: 'player.renameCharacter', name: 'Tabasco Habanero' }));
+  assert.equal(feed().length, rows, 'same name: nothing logged');
+  assert.match(run(a, { type: 'player.renameCharacter', name: '   ' }).error, /Character name is required/);
+  ok(run(a, { type: 'player.renameCharacter', name: 'x'.repeat(60) }));
+  assert.equal(state().entities[ea].name.length, 40, 'long names are cut to 40');
+  assert.equal(run(DM, { type: 'player.renameCharacter', name: 'Nope' }).error, 'Not allowed');
+});
+
+test('a DM rename shows in heroName; releasing the hero resets its name', () => {
+  const { join, run, state } = setup();
+  const a = join('Ana');
+  ok(run(a, { type: 'player.selectCharacter', characterId: 'fire-mage' }));
+  const ea = state().players[a.playerId].entityId;
+  ok(run(DM, { type: 'entity.rename', entityId: ea, name: 'Sparky' }));
+  assert.equal(projectForDm(state(), () => 'online').players[0].heroName, 'Sparky');
+  ok(run(DM, { type: 'dm.resetPlayer', playerId: a.playerId }));
+  assert.equal(projectForDm(state(), () => 'online').players[0].heroName, null);
+  ok(run(a, { type: 'player.selectCharacter', characterId: 'fire-mage' }));
+  const again = state().entities[state().players[a.playerId].entityId];
+  assert.equal(again.name, 'Fire Mage');
 });

@@ -48,6 +48,17 @@ def('player.setName', { who: 'player' }, (ctx) => {
   ctx.log('player', `${old} is now known as ${name}`);
 });
 
+// A player renames the hero they play (their own token only). Releasing the hero resets it.
+def('player.renameCharacter', { who: 'player' }, (ctx) => {
+  const e = ctx.state.entities[ctx.player.entityId];
+  if (!e) fail('Pick a hero first');
+  const name = str(ctx.cmd.name, 40, 'Character name');
+  const old = e.name;
+  if (old === name) return;
+  e.name = name;
+  ctx.log('character', `${ctx.player.name}'s ${old} is now known as ${name}`);
+});
+
 function setColor(ctx, player, color) {
   if (!PLAYER_COLORS.includes(color)) fail('Pick a color from the bank');
   const other = Object.values(ctx.state.players).find((p) => p.color === color && p.id !== player.id);

@@ -342,7 +342,7 @@ function waitingScreen() {
   const hero = heroById.get(state.me.characterId);
   showFlow(
     h('div.waiting', {}, h('span.spinner', {}, '⏳'), 'Waiting for DM to set active scene'),
-    h('p.muted', {}, `You are playing ${hero?.name ?? state.me.characterId}. Hang tight!`),
+    h('p.muted', {}, `You are playing ${state.me.heroName ?? hero?.name ?? state.me.characterId}. Hang tight!`),
     h('p', {}, meChip()));
 }
 
@@ -382,7 +382,7 @@ function showRoster(el) {
     return h(`div.roster-row${away ? '.away' : ''}`, {},
       h('span.dot', { style: { background: p.color } }),
       h('span', {}, p.name, p.id === me.id ? h('span.muted', {}, ' (you)') : null),
-      h('span.muted', {}, heroById.get(p.characterId)?.name ?? 'choosing a hero', away ? ` · ${p.presence}` : ''));
+      h('span.muted', {}, p.heroName ?? heroById.get(p.characterId)?.name ?? 'choosing a hero', away ? ` · ${p.presence}` : ''));
   }));
   roster.open = true;
   roster.el.classList.remove('hidden');
@@ -415,11 +415,20 @@ function settingsMenu(e) {
       }
     },
   }, nameInput, h('button.small.primary', { type: 'submit' }, 'Rename'));
+  // The hero you play (only once you have one). Releasing the hero resets its name.
+  const heroInput = h('input', { value: me.heroName ?? '', maxLength: 40 });
+  const heroForm = me.entityId ? h('form', {
+    onsubmit: async (ev) => {
+      ev.preventDefault();
+      if (await send({ type: 'player.renameCharacter', name: heroInput.value })) closeMenu();
+    },
+  }, heroInput, h('button.small.primary', { type: 'submit' }, 'Rename')) : null;
   const swatches = h('div.swatches', {}, ...PLAYER_COLORS.map((c) => h(`button.swatch${c === me.color ? '.current' : ''}`, {
     style: { background: c }, disabled: used.has(c), title: used.has(c) ? `Taken by ${used.get(c)}` : 'Pick this color',
     onclick: () => send({ type: 'player.setColor', color: c }).then(() => closeMenu()),
   })));
-  popupMenu(e.clientX - 150, e.clientY + 16, 'You', [{ heading: 'Name' }, { node: form }, { heading: 'Color' }, { node: swatches }]);
+  popupMenu(e.clientX - 150, e.clientY + 16, 'You', [{ heading: 'Name' }, { node: form },
+    ...(heroForm ? [{ heading: 'Character' }, { node: heroForm }] : []), { heading: 'Color' }, { node: swatches }]);
 }
 
 function gameScreen() {

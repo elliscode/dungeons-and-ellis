@@ -21,7 +21,7 @@ npm test                  # unit + socket integration tests
 
 - **Scenes** (DM home → Scenes) are reusable map templates. Each one has a background, an independent grid (columns, rows, cell size, offset), starting NPC/monster placements, and a player spawn square. The default spawn is the bottom-left square.
 - **Games** are actual adventures. When you add a scene to a game, the game gets its own live copy (a *scene instance*). Moving or hurting things in a game never changes the template, and editing the template later never changes games that already use it.
-- **Players** open the game link, enter a name, pick Tank / DPS / Heal, and then pick a hero. They can do all of this before the DM shows up. The browser remembers each seat as a `playerId` plus a server-issued secret, so refreshing or reconnecting puts the player back on the same hero. Name changes keep the seat, color, and hero.
+- **Players** open the game link, enter a name, pick Tank / DPS / Heal, and then pick a hero. They can do all of this before the DM shows up. The browser remembers each seat as a `playerId` plus a server-issued secret, so refreshing or reconnecting puts the player back on the same hero. Name changes keep the seat, color, and hero. The **You** menu (their name chip, top-right) changes their name and color, and once they have a hero, renames the hero too. The new hero name shows on the token, in the party list and in the DM's Players tab. Releasing the hero resets the name.
 - **DM controls** (Games → Open):
   - *Scenes tab:* add scenes, switch the active scene, remove scenes.
   - *Players tab:* see presence, change colors, **Release** (frees the hero so the player picks again), **✕** (removes the seat; that browser can't rejoin as that player).
