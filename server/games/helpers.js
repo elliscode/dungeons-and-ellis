@@ -127,7 +127,9 @@ export function checkAction(ctx, e, cost = 1) {
 }
 
 // Consumes actions in combat when the actor pays (see budgeted()).
+// Any action (even a free one) also locks in this phase's moves: they can no longer be undone.
 export function spendAction(ctx, e, cost = 1) {
+  if (budgeted(ctx, e)) turnFor(ctx.state, e.id).moves = [];
   if (!budgeted(ctx, e) || cost <= 0) return;
   checkAction(ctx, e, cost);
   turnFor(ctx.state, e.id).actions += cost;

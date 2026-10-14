@@ -145,7 +145,21 @@ function setMode(m) {
   renderBoard();
 }
 function cancelMode() { setMode(null); }
-addEventListener('keydown', (e) => { if (e.key === 'Escape') cancelMode(); });
+addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') cancelMode();
+  if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.target.closest('input, textarea') && canUndoMove()) { e.preventDefault(); undoMove(); }
+});
+
+// Undo move: take back this phase's last move (and its squares) until you act. Server-checked.
+function canUndoMove() {
+  const me = myEntity();
+  return !!(me && me.status === 'active' && state.combat?.active && state.combat.phase === 'player' && state.turn?.moves?.length);
+}
+function undoMove() {
+  const me = myEntity();
+  if (me) send({ type: 'move.undo', entityId: me.id });
+}
+$('#undo-move').addEventListener('click', undoMove);
 
 function onCellClick(cell) {
   const me = myEntity();
@@ -425,6 +439,7 @@ function gameScreen() {
     info.textContent = me.status !== 'active' ? me.status.toUpperCase()
       : `Actions: ${a.actionsLeft}/${a.allowance.actions} · Move: ${a.moveLeft}/${a.allowance.movement}`;
   } else info.textContent = me?.status && me.status !== 'active' ? me.status.toUpperCase() : '';
+  $('#undo-move').classList.toggle('hidden', !canUndoMove());
   // Cancel a pending mode if it no longer makes sense (e.g. phase changed).
   if (mode && (!me || me.status !== 'active' || (state.combat.active && state.combat.phase !== 'player'))) mode = null;
   renderBoard();

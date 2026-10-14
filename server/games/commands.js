@@ -415,14 +415,41 @@ def('move', { who: 'any', undoable: 'move' }, (ctx) => {
         fail(`${ctx.actor.role === 'dm' ? `${e.name} has` : 'Not enough movement:'} ${Math.max(0, allowance - t.moved)} squares left${ctx.actor.role === 'dm' ? ' (Shift-drag to force)' : ''}`);
       }
       t.moved += dist;
+      // Players can take this move back (move.undo) until they act.
+      if (ctx.actor.role === 'player') (t.moves ??= []).push({ sceneId: scene.id, from: { ...from }, to: { x, y }, dist });
     }
     const src = frightenedBy(ctx, e, scene.id, x, y);
     if (src) fail(`${e.name} is frightened of ${src.name} and can't move closer${ctx.actor.role === 'dm' ? ' (Shift-drag to force)' : ''}`);
   }
   if (from && from.x === x && from.y === y) return;
+  // The DM moving a hero locks in that hero's earlier moves (they can't be undone past it).
+  if (ctx.actor.role === 'dm' && ctx.state.turn[e.id]) ctx.state.turn[e.id].moves = [];
   e.positions[scene.id] = { x, y };
   e.z = ++ctx.state.zCounter;
   ctx.log('move', `${e.name} ${force ? 'is moved' : 'moves'}`);
+});
+
+// A player takes back their latest move this phase and gets the squares back. Combat only;
+// acting (spendAction) or the phase ending locks moves in. Refused if something else moved them.
+def('move.undo', { who: 'player', undoable: 'undo move' }, (ctx) => {
+  const e = controlled(ctx, ctx.cmd.entityId);
+  const scene = onActiveScene(ctx, e);
+  requireStatus(e, 'move');
+  if (!ctx.state.combat.active) fail('Undo move only works in combat');
+  requirePlayerWindow(ctx);
+  const t = turnFor(ctx.state, e.id);
+  const last = t.moves?.at(-1);
+  if (!last) fail('Nothing to undo');
+  const pos = e.positions[scene.id];
+  // Safety net (DM moves and actions clear the history already): never jump from somewhere else.
+  if (last.sceneId !== scene.id || !pos || pos.x !== last.to.x || pos.y !== last.to.y) {
+    fail('You were moved since then, so that move can\'t be undone');
+  }
+  t.moves.pop();
+  e.positions[scene.id] = { ...last.from };
+  e.z = ++ctx.state.zCounter;
+  t.moved = Math.max(0, t.moved - last.dist);
+  ctx.log('move', `${e.name} takes back their move`);
 });
 
 def('attack', { who: 'any', undoable: 'attack' }, (ctx) => {

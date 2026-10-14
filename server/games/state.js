@@ -113,6 +113,7 @@ export function actionAllowance(entity, turn) {
 }
 
 export function turnFor(state, entityId) {
-  state.turn[entityId] ??= { actions: 0, bonus: 0, moved: 0, abilitiesUsed: [] };
+  // moves: this phase's undoable player moves (cleared by any action); see move.undo.
+  state.turn[entityId] ??= { actions: 0, bonus: 0, moved: 0, abilitiesUsed: [], moves: [] };
   return state.turn[entityId];
 }
