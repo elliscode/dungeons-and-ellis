@@ -216,7 +216,8 @@ function chainOf(ctx, act, eff, valid) {
   return links;
 }
 
-const sourceOf = (act) => ({ entityId: act.caster.id, name: act.caster.name });
+// abilityId lets a recast find (and refresh) the copy this caster's ability already left.
+const sourceOf = (act) => ({ entityId: act.caster.id, name: act.caster.name, abilityId: act.ability.id ?? null });
 
 // One weapon or ability strike: attack roll, damage roll, shared damage pipeline.
 export function strike(ctx, { attacker, target, attack, color }) {
@@ -267,15 +268,28 @@ const attackOf = (eff, name) => ({
 });
 
 // Applies a live effect (buff, debuff, protection, mark, status) to each target.
+// The same caster's same ability never stacks on a target: a recast replaces the old copy (fresh
+// duration and params). Different casters or different abilities stack. The key includes type and
+// status, so one ability applying two things (frightened + shaken) keeps both.
 function applyLive(ctx, act, eff, targets, { icon, trigger, duration, params = {}, status = null, label } = {}) {
+  const name = eff.label ?? label ?? act.ability.name;
+  const st = eff.status ?? status;
+  const gained = [], refreshed = [];
   for (const t of targets) {
     if (!t || t.kind === 'object') continue;
+    const same = act.ability.id ? (t.effects ?? []).filter((fx) => fx.source?.entityId === act.caster.id
+      && fx.source?.abilityId === act.ability.id && fx.type === eff.type && (fx.status ?? null) === (st ?? null)) : [];
+    for (const fx of same) removeEffect(t, fx.id);
     addEffect(ctx.state, t, {
-      type: eff.type, label: eff.label ?? label ?? act.ability.name, icon: eff.icon ?? icon, status: eff.status ?? status,
+      type: eff.type, label: name, icon: eff.icon ?? icon, status: st,
       source: sourceOf(act), params, trigger: eff.trigger ?? trigger, duration: eff.duration ?? duration,
     });
+    (same.length ? refreshed : gained).push(t);
   }
-  if (targets.length) line(act, `${targets.map((t) => t.name).join(', ')} ${targets.length > 1 ? 'gain' : 'gains'} ${eff.label ?? label ?? act.ability.name}`);
+  const parts = [];
+  if (gained.length) parts.push(`${gained.map((t) => t.name).join(', ')} ${gained.length > 1 ? 'gain' : 'gains'} ${name}`);
+  if (refreshed.length) parts.push(`${refreshed.map((t) => `${t.name}'s`).join(', ')} ${name} ${refreshed.length > 1 ? 'are' : 'is'} refreshed`);
+  if (parts.length) line(act, parts.join('; '));
 }
 
 // ---------- handlers ----------
@@ -482,7 +496,7 @@ const HANDLERS = {
     for (const s of subjects) {
       const r = H.rollOrFail(eff.roll, ctx);
       ctx.state.pendingChecks.push({
-        id: newId('chk'), casterId: act.caster.id, casterName: act.caster.name, abilityName: act.ability.name,
+        id: newId('chk'), casterId: act.caster.id, casterName: act.caster.name, abilityName: act.ability.name, abilityId: act.ability.id ?? null,
         subjectId: s.id, subjectName: s.name, roll: r.text, total: r.total,
         onSuccess: eff.onSuccess ?? [], onFailure: eff.onFailure ?? [], createdAt: ctx.now,
       });
@@ -631,7 +645,7 @@ export function resolveCheck(ctx, checkId, success) {
     ctx.log('ability', verdict);
     return;
   }
-  const act = { caster, ability: { name: chk.abilityName, id: null }, scene: ctx.state.scenes[ctx.state.activeSceneId], primary: subject, checked: subject, cell: null, picks: [], hitEnemies: [subject], lastHit: true, lines: [], data: { strikes: [] } };
+  const act = { caster, ability: { name: chk.abilityName, id: chk.abilityId ?? null }, scene: ctx.state.scenes[ctx.state.activeSceneId], primary: subject, checked: subject, cell: null, picks: [], hitEnemies: [subject], lastHit: true, lines: [], data: { strikes: [] } };
   runEffects(ctx, act, outcome);
   const pub = act.lines.map((l) => l.pub).filter(Boolean).join(' · ');
   ctx.log('ability', pub ? `${verdict} — ${pub}` : verdict);

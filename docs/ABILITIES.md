@@ -91,6 +91,8 @@ Combat alternates PLAYER PHASE and DM PHASE. The server counts phases (`combat.p
 
 `trigger` values are consumed exactly once, at the moment they fire: `next_hit`, `next_magical_hit`, `next_attack_against_self`, `until_used`, and `until_next_heal_by_caster`. An effect can have both a trigger and a time limit; the default time limit for one-shot protections is `next_dm_phase`.
 
+**Stacking:** the same caster's same ability never stacks on a target. Casting it again replaces the existing copy, which restarts its duration, and the feed says it "is refreshed". Different casters, or different abilities from the same caster, do stack (two healers' blessings give +4). This is keyed on the caster, the ability, the effect type and the status, so an ability that applies two things (frightened and shaken) keeps one of each. Poisoned additionally never stacks across casters, and to-hit penalties count each status once.
+
 A timed effect applied outside combat starts its clock when combat begins. Ending combat clears every timed effect. Effects are stored in the game state, so they survive reconnects, restarts, and undo. The DM can remove any effect, or add a status, from the inspector. For frightened, the DM then clicks the creature on the map that it's frightened of.
 
 ## Damage order

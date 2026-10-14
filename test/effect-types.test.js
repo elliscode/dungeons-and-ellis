@@ -426,7 +426,10 @@ suite('modify_movement', () => {
     assert.equal(movementAllowance(w.ent(w.O)), 3);
     assert.ok(w.has(w.O, (fx) => fx.status === 'slowed'));
     ok(w.use(w.W, 'slow', { targetId: w.O }));
-    assert.equal(movementAllowance(w.ent(w.O)), 1);
+    assert.equal(movementAllowance(w.ent(w.O)), 3, 'the same caster\'s Slow refreshes, it does not stack');
+    w.give(w.A, 'slow', [{ type: 'modify_movement', target: 'enemy', amount: -2 }]);
+    ok(w.use(w.A, 'slow', { targetId: w.O }));
+    assert.equal(movementAllowance(w.ent(w.O)), 1, 'a second caster\'s Slow stacks');
     ok(w.use(w.W, 'freeze', { targetId: w.O }));
     assert.equal(movementAllowance(w.ent(w.O)), 0);
   });
@@ -582,10 +585,12 @@ suite('apply_status', () => {
   test('frightened twice is still only −2 to hit', () => {
     const w = arena();
     const fear = { type: 'apply_status', target: 'self', status: 'frightened' };
-    w.give(w.W, 'fear', [fear, fear]);
+    w.give(w.W, 'fear1', [fear]); // two different abilities, so both copies stay
+    w.give(w.W, 'fear2', [fear]);
     w.give(w.W, 'bolt', [{ type: 'attack', target: 'enemy', attack: '1d20', damage: '1d4' }]);
+    ok(w.use(w.W, 'fear1'));
+    ok(w.use(w.W, 'fear2'));
     w.fight();
-    ok(w.use(w.W, 'fear'));
     assert.equal(w.ent(w.W).effects.filter((fx) => fx.status === 'frightened').length, 2);
     w.rng.push(13); // 11 vs 11: one −2, not two
     assert.equal(ok(w.use(w.W, 'bolt', { targetId: w.O })).strikes[0].hit, true);
@@ -842,5 +847,93 @@ suite('dm_check', () => {
     ok(w.use(w.W, 'roar', { targetId: w.O }));
     ok(w.run(DM, { type: 'check.resolve', checkId: w.state().pendingChecks[0].id, success: true }));
     assert.ok(w.has(w.O, (fx) => fx.status === 'frightened'));
+  });
+});
+
+// The same caster's same ability never stacks on a target: a recast refreshes it.
+describe('no stacking from the same caster and ability', () => {
+  const blessing = [{ type: 'grant_roll_bonus', target: 'ally', bonus: 2, range: 3, duration: 'until_used' }]; // Blessing of the First Light
+  const bonuses = (w, id) => w.ent(id).effects.filter((fx) => fx.type === 'grant_roll_bonus').length;
+
+  test('15 casts of Blessing of the First Light before combat give +2, not +30', () => {
+    const w = arena();
+    w.give(w.W, 'dawnstride-blessing', blessing);
+    for (let i = 0; i < 15; i++) ok(w.use(w.W, 'dawnstride-blessing', { targetId: w.A }));
+    assert.equal(bonuses(w, w.A), 1);
+    assert.match(w.last(), /Mysterious Wizard's dawnstride-blessing is refreshed/);
+    w.give(w.A, 'bolt', [{ type: 'attack', target: 'enemy', attack: '1d20', damage: '1d4' }]);
+    w.fight();
+    w.rng.push(8); // 8 + 2 = 10 vs DEF 11: a miss (it would hit with +30)
+    assert.equal(ok(w.use(w.A, 'bolt', { targetId: w.O })).strikes[0].hit, false);
+    assert.equal(bonuses(w, w.A), 0, 'used up');
+  });
+
+  test('two different casters with the same blessing stack', () => {
+    const w = arena();
+    const selfOrAlly = [{ ...blessing[0], target: 'ally_or_self' }];
+    w.give(w.W, 'dawnstride-blessing', selfOrAlly);
+    w.give(w.A, 'dawnstride-blessing', selfOrAlly);
+    ok(w.use(w.W, 'dawnstride-blessing', { targetId: w.W }));
+    ok(w.use(w.A, 'dawnstride-blessing', { targetId: w.W }));
+    assert.equal(bonuses(w, w.W), 2);
+  });
+
+  test('the same caster with two different abilities stacks', () => {
+    const w = arena();
+    w.give(w.W, 'bless-a', [{ type: 'grant_roll_bonus', bonus: 2 }]);
+    w.give(w.W, 'bless-b', [{ type: 'grant_roll_bonus', bonus: 2 }]);
+    ok(w.use(w.W, 'bless-a'));
+    ok(w.use(w.W, 'bless-b'));
+    assert.equal(bonuses(w, w.W), 2);
+  });
+
+  test('a recast restarts the duration', () => {
+    const w = arena();
+    w.give(w.W, 'brace', [{ type: 'defense_bonus', amount: 3, duration: { phases: 2 } }]);
+    const braced = () => w.has(w.W, (fx) => fx.type === 'defense_bonus');
+    w.fight();
+    ok(w.use(w.W, 'brace'));
+    w.next();
+    ok(w.use(w.W, 'brace')); // Walky is a friendly NPC: no action limit
+    assert.match(w.last(), /Walky the Wize's brace \(\+3 DEF\) is refreshed/);
+    w.next();
+    assert.ok(braced(), 'the first cast would have run out by now');
+    assert.equal(w.ent(w.W).effects.filter((fx) => fx.type === 'defense_bonus').length, 1);
+    w.next();
+    assert.ok(!braced(), 'the refreshed copy expires on its own schedule');
+  });
+
+  test('an area recast leaves one copy each; the feed tells new from refreshed', () => {
+    const w = arena();
+    w.give(w.W, 'aegis', [{ type: 'defense_bonus', amount: 1, radius: 2 }]);
+    ok(w.run(DM, { type: 'move', entityId: w.A, x: 9, y: 9, force: true }));
+    ok(w.use(w.W, 'aegis'));
+    ok(w.run(DM, { type: 'move', entityId: w.A, x: 3, y: 2, force: true }));
+    ok(w.use(w.W, 'aegis'));
+    assert.match(w.last(), /Mysterious Wizard gains aegis \(\+1 DEF\); Walky the Wize's aegis \(\+1 DEF\) is refreshed/);
+    ok(w.use(w.W, 'aegis'));
+    assert.match(w.last(), /Walky the Wize's, Mysterious Wizard's aegis \(\+1 DEF\) are refreshed/);
+    for (const id of [w.W, w.A]) assert.equal(w.ent(id).effects.filter((fx) => fx.type === 'defense_bonus').length, 1);
+  });
+
+  test('one ability applying two statuses keeps both, once each', () => {
+    const w = arena();
+    w.give(w.W, 'offer', [
+      { type: 'apply_status', target: 'enemy', status: 'frightened' },
+      { type: 'apply_status', target: 'enemy', status: 'shaken' },
+    ]);
+    ok(w.use(w.W, 'offer', { targetId: w.O }));
+    ok(w.use(w.W, 'offer', { targetId: w.O }));
+    const count = (st) => w.ent(w.O).effects.filter((fx) => fx.status === st).length;
+    assert.deepEqual([count('frightened'), count('shaken')], [1, 1]);
+  });
+
+  test('effects applied on a successful DM check are keyed to the ability too', () => {
+    const w = arena();
+    w.give(w.W, 'roar', [{ type: 'dm_check', target: 'enemy', roll: '1d20', onSuccess: [{ type: 'apply_status', target: 'checked_enemy', status: 'frightened' }] }]);
+    ok(w.use(w.W, 'roar', { targetId: w.O }));
+    ok(w.use(w.W, 'roar', { targetId: w.O }));
+    for (const chk of [...w.state().pendingChecks]) ok(w.run(DM, { type: 'check.resolve', checkId: chk.id, success: true }));
+    assert.equal(w.ent(w.O).effects.filter((fx) => fx.status === 'frightened').length, 1);
   });
 });

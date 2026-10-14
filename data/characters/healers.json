@@ -504,7 +504,7 @@
         "effects": [
           {
             "type": "heal",
-            "target": "ally",
+            "target": "ally_or_self",
             "heal": "1d4+1",
             "range": 6
           }
@@ -535,7 +535,7 @@
         "effects": [
           {
             "type": "remove_status",
-            "target": "ally",
+            "target": "ally_or_self",
             "status": "poisoned"
           }
         ],
@@ -581,7 +581,7 @@
         "effects": [
           {
             "type": "heal",
-            "target": "ally",
+            "target": "ally_or_self",
             "heal": "1d8+3",
             "range": 6
           }
@@ -651,7 +651,7 @@
         "effects": [
           {
             "type": "heal",
-            "target": "ally",
+            "target": "ally_or_self",
             "heal": "1d8+3",
             "range": 6
           }
@@ -666,12 +666,12 @@
         "effects": [
           {
             "type": "remove_status",
-            "target": "ally",
+            "target": "ally_or_self",
             "status": "poisoned"
           },
           {
             "type": "grant_protection",
-            "target": "ally",
+            "target": "ally_or_self",
             "fraction": 0.5,
             "duration": "next_dm_phase"
           }
@@ -718,7 +718,7 @@
         "effects": [
           {
             "type": "heal",
-            "target": "ally",
+            "target": "ally_or_self",
             "heal": "2d4+2",
             "range": 6
           }
@@ -733,13 +733,13 @@
         "effects": [
           {
             "type": "grant_protection",
-            "target": "ally",
+            "target": "ally_or_self",
             "fraction": 0.5,
             "duration": "next_dm_phase"
           },
           {
             "type": "grant_roll_bonus",
-            "target": "ally",
+            "target": "ally_or_self",
             "bonus": 2,
             "range": 4,
             "duration": "until_used"
