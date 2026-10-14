@@ -105,7 +105,7 @@ label.inline { flex-direction: row; align-items: center; gap: 6px; }
 /* Each layer is its own stacking context, so token z-order can never lift a token above HP bars. */
 .layer.tokens { z-index: 1; }
 .layer.hpbars { z-index: 2; }
-.layer.fx { z-index: 3; }
+.layer.fx-layer { z-index: 3; }
 .board-zoom { position: absolute; right: 10px; bottom: 10px; display: flex; gap: 4px; z-index: 5; }
 .board-zoom button { padding: 4px 10px; background: #000a; }
 .board-empty { position: absolute; inset: 0; display: grid; place-items: center; font-family: Georgia, serif; font-size: 26px; color: var(--muted); text-align: center; padding: 20px; }
@@ -161,6 +161,15 @@ label.inline { flex-direction: row; align-items: center; gap: 6px; }
 .fx-crit { font-size: 34px; }
 .fx-miss { font-size: 22px; }
 @keyframes rise { 0% { opacity: 0; margin-top: 10px; } 10% { opacity: 1; } 100% { opacity: 0; margin-top: -50px; } }
+/* Map ping: a dot plus three staggered rings that grow and fade, in the pinger's color. */
+.ping { position: absolute; width: 0; height: 0; pointer-events: none; z-index: 11; }
+.ping-ring, .ping-dot { position: absolute; left: 0; top: 0; border-radius: 50%; transform: translate(-50%, -50%); }
+.ping-ring { width: var(--cell); height: var(--cell); border: 3px solid var(--ping-color); box-shadow: 0 0 6px var(--ping-color); animation: ping-grow 1.3s ease-out both; }
+.ping-ring:nth-of-type(3) { animation-delay: .35s; }
+.ping-ring:nth-of-type(4) { animation-delay: .7s; }
+.ping-dot { width: calc(var(--cell) * .2); height: calc(var(--cell) * .2); background: var(--ping-color); box-shadow: 0 0 0 2px #000a; animation: ping-dot 2s ease-out forwards; }
+@keyframes ping-grow { 0% { transform: translate(-50%, -50%) scale(.2); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(3); opacity: 0; } }
+@keyframes ping-dot { 0%, 60% { opacity: 1; } 100% { opacity: 0; } }
 
 /* ---------- side panel ---------- */
 .side-panel { display: flex; flex-direction: column; flex: 1; min-height: 0; }

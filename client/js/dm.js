@@ -27,6 +27,7 @@ socket.on('state', (s) => { state = s; render(); });
 socket.on('history', (hist) => panel.setHistory(hist));
 socket.on('feed', (rows) => panel.add(rows));
 socket.on('fx', (list) => { for (const f of list) board.showFx(f.entityId, f.text, f.color, f.kind); });
+socket.on('ping', (p) => board.showPing(p));
 // Definitions or art changed (Data/Assets pages): refresh the banks and hero names.
 socket.on('contentChanged', async () => {
   content = await api('GET', '/api/content');
@@ -84,6 +85,8 @@ addEventListener('keydown', (e) => {
 // ---------- board ----------
 
 const board = new Board($('#board'), {
+  // Press and hold to ping. Errors (the players' 10-per-minute limit) show as a toast.
+  onPing: (p) => socket.timeout(8000).emit('ping', p, (err, r) => { if (err) toast('Server did not respond', 'error'); else if (!r.ok) toast(r.error, 'error'); }),
   canDrag: () => !mode,
   // Shift-drag force-moves (skips movement budgets and frightened restrictions).
   onTokenDrop: (t, x, y, e) => send({ type: 'move', entityId: t.id, x, y, force: !!e?.shiftKey }),

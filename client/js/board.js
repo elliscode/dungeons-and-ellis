@@ -2,6 +2,7 @@ import { h } from './common.js';
 import { buildDonut } from './donut.js';
 
 const DRAG_THRESHOLD = 5;
+const PING_HOLD_MS = 500;
 
 // Renders a scene (background + independent grid) and tokens. Used by the player view, the DM
 // view, and the scene editor. Tokens are plain descriptors:
@@ -27,7 +28,7 @@ export class Board {
     this.hlLayer = h('div.layer.highlights');
     this.tokenLayer = h('div.layer.tokens');
     this.hpLayer = h('div.layer.hpbars'); // above every token, so no token can cover an HP bar
-    this.fxLayer = h('div.layer.fx');
+    this.fxLayer = h('div.layer.fx-layer'); // not .fx: that's the floating-text style (fades out)
     this.stage.append(this.bg, this.grid, this.hlLayer, this.tokenLayer, this.hpLayer, this.fxLayer);
     this.sizer = h('div.board-sizer');
     this.sizer.append(this.stage);
@@ -56,6 +57,40 @@ export class Board {
       if (!this.opts.onCellHover || this.drag) return;
       this.opts.onCellHover(this.cellAt(e.clientX, e.clientY), e);
     });
+    if (this.opts.onPing) this.bindPing();
+  }
+
+  // Press and hold (without moving) anywhere on the map to ping it. Capture-phase listeners, so
+  // holding on a token works too (tokens stop pointerdown from bubbling). The click that follows
+  // the release is swallowed, so a ping never also selects, opens a menu or picks a target.
+  bindPing() {
+    let hold = null;
+    const cancel = () => { if (hold) clearTimeout(hold.timer); hold = null; };
+    this.stage.addEventListener('pointerdown', (e) => {
+      cancel();
+      this.pinged = false; // a new press: forget the previous ping
+      this.suppressClick = false;
+      if (e.button !== 0 || !e.isPrimary) return;
+      // Anywhere on the map image counts, not just the grid (backgrounds often extend past it).
+      const point = this.pointAt(e.clientX, e.clientY, { onGrid: false });
+      if (!point) return;
+      hold = {
+        x: e.clientX, y: e.clientY,
+        timer: setTimeout(() => {
+          hold = null;
+          this.pinged = true;
+          this.suppressClick = true;
+          this.opts.onPing(point);
+        }, PING_HOLD_MS),
+      };
+    }, true);
+    this.stage.addEventListener('pointermove', (e) => {
+      if (hold && Math.hypot(e.clientX - hold.x, e.clientY - hold.y) >= DRAG_THRESHOLD) cancel();
+    }, true);
+    // Not pointerleave: a token capturing the pointer on press fires one on its inner element.
+    for (const ev of ['pointerup', 'pointercancel']) this.stage.addEventListener(ev, cancel, true);
+    // A touch long-press would otherwise open the browser's context menu.
+    this.stage.addEventListener('contextmenu', (e) => e.preventDefault());
   }
 
   showEmpty(text) {
@@ -150,15 +185,22 @@ export class Board {
     el.style.height = `${hgt * c}px`;
   }
 
-  cellAt(clientX, clientY) {
+  // Fractional grid position (in cells) under a screen point. Null off the grid, or with
+  // onGrid: false, null only off the map (stage) itself.
+  pointAt(clientX, clientY, { onGrid = true } = {}) {
     if (!this.scene) return null;
     const r = this.stage.getBoundingClientRect();
     const g = this.scene.grid;
-    const px = (clientX - r.left) / this.zoom - g.offsetX;
-    const py = (clientY - r.top) / this.zoom - g.offsetY;
-    const x = Math.floor(px / g.cellSize), y = Math.floor(py / g.cellSize);
-    if (x < 0 || y < 0 || x >= g.cols || y >= g.rows) return null;
+    const sx = (clientX - r.left) / this.zoom, sy = (clientY - r.top) / this.zoom;
+    if (sx < 0 || sy < 0 || sx > this.width || sy > this.height) return null;
+    const x = (sx - g.offsetX) / g.cellSize, y = (sy - g.offsetY) / g.cellSize;
+    if (onGrid && (x < 0 || y < 0 || x >= g.cols || y >= g.rows)) return null;
     return { x, y };
+  }
+
+  cellAt(clientX, clientY) {
+    const p = this.pointAt(clientX, clientY);
+    return p && { x: Math.floor(p.x), y: Math.floor(p.y) };
   }
 
   // All tokens whose footprint covers the cell, topmost first (by global z).
@@ -295,6 +337,8 @@ export class Board {
         this.suppressClick = true;
         setTimeout(() => { this.suppressClick = false; });
         if (x !== t.position.x || y !== t.position.y) this.opts.onTokenDrop?.(t, x, y, e);
+      } else if (this.pinged) {
+        this.pinged = false; // the hold was a ping, not a click
       } else if (!cancelled) {
         const cell = this.cellAt(e.clientX, e.clientY) ?? t.position;
         this.opts.onTokenClick?.(t, e, this.stackAt(cell));
@@ -320,6 +364,17 @@ export class Board {
     if (kind === 'crit') el.style.top = `${p.y - this.cell * 0.9}px`;
     this.fxLayer.append(el);
     setTimeout(() => el.remove(), 1600);
+  }
+
+  // A map ping: a dot plus three rings that grow and fade, in the pinger's color.
+  showPing({ sceneId, x, y, color }) {
+    if (!this.scene || sceneId !== this.scene.id) return;
+    const g = this.scene.grid;
+    const el = h('div.ping', {
+      style: { left: `${g.offsetX + x * g.cellSize}px`, top: `${g.offsetY + y * g.cellSize}px`, '--ping-color': color || '#fff', '--cell': `${g.cellSize}px` },
+    }, h('span.ping-dot'), h('span.ping-ring'), h('span.ping-ring'), h('span.ping-ring'));
+    this.fxLayer.append(el);
+    setTimeout(() => el.remove(), 2200);
   }
 
   // Screen position of a token (for anchoring popup menus).

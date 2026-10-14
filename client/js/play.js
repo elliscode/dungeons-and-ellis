@@ -33,6 +33,7 @@ socket.on('state', (s) => { state = s; render(); });
 socket.on('history', (hist) => panel.setHistory(hist));
 socket.on('feed', (rows) => panel.add(rows));
 socket.on('fx', (list) => { for (const f of list) board.showFx(f.entityId, f.text, f.color, f.kind); });
+socket.on('ping', (p) => board.showPing(p));
 socket.on('seatInvalid', () => {
   store.del(SEAT_KEY);
   seat = null;
@@ -53,6 +54,8 @@ const send = (cmd) => sendCmd(socket, cmd);
 // ---------- board ----------
 
 const board = new Board($('#board'), {
+  // Press and hold to ping. Errors (the players' 10-per-minute limit) show as a toast.
+  onPing: (p) => socket.timeout(8000).emit('ping', p, (err, r) => { if (err) toast('Server did not respond', 'error'); else if (!r.ok) toast(r.error, 'error'); }),
   canDrag: (t) => t.id === myEntity()?.id && !mode,
   onTokenDrop: (t, x, y) => send({ type: 'move', entityId: t.id, x, y }),
   onTokenClick: (t, e, stack) => onTokenClick(t, e, stack),

@@ -51,6 +51,11 @@ export function attachSockets(io, { service, auth }) {
     }
   });
 
+  // Pings go to everyone who has joined (and the DM); nothing is stored.
+  service.on('ping', (gameId, ping) => {
+    for (const s of socketsFor(gameId)) if (s.data.role === 'dm' || s.data.playerId) s.emit('ping', ping);
+  });
+
   dm.use((socket, next) => {
     if (!auth.isDmCookieHeader(socket.handshake.headers.cookie)) return next(new Error('unauthorized'));
     next();
@@ -68,6 +73,7 @@ export function attachSockets(io, { service, auth }) {
     socket.emit('history', service.history(game.id, 'dm'));
     socket.on('cmd', (cmd, ack) => reply(ack, service.dispatch(game.id, actor, cmd)));
     socket.on('chat', (text, ack) => reply(ack, service.chat(game.id, actor, text)));
+    socket.on('ping', (pos, ack) => reply(ack, service.ping(game.id, actor, pos)));
   });
 
   play.on('connection', (socket) => {
@@ -118,6 +124,10 @@ export function attachSockets(io, { service, auth }) {
     socket.on('chat', (text, ack) => {
       if (!socket.data.playerId) return reply(ack, { ok: false, error: 'Join the game first' });
       reply(ack, service.chat(game.id, actor(), text));
+    });
+    socket.on('ping', (pos, ack) => {
+      if (!socket.data.playerId) return reply(ack, { ok: false, error: 'Join the game first' });
+      reply(ack, service.ping(game.id, actor(), pos));
     });
     socket.on('disconnect', () => {
       if (socket.data.playerId) service.disconnect(game.id, socket.data.playerId, socket.id);
