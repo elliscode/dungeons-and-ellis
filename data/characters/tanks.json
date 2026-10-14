@@ -99,7 +99,7 @@
             ]
           }
         ],
-        "description": "Roar at a nearby enemy. On a successful check against the DM's difficulty, the enemy is frightened and cannot move closer to you on its next turn."
+        "description": "Roar at a nearby enemy. On a successful check against the DM's difficulty, the enemy is frightened (−2 to hit, and it can't move closer to you) on its next turn."
       }
     ],
     "inventory": ["rope", "healing-potion", "greataxe"]

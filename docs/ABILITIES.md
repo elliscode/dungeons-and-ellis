@@ -65,7 +65,7 @@ Older loose fields (`attack`/`damage`, `heal`, `roll`, `free`, `grantsActions`) 
 | `reduce_actions` | `amount` | Lowers the target's action allowance. It never goes below 0. |
 | `mark_target` | `bonus` (dice) | The caster's next hit on the target adds `bonus` (Hunter's Mark). |
 | `grant_roll_bonus` | `bonus` (dice or number) | Added to the holder's next attack roll, including roll-to-apply rolls (Inspire, Foresight). |
-| `apply_status` / `remove_status` | `status` | Statuses: `frightened` (can't move closer to its source), `snared` (movement 0), `shaken` (−2 to hit), `poisoned` (−2 to hit for the rest of the current phase plus 5 full rounds; ignores `duration`, and re-poisoning refreshes instead of stacking), `slowed`. |
+| `apply_status` / `remove_status` | `status` | Statuses: `frightened` (−2 to hit, and can't move closer to its source), `snared` (movement 0), `shaken` (−2 to hit), `poisoned` (−2 to hit for the rest of the current phase plus 5 full rounds; ignores `duration`, and re-poisoning refreshes instead of stacking), `slowed`. |
 | `discourage_attacks` | `penalty` (default 5) | Attacks against the holder take −penalty (Sanctuary). |
 | `grant_actions` | `amount` | Extra actions this phase. The ability must set `usesPerPhase`, and it can grant at most `actionCost + 1`. |
 | `teleport` | `distance` | Moves the caster to the picked square. |
@@ -91,7 +91,7 @@ Combat alternates PLAYER PHASE and DM PHASE. The server counts phases (`combat.p
 
 `trigger` values are consumed exactly once, at the moment they fire: `next_hit`, `next_magical_hit`, `next_attack_against_self`, `until_used`, and `until_next_heal_by_caster`. An effect can have both a trigger and a time limit; the default time limit for one-shot protections is `next_dm_phase`.
 
-A timed effect applied outside combat starts its clock when combat begins. Ending combat clears every timed effect. Effects are stored in the game state, so they survive reconnects, restarts, and undo. The DM can remove any effect, or add a status, from the inspector.
+A timed effect applied outside combat starts its clock when combat begins. Ending combat clears every timed effect. Effects are stored in the game state, so they survive reconnects, restarts, and undo. The DM can remove any effect, or add a status, from the inspector. For frightened, the DM then clicks the creature on the map that it's frightened of.
 
 ## Damage order
 
@@ -135,7 +135,7 @@ These are automatic for player characters, based on `role`, and scaled by one gl
 
 Monsters, NPCs, and the DM's Damage and Heal buttons never get role bonuses. A DPS hero's self-heal (Life Drain, for example) isn't multiplied, because only Heal-role heroes get the healing multiplier.
 
-Attack rolls (`attackRoll()`) include `attackBonus`, one-shot roll bonuses (which are consumed), shaken/poisoned penalties, the Sanctuary penalty, and the target's effective Defense (base, plus `defense_bonus`, minus `defenseReduction`). Serene Focus is consumed by the next attack against its holder.
+Attack rolls (`attackRoll()`) include `attackBonus`, one-shot roll bonuses (which are consumed), frightened/shaken/poisoned penalties (each status counts once, however many copies), the Sanctuary penalty, and the target's effective Defense (base, plus `defense_bonus`, minus `defenseReduction`). Serene Focus is consumed by the next attack against its holder.
 
 ## Action economy and movement
 

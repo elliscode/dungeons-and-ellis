@@ -525,7 +525,7 @@ suite('grant_roll_bonus', () => {
 });
 
 suite('apply_status', () => {
-  for (const status of ['poisoned', 'shaken']) {
+  for (const status of ['poisoned', 'shaken', 'frightened']) {
     test(`${status}: exactly −2 to hit`, () => {
       const w = arena();
       w.give(w.W, 'sick', [{ type: 'apply_status', target: 'self', status }]);
@@ -558,6 +558,36 @@ suite('apply_status', () => {
     w.next();
     assert.match(w.run(DM, { type: 'move', entityId: w.O, x: 3, y: 3 }).error, /frightened/);
     ok(w.run(DM, { type: 'move', entityId: w.O, x: 6, y: 2 }));
+  });
+
+  test('frightened by the DM: needs a source picked on the map', () => {
+    const w = arena();
+    const add = (sourceId) => w.run(DM, { type: 'effect.addStatus', entityId: w.O, status: 'frightened', sourceId });
+    assert.match(add(undefined).error, /Choose who Ogre is frightened of/);
+    assert.match(add(w.O).error, /itself/);
+    w.fight();
+    ok(add(w.W));
+    const fx = w.ent(w.O).effects.find((f) => f.status === 'frightened');
+    assert.equal(fx.params.sourceId, w.W);
+    assert.equal(fx.source.entityId, w.W);
+    assert.match(w.last(), /Ogre is frightened of /);
+    w.next(); // DM phase
+    assert.match(w.run(DM, { type: 'move', entityId: w.O, x: 3, y: 3 }).error, /frightened/);
+    ok(w.run(DM, { type: 'move', entityId: w.O, x: 6, y: 2 }));
+    w.rng.push(7); // 13 − 2 = 11 vs 12
+    assert.equal(ok(w.rock(w.W)).hit, false);
+  });
+
+  test('frightened twice is still only −2 to hit', () => {
+    const w = arena();
+    const fear = { type: 'apply_status', target: 'self', status: 'frightened' };
+    w.give(w.W, 'fear', [fear, fear]);
+    w.give(w.W, 'bolt', [{ type: 'attack', target: 'enemy', attack: '1d20', damage: '1d4' }]);
+    w.fight();
+    ok(w.use(w.W, 'fear'));
+    assert.equal(w.ent(w.W).effects.filter((fx) => fx.status === 'frightened').length, 2);
+    w.rng.push(13); // 11 vs 11: one −2, not two
+    assert.equal(ok(w.use(w.W, 'bolt', { targetId: w.O })).strikes[0].hit, true);
   });
 
   test('lasts through the next DM PHASE', () => {

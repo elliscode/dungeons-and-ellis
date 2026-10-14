@@ -95,7 +95,7 @@ export const MAGICAL_TYPES = new Set(['fire', 'cold', 'frost', 'lightning', 'thu
 export const isMagical = (damageType) => !!damageType && MAGICAL_TYPES.has(String(damageType).toLowerCase());
 
 // To-hit penalties from statuses on the attacker.
-const STATUS_TO_HIT = { shaken: -2, poisoned: -2 };
+const STATUS_TO_HIT = { frightened: -2, shaken: -2, poisoned: -2 };
 
 export function effectiveDefense(target, defenseReduction = 0) {
   const bonus = effectsOf(target, 'defense_bonus').reduce((s, fx) => s + (fx.params.amount ?? 0), 0);
@@ -106,7 +106,7 @@ const signed = (n) => (n >= 0 ? `+${n}` : `${n}`);
 
 // Rolls `expr` against the target's effective Defense with every modifier applied once:
 // flat attackBonus, the attacker's one-shot roll bonuses (Inspire, Foresight; consumed), status
-// penalties (shaken, poisoned), the target's discourage_attacks penalty (Sanctuary), and the
+// penalties (frightened, shaken, poisoned), the target's discourage_attacks penalty (Sanctuary), and the
 // target's "next attack against self" Defense bonus (Serene Focus; consumed).
 // Natural 20 always hits (crit); natural 1 always misses.
 export function attackRoll(ctx, { source, target, expr, attackBonus = 0, defenseReduction = 0 }) {

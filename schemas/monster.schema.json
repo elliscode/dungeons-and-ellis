@@ -187,7 +187,7 @@
         "poisoned",
         "slowed"
       ],
-      "description": "frightened: can't move closer to the caster. snared: movement 0. shaken: −2 to hit. poisoned: −2 to hit for 5 rounds (ignores duration; refreshes, never stacks). slowed: label only (use modify_movement for a real slow)."
+      "description": "frightened: −2 to hit, and can't move closer to the caster (never stacks). snared: movement 0. shaken: −2 to hit. poisoned: −2 to hit for 5 rounds (ignores duration; refreshes, never stacks). slowed: label only (use modify_movement for a real slow)."
     },
     "label": {
       "type": "string",

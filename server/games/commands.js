@@ -345,14 +345,23 @@ def('effect.remove', { who: 'dm', undoable: 'remove effect' }, (ctx) => {
 def('effect.addStatus', { who: 'dm', undoable: 'add status' }, (ctx) => {
   const e = getEntity(ctx, ctx.cmd.entityId);
   const st = STATUSES[ctx.cmd.status];
-  if (!st || ctx.cmd.status === 'frightened') fail('Pick poisoned, snared, shaken or slowed');
+  if (!st) fail('Pick frightened, poisoned, snared, shaken or slowed');
   if (e.kind === 'object') fail('Objects have no statuses');
+  // Frightened needs a source on the map (picked by the DM): it's what the creature can't approach.
+  let src = null;
+  if (ctx.cmd.status === 'frightened') {
+    if (!ctx.cmd.sourceId) fail(`Choose who ${e.name} is frightened of`);
+    src = getEntity(ctx, ctx.cmd.sourceId);
+    if (src.id === e.id) fail("A creature can't be frightened of itself");
+    if (src.kind === 'object') fail("Objects can't frighten anyone");
+  }
   if (st.duration) clearStatus(e, ctx.cmd.status);
   addEffect(ctx.state, e, {
     type: st.movement ? 'modify_movement' : 'apply_status', status: ctx.cmd.status, label: st.label, icon: st.icon,
-    source: { entityId: null, name: 'DM' }, params: st.movement ? { amount: st.movement } : {}, duration: st.duration ?? 'next_dm_phase',
+    source: src ? { entityId: src.id, name: src.name } : { entityId: null, name: 'DM' },
+    params: src ? { sourceId: src.id } : st.movement ? { amount: st.movement } : {}, duration: st.duration ?? 'next_dm_phase',
   });
-  ctx.log('effect', `${e.name} is ${st.label.toLowerCase()}`);
+  ctx.log('effect', src ? `${e.name} is frightened of ${src.name}` : `${e.name} is ${st.label.toLowerCase()}`);
 });
 
 def('check.resolve', { who: 'dm', undoable: 'check' }, (ctx) => resolveCheck(ctx, ctx.cmd.checkId, !!ctx.cmd.success));

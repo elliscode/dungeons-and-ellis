@@ -156,7 +156,7 @@ function renderBoard() {
   if (mode?.type === 'target') {
     const origin = view(state.entities[mode.origin.id]) ?? mode.origin;
     v.targetIds = new Set(tokens.filter((t) => mode.filter(t) && distance(origin, t) <= mode.range).map((t) => t.id));
-    board.highlight(cellsWithin(scene, origin, mode.range), 'range');
+    board.highlight(Number.isFinite(mode.range) ? cellsWithin(scene, origin, mode.range) : [], 'range');
   } else if (mode?.type === 'cell') {
     board.highlight(cellsWithin(scene, state.entities[mode.origin.id] ?? mode.origin, mode.range), 'move');
   } else board.highlight([]);
@@ -386,8 +386,19 @@ function renderInspector() {
   };
   for (const input of [hpInput, maxInput]) input.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') setHealth(); });
   const itemInput = h('input.grow', { placeholder: 'Add item…', maxLength: 60 });
-  const statusPick = h('select', {}, h('option', { value: '' }, 'Add status…'), ...['poisoned', 'snared', 'shaken', 'slowed'].map((st) => h('option', { value: st }, st)));
-  statusPick.addEventListener('change', () => { if (statusPick.value) send({ type: 'effect.addStatus', entityId: id, status: statusPick.value }); });
+  const statusPick = h('select', {}, h('option', { value: '' }, 'Add status…'), ...['frightened', 'poisoned', 'snared', 'shaken', 'slowed'].map((st) => h('option', { value: st }, st)));
+  statusPick.addEventListener('change', () => {
+    const status = statusPick.value;
+    if (!status) return;
+    if (status !== 'frightened') return send({ type: 'effect.addStatus', entityId: id, status });
+    // Frightened needs a source: pick any creature on the map.
+    statusPick.value = '';
+    setMode({
+      type: 'target', label: `Choose who ${e.name} is frightened of`, range: Infinity, origin: e,
+      filter: (t) => t.id !== id && t.kind !== 'object',
+      onTarget: (t) => send({ type: 'effect.addStatus', entityId: id, status, sourceId: t.id }),
+    });
+  });
   const owner = playerOf(e);
   const c = state.combat;
   const turn = state.turn[id];

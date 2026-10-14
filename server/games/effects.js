@@ -10,7 +10,7 @@ import * as H from './helpers.js';
 // a handler; mechanics never come from descriptions. See docs/ABILITIES.md.
 
 export const STATUSES = {
-  frightened: { label: 'Frightened', icon: '😨' }, // can't move closer to its source
+  frightened: { label: 'Frightened', icon: '😨' }, // -2 to hit; can't move closer to its source
   snared: { label: 'Snared', icon: '🕸️' }, // movement 0
   shaken: { label: 'Shaken', icon: '💢' }, // -2 to hit
   // -2 to hit for the rest of the current phase plus 5 full rounds (10 phases). The status owns its
