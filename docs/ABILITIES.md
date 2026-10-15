@@ -59,7 +59,7 @@ Older loose fields (`attack`/`damage`, `heal`, `roll`, `free`, `grantsActions`) 
 | `redirect_next_hit` | (none) | Placed on an ally: their next hit lands on the caster instead (Intercept). |
 | `defense_bonus` | `amount` (can be negative), optional `radius` | Defense modifier. With `radius`, it also covers allies around the caster. |
 | `modify_damage_received` | `amount` or `multiplier` | Changes the damage the holder takes from hits. |
-| `modify_damage_dealt` | `amount` or `multiplier` | Changes the holder's next hit (Curse of Weakness uses 0.5). |
+| `modify_damage_dealt` | `amount` or `multiplier` | Changes the holder's next hit (Curse of Weakness uses 0.5). Unless `duration` is set, a boost lasts until that hit lands (across phases), and a penalty lasts through the next DM phase. "Next hit" means the next ability or attack that hits: every hit of one ability (each enemy of an area or chain attack, each strike of a multi-attack) gets it, and it's used up when that ability finishes. |
 | `modify_movement` | `amount` | Movement modifier. Negative values show as *Slowed*. |
 | `taunt` | optional `radius` | While the taunter is a valid target, the taunted enemy's attacks must target the taunter. |
 | `reduce_actions` | `amount` | Lowers the target's action allowance. It never goes below 0. |
@@ -100,7 +100,7 @@ A timed effect applied outside combat starts its clock when combat begins. Endin
 Every damage source runs through `dealDamage()` in `server/games/combat.js`: weapon attacks, ability attacks, area, chain, and multi strikes, enemy attacks, and the DM's Damage button. Each step applies at most once per hit:
 
 1. Raw damage is rolled. A critical hit doubles the dice, not the modifier.
-2. Attacker modifiers apply: `modify_damage_dealt`, then a Hunter's Mark bonus.
+2. Attacker modifiers apply: `modify_damage_dealt` (to every hit of the ability that uses it up), then a Hunter's Mark bonus.
 3. Attacker role: a DPS hero's damage is multiplied by the role strength n (rounded down). This happens before any of the target's defenses, once per strike.
 4. Redirection: Intercept makes the protector the victim.
 5. Victim protection: `absorb_next_hit` (the hit deals 0), otherwise `grant_protection` (reduced). Then `modify_damage_received`.

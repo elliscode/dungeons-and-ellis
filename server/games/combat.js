@@ -144,7 +144,8 @@ const consumable = (fx) => ['next_hit', 'until_next_hit', 'until_used', 'next_ma
 
 // Damage resolution order (each step applies at most once per hit):
 //   1. raw rolled damage (crits already doubled the dice)
-//   2. attacker modifiers: modify_damage_dealt (e.g. Curse of Weakness halves), Hunter's Mark dice
+//   2. attacker modifiers: modify_damage_dealt (e.g. Curse of Weakness halves; applies to every hit
+//      of one ability, then it's used up), Hunter's Mark dice
 //   3. attacker role: DPS player characters deal n× (role strength; before the target's defenses)
 //   4. redirection (Intercept): the protector becomes the victim
 //   5. victim protection: absorb_next_hit (negates) or grant_protection (reduces), then
@@ -159,7 +160,12 @@ export function dealDamage(ctx, { source = null, target, raw, damageType = null,
       if (fx.params.multiplier !== undefined) amount = Math.floor(amount * fx.params.multiplier);
       if (fx.params.amount) amount = Math.max(0, amount + fx.params.amount);
       notes.push(fx.label);
-      if (consumable(fx)) removeEffect(source, fx.id);
+      // Inside an ability, "your next hit" covers every hit of that ability (all enemies of an
+      // area or chain attack, every strike of a multi-attack); runAbility removes it afterwards.
+      if (consumable(fx)) {
+        if (ctx.spendAfterAbility) ctx.spendAfterAbility.push({ entity: source, id: fx.id });
+        else removeEffect(source, fx.id);
+      }
     }
     for (const fx of effectsOf(target, 'mark_target')) {
       if (fx.source?.entityId !== source.id) continue;

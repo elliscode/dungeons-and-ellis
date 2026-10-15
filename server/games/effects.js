@@ -387,8 +387,12 @@ const HANDLERS = {
     applyLive(ctx, act, eff, targetsFor(ctx, act, eff), { icon: eff.amount > 0 || eff.multiplier > 1 ? '🔻' : '🛡️', duration: 'next_dm_phase', params: { amount: eff.amount, multiplier: eff.multiplier } });
   },
 
+  // A penalty (Curse of Weakness) lasts through the next DM phase by default, for the enemy's next
+  // attack. A boost ("your next hit deals +4") lasts until that hit lands, however many phases
+  // later; otherwise a buff cast on your turn would expire before your next one.
   modify_damage_dealt(ctx, act, eff) {
-    applyLive(ctx, act, eff, targetsFor(ctx, act, eff), { icon: eff.amount < 0 || eff.multiplier < 1 ? '🥀' : '💪', trigger: 'next_hit', duration: 'next_dm_phase', params: { amount: eff.amount, multiplier: eff.multiplier } });
+    const penalty = eff.amount < 0 || eff.multiplier < 1;
+    applyLive(ctx, act, eff, targetsFor(ctx, act, eff), { icon: penalty ? '🥀' : '💪', trigger: 'next_hit', duration: penalty ? 'next_dm_phase' : 'until_used', params: { amount: eff.amount, multiplier: eff.multiplier } });
   },
 
   modify_movement(ctx, act, eff) {
@@ -612,7 +616,16 @@ export function runAbility(ctx, e, raw, { item = null } = {}) {
 
   H.spendAction(ctx, e, ab.actionCost);
   if (t && !item) t.abilitiesUsed.push(ab.id);
-  runEffects(ctx, act, ab.effects);
+  // A "next hit" damage modifier (Blood Frenzy) applies to every hit this ability makes and is
+  // used up once the ability finishes (dealDamage collects them in ctx.spendAfterAbility).
+  const outer = ctx.spendAfterAbility;
+  ctx.spendAfterAbility = [];
+  try {
+    runEffects(ctx, act, ab.effects);
+  } finally {
+    for (const { entity, id } of ctx.spendAfterAbility) removeEffect(entity, id);
+    ctx.spendAfterAbility = outer;
+  }
 
   const on = act.primary && act.primary !== e ? ` on ${act.primary.name}` : '';
   const head = `${e.name} uses ${ab.name}${on}`;

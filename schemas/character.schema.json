@@ -1112,7 +1112,7 @@
     },
     "effect_modify_damage_dealt": {
       "type": "object",
-      "description": "Changes the holder's next hit: +amount / ×multiplier (0.5 halves it). Set at least one. Default trigger next_hit.",
+      "description": "Changes the holder's next hit: +amount / ×multiplier (0.5 halves it). Set at least one. Default trigger next_hit. Default duration: a boost lasts until that hit lands; a penalty lasts through the next DM phase. It applies to every hit of the ability that uses it (all enemies of an area/chain attack, every strike of a multi-attack).",
       "additionalProperties": false,
       "required": [
         "type"
