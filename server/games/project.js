@@ -96,6 +96,7 @@ export function projectForPlayer(state, playerId, presence) {
     me: me ? publicPlayer(me, presence, state) : null,
     players: Object.values(state.players).map((p) => publicPlayer(p, presence, state)),
     takenCharacters: taken,
+    options: { playersCanLeave: !!state.options?.playersCanLeave },
     combat: structuredClone(state.combat),
     turn: me?.entityId ? structuredClone(state.turn[me.entityId] ?? null) : null,
     scene: scene ? structuredClone(scene) : null,

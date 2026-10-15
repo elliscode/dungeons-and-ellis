@@ -1,5 +1,5 @@
 import { io } from '/socket.io/socket.io.esm.min.js';
-import { $, fill, h, toast, sendCmd, popupMenu, closeMenu, combatBar, ROLE_LABELS, ROLE_ICONS, PLAYER_COLORS } from './common.js';
+import { $, fill, h, toast, sendCmd, popupMenu, closeMenu, confirmModal, combatBar, ROLE_LABELS, ROLE_ICONS, PLAYER_COLORS } from './common.js';
 import { Board } from './board.js';
 import { GameFeed } from './panel.js';
 import { startAbility, abilitySummary, distance, sideOf } from './abilities.js';
@@ -423,12 +423,26 @@ function settingsMenu(e) {
       if (await send({ type: 'player.renameCharacter', name: heroInput.value })) closeMenu();
     },
   }, heroInput, h('button.small.primary', { type: 'submit' }, 'Rename')) : null;
+  // Leaving the hero (only when the DM allows it in this game): confirm, then back to the picker.
+  const leave = me.entityId && state.options?.playersCanLeave ? h('button.small.danger', {
+    onclick: async () => {
+      const hero = me.heroName ?? 'your hero';
+      const ok = await confirmModal({
+        title: `Leave ${hero}?`,
+        body: `Your hero leaves the game and you'll pick a hero again. Its HP, items and effects are lost; picking it again starts fresh. Your name and color stay.${state.combat?.active ? ' Your token leaves the fight right away.' : ''}`,
+        confirm: 'Leave hero', danger: true,
+      });
+      if (!ok) return;
+      cancelMode();
+      send({ type: 'player.leaveCharacter' });
+    },
+  }, 'Leave hero…') : null;
   const swatches = h('div.swatches', {}, ...PLAYER_COLORS.map((c) => h(`button.swatch${c === me.color ? '.current' : ''}`, {
     style: { background: c }, disabled: used.has(c), title: used.has(c) ? `Taken by ${used.get(c)}` : 'Pick this color',
     onclick: () => send({ type: 'player.setColor', color: c }).then(() => closeMenu()),
   })));
   popupMenu(e.clientX - 150, e.clientY + 16, 'You', [{ heading: 'Name' }, { node: form },
-    ...(heroForm ? [{ heading: 'Character' }, { node: heroForm }] : []), { heading: 'Color' }, { node: swatches }]);
+    ...(heroForm ? [{ heading: 'Character' }, { node: heroForm }] : []), ...(leave ? [{ node: leave }] : []), { heading: 'Color' }, { node: swatches }]);
 }
 
 function gameScreen() {

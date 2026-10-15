@@ -59,6 +59,17 @@ def('player.renameCharacter', { who: 'player' }, (ctx) => {
   ctx.log('character', `${ctx.player.name}'s ${old} is now known as ${name}`);
 });
 
+// A player gives up their hero and goes back to the hero picker, if the DM allows it in this game.
+// Like the DM's Release: the token goes, the seat, name and color stay, and undo is cleared.
+def('player.leaveCharacter', { who: 'player', clearsUndo: true }, (ctx) => {
+  const p = ctx.player;
+  if (!ctx.state.options?.playersCanLeave) fail("The DM hasn't allowed leaving heroes in this game");
+  if (!p.characterId) fail("You don't have a hero");
+  const name = ctx.state.entities[p.entityId]?.name ?? ctx.content.def('character', p.characterId)?.name ?? p.characterId;
+  releaseCharacter(ctx, p);
+  ctx.log('character', `${p.name} left ${name}`);
+});
+
 function setColor(ctx, player, color) {
   if (!PLAYER_COLORS.includes(color)) fail('Pick a color from the bank');
   const other = Object.values(ctx.state.players).find((p) => p.color === color && p.id !== player.id);
@@ -102,6 +113,20 @@ function getPlayer(ctx, id) {
   if (!p) fail('Unknown player');
   return p;
 }
+
+// Per-game switches. playersCanLeave: players may leave their hero from their ⚙ menu.
+const GAME_OPTIONS = {
+  playersCanLeave: { on: 'DM allowed players to leave their heroes', off: 'DM stopped players leaving their heroes' },
+};
+def('game.setOption', { who: 'dm' }, (ctx) => {
+  const opt = GAME_OPTIONS[ctx.cmd.option];
+  if (!opt) fail('Unknown game option');
+  if (typeof ctx.cmd.value !== 'boolean') fail('Option value must be on or off');
+  ctx.state.options ??= {};
+  if (ctx.state.options[ctx.cmd.option] === ctx.cmd.value) return;
+  ctx.state.options[ctx.cmd.option] = ctx.cmd.value;
+  ctx.log('game', ctx.cmd.value ? opt.on : opt.off);
+});
 
 def('dm.resetPlayer', { who: 'dm', clearsUndo: true }, (ctx) => {
   const p = getPlayer(ctx, ctx.cmd.playerId);

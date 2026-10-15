@@ -17,9 +17,14 @@ export const PLAYER_COLORS = [
 export const DM_COLOR = '#d4af37';
 
 // Brings a saved game up to date with the current rules. Players whose color is no longer in the
-// bank (red, removed) get the first free one. Returns true if anything changed.
+// bank (red, removed) get the first free one; games from before game options get the defaults.
+// Returns true if anything changed.
 export function upgradeState(state) {
   let changed = false;
+  if (state.options?.playersCanLeave === undefined) {
+    state.options = { ...state.options, playersCanLeave: false };
+    changed = true;
+  }
   const players = Object.values(state.players ?? {});
   for (const p of players) {
     if (PLAYER_COLORS.includes(p.color)) continue;
@@ -50,6 +55,8 @@ export function createGameState({ id, name, joinToken }) {
     zCounter: 0,
     combat: { active: false, phase: null, round: 0, timerSeconds: 0, phaseEndsAt: null },
     turn: {},
+    // Per-game switches the DM can flip mid-game (game.setOption).
+    options: { playersCanLeave: false },
   };
 }
 

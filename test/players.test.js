@@ -160,3 +160,71 @@ test('the client color list matches the server list', () => {
   assert.ok(m, 'PLAYER_COLORS found in common.js');
   assert.deepEqual(JSON.parse(m[1].replace(/'/g, '"')), PLAYER_COLORS);
 });
+
+test('leaving your hero is off by default; the DM switches it per game', () => {
+  const { join, run, state, service, game, db } = setup();
+  const a = join('Ana');
+  assert.equal(state().options.playersCanLeave, false);
+  ok(run(a, { type: 'player.selectCharacter', characterId: 'fire-mage' }));
+  assert.equal(run(a, { type: 'player.leaveCharacter' }).error, "The DM hasn't allowed leaving heroes in this game");
+  assert.ok(state().players[a.playerId].entityId, 'still has the hero');
+
+  assert.equal(run(a, { type: 'game.setOption', option: 'playersCanLeave', value: true }).error, 'Not allowed');
+  assert.equal(run(DM, { type: 'game.setOption', option: 'nope', value: true }).error, 'Unknown game option');
+  assert.equal(run(DM, { type: 'game.setOption', option: 'playersCanLeave', value: 'yes' }).error, 'Option value must be on or off');
+  ok(run(DM, { type: 'game.setOption', option: 'playersCanLeave', value: true }));
+  assert.equal(state().options.playersCanLeave, true);
+  const feed = service.history(game.id, 'player').feed;
+  assert.match(feed.at(-1).text, /DM allowed players to leave their heroes/, 'players see it');
+  assert.equal(projectForPlayer(state(), a.playerId, () => 'online').options.playersCanLeave, true);
+
+  ok(run(DM, { type: 'game.setOption', option: 'playersCanLeave', value: false }));
+  assert.match(service.history(game.id, 'player').feed.at(-1).text, /DM stopped players leaving their heroes/);
+  assert.equal(run(a, { type: 'player.leaveCharacter' }).error, "The DM hasn't allowed leaving heroes in this game");
+
+  // Games saved before options existed load with it off.
+  const saved = structuredClone(state());
+  delete saved.options;
+  db.prepare('UPDATE games SET state = ? WHERE id = ?').run(JSON.stringify(saved), game.id);
+  service.games.delete(game.id);
+  assert.equal(service.get(game.id).state.options.playersCanLeave, false);
+});
+
+test('with the option on, a player leaves their hero and picks another', () => {
+  const { join, run, state, service, game } = setup();
+  const a = join('Ana'), b = join('Bo');
+  ok(run(DM, { type: 'game.setOption', option: 'playersCanLeave', value: true }));
+  assert.equal(run(a, { type: 'player.leaveCharacter' }).error, "You don't have a hero");
+  ok(run(a, { type: 'player.selectCharacter', characterId: 'fire-mage' }));
+  ok(run(a, { type: 'player.renameCharacter', name: 'Sparky' }));
+  const before = structuredClone(state().players[a.playerId]);
+
+  ok(run(a, { type: 'player.leaveCharacter' }));
+  const p = state().players[a.playerId];
+  assert.equal(p.characterId, null);
+  assert.equal(p.entityId, null);
+  assert.equal(state().entities[before.entityId], undefined, 'the token is gone');
+  assert.deepEqual([p.name, p.color], [before.name, before.color], 'seat, name and color kept');
+  assert.match(service.history(game.id, 'player').feed.at(-1).text, /Ana left Sparky/);
+
+  ok(run(b, { type: 'player.selectCharacter', characterId: 'fire-mage' }), 'the hero is free again');
+  ok(run(a, { type: 'player.selectCharacter', characterId: 'cleric' }));
+  assert.equal(state().entities[state().players[a.playerId].entityId].name, 'Cleric');
+});
+
+test('leaving works mid-combat, even downed, and clears undo', () => {
+  const { join, run, state, service, game, tpl } = setup();
+  const sid = ok(run(DM, { type: 'scene.add', templateId: tpl.id })).sceneId;
+  ok(run(DM, { type: 'scene.activate', sceneId: sid }));
+  const a = join('Ana');
+  ok(run(DM, { type: 'game.setOption', option: 'playersCanLeave', value: true }));
+  ok(run(a, { type: 'player.selectCharacter', characterId: 'fire-mage' }));
+  const ea = state().players[a.playerId].entityId;
+  ok(run(DM, { type: 'combat.start' }));
+  ok(run(DM, { type: 'entity.damage', entityId: ea, amount: 30 }));
+  assert.equal(state().entities[ea].status, 'down');
+  ok(run(a, { type: 'player.leaveCharacter' }));
+  assert.equal(state().entities[ea], undefined);
+  assert.equal(state().turn[ea], undefined);
+  assert.equal(service.undoInfo(game.id), null, 'undo history cleared');
+});

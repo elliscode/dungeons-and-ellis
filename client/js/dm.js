@@ -293,7 +293,12 @@ function renderScenes() {
 
 function renderPlayers() {
   const root = $('#tab-players');
-  fill(root, 
+  // Per-game switch (game.setOption): players may leave their hero from their ⚙ menu.
+  const canLeave = h('input', { type: 'checkbox', checked: !!state.options?.playersCanLeave });
+  canLeave.addEventListener('change', () => send({ type: 'game.setOption', option: 'playersCanLeave', value: canLeave.checked }));
+  fill(root,
+    h('label.option-row', { title: 'Players can pick a different hero from their ⚙ menu (they confirm first). You can change this any time.' },
+      canLeave, h('span', {}, 'Let players leave their hero')),
     h('div.section-title', {}, `Players (${state.players.length}/10)`),
     ...(state.players.length ? state.players.map((p) => {
       const hero = p.characterId ? heroById.get(p.characterId) : null;
@@ -521,7 +526,7 @@ function render() {
   const ents = Object.values(state.entities);
   renderTop();
   memo('scenes', [state.scenes, state.sceneOrder, state.activeSceneId, templates, ents.map((e) => [e.scope, e.sceneId])], renderScenes);
-  memo('players', state.players, renderPlayers);
+  memo('players', [state.players, state.options], renderPlayers);
   memo('banks', [spawnScope, state.activeSceneId, state.combat, state.turn, ents.filter((e) => e.kind !== 'pc').map((e) => [e.id, e.name, e.hp, e.status, e.scope, e.sceneId, e.damageTaken])], renderBanks);
   renderBoard();
   const sel = selected();

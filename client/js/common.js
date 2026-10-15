@@ -138,6 +138,32 @@ export function popupMenu(x, y, title, items, { className = '' } = {}) {
 function outside(e) {
   if (openMenu && !openMenu.contains(e.target)) closeMenu();
 }
+// A small "Are you sure?" dialog in the app's style. Resolves true on confirm (button or Enter),
+// false on Cancel, Esc or a click outside the card.
+export function confirmModal({ title, body, confirm = 'OK', danger = false }) {
+  closeMenu();
+  return new Promise((resolve) => {
+    const done = (answer) => {
+      removeEventListener('keydown', onKey, true);
+      backdrop.remove();
+      resolve(answer);
+    };
+    const onKey = (e) => {
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); done(false); }
+      else if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); done(true); }
+    };
+    const ok = h(`button.small${danger ? '.danger' : '.primary'}`, { onclick: () => done(true) }, confirm);
+    const card = h('div.modal', { role: 'dialog', 'aria-modal': 'true' },
+      h('div.modal-title', {}, title),
+      body ? h('p.modal-body', {}, body) : null,
+      h('div.modal-actions', {}, h('button.small', { onclick: () => done(false) }, 'Cancel'), ok));
+    const backdrop = h('div.modal-backdrop', { onclick: (e) => { if (e.target === backdrop) done(false); } }, card);
+    document.body.append(backdrop);
+    addEventListener('keydown', onKey, true);
+    ok.focus();
+  });
+}
+
 export function closeMenu() {
   openMenu?.remove();
   openMenu = null;
