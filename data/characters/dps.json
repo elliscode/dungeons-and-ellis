@@ -36,6 +36,14 @@
         "range": 0,
         "effects": [{ "type": "narrative" }],
         "description": "Make a small object glow with magical light."
+      },
+      {
+        "id": "fireball",
+        "name": "Fireball",
+        "actionCost": 1,
+        "range": 8,
+        "effects": [{ "type": "area_attack", "target": "enemies_in_area", "center": "target", "radius": 1, "range": 8, "attack": "1d20+5", "damage": "1d10+3", "damageType": "fire" }],
+        "description": "Hurl a fireball at an enemy within 8 squares, attacking it and every enemy within 1 square of it for 1d10+3 fire damage."
       }
     ],
     "inventory": ["spellbook", "healing-potion", "candle"]
@@ -384,6 +392,14 @@
           }
         ],
         "description": "Set or trigger a snare that can hinder an enemy crossing its space."
+      },
+      {
+        "id": "pack-takedown",
+        "name": "Pack Takedown",
+        "actionCost": 1,
+        "range": 1,
+        "effects": [{ "type": "multi_attack", "target": "enemy", "count": 2, "attack": "1d20+5", "damage": "1d8+3", "range": 1 }],
+        "description": "You and your wolf strike an adjacent enemy together: two separate attacks, each dealing 1d8+3 on a hit."
       }
     ],
     "inventory": ["animal-whistle", "snare-wire", "healing-potion"]
@@ -709,6 +725,14 @@
           }
         ],
         "description": "Fix an enemy within 5 squares with your unblinking gaze. If your roll meets its Defense, it becomes snared through the next DM phase."
+      },
+      {
+        "id": "disintegration-ray",
+        "name": "Disintegration Ray",
+        "actionCost": 1,
+        "range": 8,
+        "effects": [{ "type": "attack", "target": "enemy", "attack": "1d20+5", "damage": "2d8+2", "range": 8, "damageType": "force" }],
+        "description": "Fire a disintegrating ray from your central eye at an enemy within 8 squares for 2d8+2 force damage."
       }
     ],
     "inventory": [
@@ -781,6 +805,14 @@
           }
         ],
         "description": "Launch a venomous spine at an enemy within 5 squares. On a hit, deal damage and poison the target, imposing −2 to hit for 5 rounds."
+      },
+      {
+        "id": "thorned-execution",
+        "name": "Thorned Execution",
+        "actionCost": 1,
+        "range": 1,
+        "effects": [{ "type": "attack", "target": "enemy", "attack": "1d20+6", "damage": "2d6+3", "range": 1, "defenseReduction": 2, "damageType": "piercing" }],
+        "description": "Drive a thorned blade through an adjacent enemy's guard for 2d6+3, treating its Defense as 2 lower."
       }
     ],
     "inventory": [
@@ -1556,6 +1588,14 @@
           }
         ],
         "description": "Gain 3 additional movement squares this turn and +2 Defense through the next DM phase."
+      },
+      {
+        "id": "fiendfire-blast",
+        "name": "Fiendfire Blast",
+        "actionCost": 1,
+        "range": 7,
+        "effects": [{ "type": "area_attack", "target": "enemies_in_area", "center": "target", "radius": 1, "range": 7, "attack": "1d20+5", "damage": "1d8+3", "damageType": "fire" }],
+        "description": "Lob a ball of fiendfire at an enemy within 7 squares, attacking it and every enemy within 1 square of it for 1d8+3 fire."
       }
     ],
     "inventory": [
