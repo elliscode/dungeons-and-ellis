@@ -1,5 +1,6 @@
 import { h } from './common.js';
 import { buildDonut } from './donut.js';
+import { zoomAt, clampPan, fitCamera, normalizeWheel, wheelIntent, wheelZoomFactor, pinchScaleFactor } from './camera.js';
 
 const DRAG_THRESHOLD = 5;
 const PING_HOLD_MS = 500;
@@ -11,7 +12,8 @@ export class Board {
   constructor(root, opts = {}) {
     this.opts = opts;
     this.root = root;
-    this.zoom = 1;
+    // The camera: one transform for every map layer, translate(x, y) scale(zoom) on the stage.
+    this.cam = { x: 0, y: 0, zoom: 1 };
     this.autoFit = true;
     this.scene = null;
     this.tokens = [];
@@ -30,23 +32,18 @@ export class Board {
     this.hpLayer = h('div.layer.hpbars'); // above every token, so no token can cover an HP bar
     this.fxLayer = h('div.layer.fx-layer'); // not .fx: that's the floating-text style (fades out)
     this.stage.append(this.bg, this.grid, this.hlLayer, this.tokenLayer, this.hpLayer, this.fxLayer);
-    this.sizer = h('div.board-sizer');
-    this.sizer.append(this.stage);
-    this.viewport.append(this.sizer);
+    this.viewport.append(this.stage);
     this.empty = h('div.board-empty.hidden');
+    const zoomCenter = (f) => this.zoomBy(f, this.viewport.clientWidth / 2, this.viewport.clientHeight / 2);
     this.zoomBar = h('div.board-zoom', {},
-      h('button', { title: 'Zoom in', onclick: () => this.setZoom(this.zoom * 1.2) }, '+'),
-      h('button', { title: 'Zoom out', onclick: () => this.setZoom(this.zoom / 1.2) }, '−'),
+      h('button', { title: 'Zoom in', onclick: () => zoomCenter(1.2) }, '+'),
+      h('button', { title: 'Zoom out', onclick: () => zoomCenter(1 / 1.2) }, '−'),
       h('button', { title: 'Fit to screen', onclick: () => { this.autoFit = true; this.fit(); } }, 'Fit'));
     root.append(this.viewport, this.empty, this.zoomBar);
 
     this.bg.addEventListener('load', () => this.layout());
-    new ResizeObserver(() => this.autoFit && this.fit()).observe(this.viewport);
-    this.viewport.addEventListener('wheel', (e) => {
-      if (!e.ctrlKey && !e.metaKey) return;
-      e.preventDefault();
-      this.setZoom(this.zoom * (e.deltaY < 0 ? 1.1 : 1 / 1.1));
-    }, { passive: false });
+    new ResizeObserver(() => (this.autoFit ? this.fit() : this.applyCamera())).observe(this.viewport);
+    this.bindNavigation();
     this.stage.addEventListener('click', (e) => {
       if (this.suppressClick) { this.suppressClick = false; return; }
       if (e.target.closest('.token')) return;
@@ -58,6 +55,103 @@ export class Board {
       this.opts.onCellHover(this.cellAt(e.clientX, e.clientY), e);
     });
     if (this.opts.onPing) this.bindPing();
+  }
+
+  // Map navigation (Roll20-style). Trackpad: two-finger scroll pans, pinch zooms toward the
+  // gesture. Mouse: the wheel zooms toward the cursor, right- (or middle-) drag pans. Touch: one
+  // finger on the empty map pans, two fingers pinch. Gestures over the map never scroll or zoom
+  // the page; everywhere else the browser behaves normally.
+  bindNavigation() {
+    const vp = this.viewport;
+    const local = (e) => { const r = vp.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+    const wheelMemory = {};
+    vp.addEventListener('wheel', (e) => {
+      if (!this.scene) return;
+      e.preventDefault();
+      const intent = wheelIntent(e, wheelMemory, e.timeStamp);
+      if (intent === 'pan') {
+        const { dx, dy } = normalizeWheel(e, vp.clientHeight);
+        // Shift+wheel on a mouse scrolls sideways, like a page.
+        this.panBy(e.shiftKey && !dx ? -dy : -dx, e.shiftKey && !dx ? 0 : -dy);
+      } else {
+        const p = local(e);
+        this.zoomBy(wheelZoomFactor(e, intent, vp.clientHeight), p.x, p.y);
+      }
+    }, { passive: false });
+
+    // Safari reports trackpad pinches as gesture events (scale relative to the gesture start).
+    let gestureScale = 1;
+    vp.addEventListener('gesturestart', (e) => { e.preventDefault(); gestureScale = 1; });
+    vp.addEventListener('gesturechange', (e) => {
+      e.preventDefault();
+      const p = local(e);
+      this.zoomBy(pinchScaleFactor(e.scale / gestureScale), p.x, p.y);
+      gestureScale = e.scale;
+    });
+    vp.addEventListener('gestureend', (e) => e.preventDefault());
+
+    // Drag-to-pan: right or middle mouse button anywhere on the map; touch on the empty map
+    // (a touch on a token drags the token, which stops the event before it gets here).
+    const touches = new Map(); // pointerId -> {x, y} for active touch pointers
+    let pan = null;
+    vp.addEventListener('pointerdown', (e) => {
+      if (e.pointerType === 'touch') {
+        touches.set(e.pointerId, local(e));
+        if (touches.size === 2) pan = { pinch: this.pinchState(touches), moved: true };
+        else if (touches.size === 1) pan = { x: e.clientX, y: e.clientY, moved: false, touch: true };
+        return;
+      }
+      if (e.button !== 1 && e.button !== 2) return;
+      e.preventDefault();
+      pan = { x: e.clientX, y: e.clientY, moved: false, pointerId: e.pointerId };
+      vp.setPointerCapture(e.pointerId);
+      vp.classList.add('panning');
+    });
+    vp.addEventListener('pointermove', (e) => {
+      if (!pan) return;
+      if (e.pointerType === 'touch') {
+        if (!touches.has(e.pointerId)) return;
+        touches.set(e.pointerId, local(e));
+        if (pan.pinch && touches.size >= 2) {
+          const now = this.pinchState(touches);
+          this.zoomBy(now.dist / pan.pinch.dist, now.mid.x, now.mid.y);
+          this.panBy(now.mid.x - pan.pinch.mid.x, now.mid.y - pan.pinch.mid.y);
+          pan.pinch = now;
+          return;
+        }
+      } else if (e.pointerId !== pan.pointerId) return;
+      const dx = e.clientX - pan.x, dy = e.clientY - pan.y;
+      if (!pan.moved && Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
+      pan.moved = true;
+      this.panBy(dx, dy);
+      pan.x = e.clientX;
+      pan.y = e.clientY;
+    });
+    const end = (e) => {
+      if (e.pointerType === 'touch') {
+        touches.delete(e.pointerId);
+        if (pan?.moved) this.suppressClick = true; // the lift after a pan isn't a tap
+        if (touches.size === 1) {
+          const [p] = touches.values();
+          const r = vp.getBoundingClientRect();
+          pan = { x: p.x + r.left, y: p.y + r.top, moved: true, touch: true };
+        } else if (!touches.size) pan = null;
+        return;
+      }
+      if (pan && e.pointerId === pan.pointerId) {
+        pan = null;
+        vp.classList.remove('panning');
+      }
+    };
+    vp.addEventListener('pointerup', end);
+    vp.addEventListener('pointercancel', end);
+    // Right-drag pans, so the browser menu never opens over the map (or on a touch long-press).
+    vp.addEventListener('contextmenu', (e) => e.preventDefault());
+  }
+
+  pinchState(touches) {
+    const [a, b] = [...touches.values()];
+    return { dist: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)), mid: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } };
   }
 
   // Press and hold (without moving) anywhere on the map to ping it. Capture-phase listeners, so
@@ -89,8 +183,6 @@ export class Board {
     }, true);
     // Not pointerleave: a token capturing the pointer on press fires one on its inner element.
     for (const ev of ['pointerup', 'pointercancel']) this.stage.addEventListener(ev, cancel, true);
-    // A touch long-press would otherwise open the browser's context menu.
-    this.stage.addEventListener('contextmenu', (e) => e.preventDefault());
   }
 
   showEmpty(text) {
@@ -133,29 +225,39 @@ export class Board {
     this.height = Math.max(bh, g.offsetY + g.rows * g.cellSize, 1);
     this.stage.style.width = `${this.width}px`;
     this.stage.style.height = `${this.height}px`;
-    this.applyZoom();
     if (this.autoFit) this.fit();
+    else this.applyCamera();
   }
+
+  // Current zoom (world px -> screen px). Hit testing divides by it.
+  get zoom() { return this.cam.zoom; }
 
   fit() {
-    if (!this.width) return;
-    const vw = this.viewport.clientWidth - 16, vh = this.viewport.clientHeight - 16;
-    if (vw <= 0 || vh <= 0) return;
-    this.zoom = Math.max(0.2, Math.min(2.5, vw / this.width, vh / this.height));
-    this.applyZoom();
+    const cam = fitCamera(this.viewport.clientWidth, this.viewport.clientHeight, this.width, this.height);
+    if (!cam) return;
+    this.cam = cam;
+    this.applyCamera();
   }
 
-  setZoom(z) {
+  // Zoom by `factor` around viewport point (px, py), which stays put on the map.
+  zoomBy(factor, px, py) {
+    if (!this.width || !Number.isFinite(factor) || factor <= 0) return;
     this.autoFit = false;
-    this.zoom = Math.max(0.2, Math.min(4, z));
-    this.applyZoom();
+    this.cam = zoomAt(this.cam, factor, px, py);
+    this.applyCamera();
   }
 
-  applyZoom() {
-    this.stage.style.transform = `scale(${this.zoom})`;
-    // The sizer takes up the scaled size so the viewport scrolls correctly.
-    this.sizer.style.width = `${(this.width || 0) * this.zoom}px`;
-    this.sizer.style.height = `${(this.height || 0) * this.zoom}px`;
+  panBy(dx, dy) {
+    if (!this.width || (!dx && !dy)) return;
+    this.autoFit = false;
+    this.cam = { ...this.cam, x: this.cam.x + dx, y: this.cam.y + dy };
+    this.applyCamera();
+  }
+
+  applyCamera() {
+    if (this.width) this.cam = clampPan(this.cam, this.viewport.clientWidth, this.viewport.clientHeight, this.width, this.height);
+    const { x, y, zoom } = this.cam;
+    this.stage.style.transform = `translate(${x}px, ${y}px) scale(${zoom})`;
   }
 
   drawGrid() {

@@ -98,9 +98,11 @@ label.inline { flex-direction: row; align-items: center; gap: 6px; }
 
 /* ---------- board ---------- */
 .board { position: relative; min-height: 0; min-width: 0; overflow: hidden; background: #0d0b10; }
-.board-viewport { position: absolute; inset: 0; overflow: auto; }
-.board-sizer { position: relative; margin: 8px; }
-.board-stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; user-select: none; -webkit-user-select: none; }
+/* The map camera: the viewport clips, and one transform on the stage pans and zooms every layer.
+   touch-action: none so the page never scrolls or zooms under a gesture on the map. */
+.board-viewport { position: absolute; inset: 0; overflow: hidden; touch-action: none; overscroll-behavior: contain; }
+.board-viewport.panning { cursor: grabbing; }
+.board-stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; will-change: transform; user-select: none; -webkit-user-select: none; }
 .board-bg { position: absolute; left: 0; top: 0; pointer-events: none; }
 .board-grid { position: absolute; pointer-events: none; overflow: visible; }
 .spawn-mark { fill: #42d4f422; stroke: #42d4f4; stroke-width: 2; stroke-dasharray: 6 4; }
