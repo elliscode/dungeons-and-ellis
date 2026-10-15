@@ -51,7 +51,7 @@ label.inline { flex-direction: row; align-items: center; gap: 6px; }
 .toast.error { border-color: var(--bad); background: #3a1a1a; }
 .toast.out { opacity: 0; }
 .popup-menu {
-  position: fixed; z-index: 50000; min-width: 200px; max-width: 320px; max-height: 70vh; overflow: auto;
+  position: fixed; z-index: 50000; min-width: 200px; max-width: 320px; max-height: 70vh; max-height: 70dvh; overflow: auto;
   background: var(--bg2); border: 1px solid var(--gold); border-radius: var(--radius); padding: 6px; box-shadow: 0 10px 40px #000a;
 }
 .ab-name.has-tip { cursor: help; text-decoration: underline dotted var(--muted); text-underline-offset: 3px; }
@@ -76,7 +76,10 @@ label.inline { flex-direction: row; align-items: center; gap: 6px; }
 /* ---------- layout shells ---------- */
 .topbar { display: flex; align-items: center; gap: 12px; padding: 8px 14px; background: var(--bg2); border-bottom: 1px solid var(--line); min-height: 52px; flex-wrap: wrap; }
 .topbar .title { font-family: Georgia, serif; font-size: 18px; color: var(--gold); }
-.app { display: grid; height: 100vh; grid-template-rows: auto 1fr; }
+/* Full-screen app shell. 100dvh = the height actually visible right now, so it resizes when
+   iOS Safari shows or hides its tab bar / address bar (100vh would sit under them). The page
+   never scrolls (panels scroll inside), so dvh doesn't jump. vh first: fallback for old browsers. */
+.app { display: grid; height: 100vh; height: 100dvh; grid-template-rows: auto 1fr; }
 .main { display: grid; min-height: 0; }
 .main.play { grid-template-columns: 1fr 320px; }
 .main.dm { grid-template-columns: 290px 1fr 330px; }
@@ -204,7 +207,9 @@ label.inline { flex-direction: row; align-items: center; gap: 6px; }
 .list-item .thumb { width: 80px; height: 54px; border-radius: 6px; object-fit: cover; background: var(--bg3); }
 .list-item .name { font-size: 16px; font-family: Georgia, serif; }
 .empty-note { color: var(--muted); padding: 24px; text-align: center; border: 1px dashed var(--line); border-radius: var(--radius); }
-.center-screen { min-height: 100vh; display: grid; place-items: center; padding: 16px; }
+/* svh (smallest viewport) for pages that scroll: always fills the screen, never jumps as the
+   browser bars slide in and out. */
+.center-screen { min-height: 100vh; min-height: 100svh; display: grid; place-items: center; padding: 16px; }
 .login-card { width: min(360px, 100%); display: grid; gap: 12px; }
 
 /* ---------- player join flow ---------- */
