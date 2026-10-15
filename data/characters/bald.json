@@ -419,7 +419,7 @@
         "name": "Blood Frenzy",
         "actionCost": 1,
         "range": 0,
-        "effects": [{ "type": "modify_damage_dealt", "target": "self", "amount": 4 }],
+        "effects": [{ "type": "modify_damage_dealt", "target": "self", "amount": 4, "duration": "until_used" }],
         "description": "Work yourself into a frenzy: your next hit deals +4 damage."
       },
       {
