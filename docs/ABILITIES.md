@@ -141,7 +141,7 @@ Attack rolls (`attackRoll()`) include `attackBonus`, one-shot roll bonuses (whic
 ## Action economy and movement
 
 - Abilities that deal damage (any `attack`, `multi_attack`, `area_attack` or `chain_attack` effect, including ones nested in `onSuccess`/`onFailure`) work only in combat, like weapon attacks. The server refuses them outside combat, and the Act menu greys them out with "combat only". Heals, buffs, debuffs like Hunter's Mark, movement, and narrative abilities still work while exploring.
-- Players get their allowance (default 1 action) each PLAYER PHASE. Monsters and hostile NPCs get theirs each DM PHASE and can only act then. Friendly NPCs and the DM's own tools are unlimited.
+- Players get their allowance (default 1 action) each PLAYER PHASE, and so do friendly NPCs (the DM spends it for them, and they can only act then). Monsters and hostile NPCs get theirs each DM PHASE and can only act then. The DM's **+1 action** overrides any budget, and the DM's own tools (Damage, HP, Kill…) and the DM acting through a hero are unlimited. `usesPerPhase` applies to every budgeted creature.
 - The allowance is the definition's `actions`, plus granted actions, minus `reduce_actions`. It never goes below 0.
 - Movement is separate from actions. In combat, players and enemies spend movement after modifiers; a snared creature can't move. The DM can **Shift-drag** to force a move past budgets and frightened restrictions.
 

@@ -27,6 +27,9 @@ function arena() {
   const A = spawn('mysterious-wizard', 3, 2, 'npc');
   const O = spawn('ogre', 4, 2);
   const ent = (id) => s.state().entities[id];
+  // Friendly NPCs have a per-phase action budget like heroes; these suites test effects, not the
+  // action economy, so the casters get plenty of actions.
+  for (const id of [W, A]) ent(id).actionsPerPhase = 99;
   return {
     ...s, rng, sid, W, A, O, ent, spawn,
     // Adds a hand-made ability straight onto the entity in the live game state.
@@ -740,10 +743,13 @@ suite('dash', () => {
     w.give(w.O, 'snare', [{ type: 'apply_status', target: 'enemy', status: 'snared' }]);
     w.give(gob, 'fear', [{ type: 'apply_status', target: 'enemy', status: 'frightened' }]);
     w.fight();
-    w.next(); // DM phase: the enemies curse W
+    w.next(); // DM phase: the goblin frightens W
     ok(w.use(gob, 'fear', { targetId: w.W }));
+    w.next(); // W (a friendly NPC) acts in the player phase
     assert.match(w.use(w.W, 'lunge', { cell: { x: 6, y: 2 }, targetId: gob }).error, /frightened of Goblin/);
+    w.next(); // DM phase: the ogre snares W
     ok(w.use(w.O, 'snare', { targetId: w.W }));
+    w.next();
     assert.match(w.use(w.W, 'lunge', { cell: { x: 1, y: 2 }, targetId: gob }).error, /snared/);
   });
 });
@@ -889,16 +895,19 @@ describe('no stacking from the same caster and ability', () => {
 
   test('a recast restarts the duration', () => {
     const w = arena();
-    w.give(w.W, 'brace', [{ type: 'defense_bonus', amount: 3, duration: { phases: 2 } }]);
+    w.give(w.W, 'brace', [{ type: 'defense_bonus', amount: 3, duration: { phases: 3 } }]);
     const braced = () => w.has(w.W, (fx) => fx.type === 'defense_bonus');
     w.fight();
-    ok(w.use(w.W, 'brace'));
+    ok(w.use(w.W, 'brace')); // player phase, round 1
     w.next();
-    ok(w.use(w.W, 'brace')); // Walky is a friendly NPC: no action limit
+    w.next();
+    ok(w.use(w.W, 'brace')); // player phase, round 2 (friendly NPCs act in player phases)
     assert.match(w.last(), /Walky the Wize's brace \(\+3 DEF\) is refreshed/);
     w.next();
     assert.ok(braced(), 'the first cast would have run out by now');
     assert.equal(w.ent(w.W).effects.filter((fx) => fx.type === 'defense_bonus').length, 1);
+    w.next();
+    assert.ok(braced());
     w.next();
     assert.ok(!braced(), 'the refreshed copy expires on its own schedule');
   });

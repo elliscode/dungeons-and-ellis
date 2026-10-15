@@ -1,4 +1,4 @@
-import { entitiesInScene, actionAllowance } from './state.js';
+import { entitiesInScene, actionAllowance, isFriendly } from './state.js';
 import { movementAllowance } from './status.js';
 import { normalizeAbility, targetingOf, dealsDamage } from './effects.js';
 
@@ -21,6 +21,30 @@ function publicPlayer(p, presence, state) {
   };
 }
 
+// Who has gone this phase, for the DM's counter. PLAYER PHASE: heroes and friendly NPCs; DM PHASE:
+// monsters and hostile NPCs. A creature is done at 0 actions left. Dead creatures, objects,
+// training dummies, downed NPCs/monsters (they can't act) and anyone with no actions are left out;
+// downed heroes count, since their down roll is their action.
+export function turnProgress(state) {
+  const c = state.combat;
+  if (!c.active || !state.activeSceneId) return null;
+  const party = c.phase === 'player';
+  const counted = [];
+  for (const e of entitiesInScene(state, state.activeSceneId)) {
+    if (e.kind === 'object' || e.immortal || e.status === 'dead') continue;
+    if (party ? !(e.kind === 'pc' || (e.kind === 'npc' && isFriendly(e))) : isFriendly(e)) continue;
+    if (e.status === 'down' && e.kind !== 'pc') continue;
+    const t = state.turn[e.id];
+    const allowance = actionAllowance(e, t);
+    if (allowance <= 0) continue;
+    counted.push({ id: e.id, name: e.name, kind: e.kind, left: Math.max(0, allowance - (t?.actions ?? 0)) });
+  }
+  const pending = counted.filter((x) => x.left > 0)
+    .sort((a, b) => (a.kind === 'pc' ? 0 : 1) - (b.kind === 'pc' ? 0 : 1) || a.name.localeCompare(b.name))
+    .map(({ id, name, left }) => ({ id, name, left }));
+  return { side: party ? 'party' : 'enemies', done: counted.length - pending.length, total: counted.length, pending };
+}
+
 export function projectForDm(state, presence) {
   const { players, ...rest } = state;
   const view = structuredClone(rest);
@@ -33,6 +57,7 @@ export function projectForDm(state, presence) {
     role: 'dm',
     ...view,
     players: Object.values(players).map((p) => publicPlayer(p, presence, state)),
+    turnProgress: turnProgress(state),
   };
 }
 

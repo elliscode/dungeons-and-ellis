@@ -22,8 +22,8 @@ Run `npm run validate:npcs` with no arguments to check the whole bank.
 | --- | --- | --- |
 | Side | The party's | The monsters' |
 | `ally` / `enemy` in abilities | heroes and friendly NPCs / monsters | monsters / heroes |
-| When it acts | Any phase | DM PHASE only |
-| Action limit | None (the DM decides) | `actions` per DM phase (default 1) |
+| When it acts (in combat) | PLAYER PHASE only, like the heroes | DM PHASE only |
+| Action limit | `actions` per PLAYER PHASE (default 1) | `actions` per DM phase (default 1) |
 | Players see its HP | Yes | No |
 
 The DM can flip any NPC between friendly and hostile mid-game with the **Mark hostile** / **Mark friendly** button. Only the DM ever sees an NPC's inventory and attacks.
@@ -76,4 +76,4 @@ NPC request:
 - every bank NPC passes the schema;
 - every effect type works in an NPC ability, through both the schema and the engine;
 - the schema rejects what NPCs can't have, such as a `role`, old-style ability fields, or `maxHp` on an immortal NPC;
-- in a real game, a friendly NPC heals a hero in the player phase without spending actions, and a hostile NPC follows the enemy rules.
+- in a real game, a friendly NPC heals a hero in the player phase using its one action (a second heal needs +1 action), and a hostile NPC follows the enemy rules.
