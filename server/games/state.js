@@ -1,8 +1,8 @@
 import { randomBytes } from 'node:crypto';
 
-// Ten accessible, mutually distinct player colors (tuned for a dark UI).
+// Ten accessible, mutually distinct player colors (tuned for a dark UI). Red is left out on
+// purpose: enemies are drawn in red. Keep in sync with PLAYER_COLORS in client/js/common.js.
 export const PLAYER_COLORS = [
-  '#e6194b', // red
   '#3cb44b', // green
   '#4363d8', // blue
   '#f58231', // orange
@@ -12,8 +12,25 @@ export const PLAYER_COLORS = [
   '#bfef45', // lime
   '#fabed4', // pink
   '#ffe119', // yellow
+  '#469990', // teal
 ];
 export const DM_COLOR = '#d4af37';
+
+// Brings a saved game up to date with the current rules. Players whose color is no longer in the
+// bank (red, removed) get the first free one. Returns true if anything changed.
+export function upgradeState(state) {
+  let changed = false;
+  const players = Object.values(state.players ?? {});
+  for (const p of players) {
+    if (PLAYER_COLORS.includes(p.color)) continue;
+    const used = new Set(players.map((o) => o.color));
+    const free = PLAYER_COLORS.find((c) => !used.has(c));
+    if (!free) continue;
+    p.color = free;
+    changed = true;
+  }
+  return changed;
+}
 
 export class GameError extends Error {}
 export const fail = (msg) => { throw new GameError(msg); };

@@ -70,7 +70,8 @@ export function sendCmd(socket, cmd, { quiet = false } = {}) {
 
 export const ROLE_LABELS = { tank: 'Tank', dps: 'DPS', heal: 'Heal' };
 export const ROLE_ICONS = { tank: '🛡️', dps: '⚔️', heal: '✚' };
-export const PLAYER_COLORS = ['#e6194b', '#3cb44b', '#4363d8', '#f58231', '#911eb4', '#42d4f4', '#f032e6', '#bfef45', '#fabed4', '#ffe119'];
+// Same list as the server (server/games/state.js). No red: that's the enemy color.
+export const PLAYER_COLORS = ['#3cb44b', '#4363d8', '#f58231', '#911eb4', '#42d4f4', '#f032e6', '#bfef45', '#fabed4', '#ffe119', '#469990'];
 export const DM_COLOR = '#d4af37';
 
 // Phase banner + authoritative countdown. Call update() with each state.

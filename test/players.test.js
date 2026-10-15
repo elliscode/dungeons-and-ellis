@@ -1,6 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { setup, ok, DM } from './helpers.js';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { setup, ok, DM, ROOT } from './helpers.js';
 import { PLAYER_COLORS } from '../server/games/state.js';
 import { projectForDm, projectForPlayer } from '../server/games/project.js';
 
@@ -122,4 +124,39 @@ test('a DM rename shows in heroName; releasing the hero resets its name', () => 
   ok(run(a, { type: 'player.selectCharacter', characterId: 'fire-mage' }));
   const again = state().entities[state().players[a.playerId].entityId];
   assert.equal(again.name, 'Fire Mage');
+});
+
+test('red is not a player color (it is the enemy color); the first player gets green', () => {
+  const { join, run, state } = setup();
+  assert.ok(!PLAYER_COLORS.includes('#e6194b'));
+  assert.equal(PLAYER_COLORS.length, 10);
+  assert.equal(PLAYER_COLORS.at(-1), '#469990', 'teal took its place at the end');
+  const a = join('Ana');
+  assert.equal(state().players[a.playerId].color, '#3cb44b');
+  assert.equal(run(a, { type: 'player.setColor', color: '#e6194b' }).error, 'Pick a color from the bank');
+  ok(run(a, { type: 'player.setColor', color: '#469990' }));
+});
+
+test('saved games with a red player are moved to a free color on load', () => {
+  const { join, state, service, game, db } = setup();
+  const a = join('Ana'), b = join('Bo');
+  // Simulate a game saved before red was removed: Ana red, Bo green.
+  const saved = structuredClone(state());
+  saved.players[a.playerId].color = '#e6194b';
+  saved.players[b.playerId].color = '#3cb44b';
+  db.prepare('UPDATE games SET state = ? WHERE id = ?').run(JSON.stringify(saved), game.id);
+  service.games.delete(game.id); // force a reload from the database
+
+  const loaded = service.get(game.id).state;
+  assert.equal(loaded.players[b.playerId].color, '#3cb44b', 'valid colors are kept');
+  assert.equal(loaded.players[a.playerId].color, '#4363d8', 'the first free bank color');
+  const stored = JSON.parse(db.prepare('SELECT state FROM games WHERE id = ?').get(game.id).state);
+  assert.equal(stored.players[a.playerId].color, '#4363d8', 'saved back to the database');
+});
+
+test('the client color list matches the server list', () => {
+  const src = readFileSync(join(ROOT, 'client', 'js', 'common.js'), 'utf8');
+  const m = src.match(/export const PLAYER_COLORS = (\[[^\]]*\]);/);
+  assert.ok(m, 'PLAYER_COLORS found in common.js');
+  assert.deepEqual(JSON.parse(m[1].replace(/'/g, '"')), PLAYER_COLORS);
 });

@@ -2,7 +2,7 @@ import { EventEmitter } from 'node:events';
 import { randomBytes, randomInt } from 'node:crypto';
 import { transaction } from '../db.js';
 import { handlers } from './commands.js';
-import { GameError, DM_COLOR, newId, createGameState } from './state.js';
+import { GameError, DM_COLOR, newId, createGameState, upgradeState } from './state.js';
 import { ensurePlaced } from './placement.js';
 import { feedForRole } from './project.js';
 import { stripMarkers } from './helpers.js';
@@ -83,6 +83,7 @@ export class GameService extends EventEmitter {
     const row = this.db.prepare('SELECT state FROM games WHERE id = ?').get(id);
     if (!row) return null;
     game = { id, state: JSON.parse(row.state) };
+    if (upgradeState(game.state)) this.persist(game, []);
     this.games.set(id, game);
     this.syncTimer(game);
     return game;
