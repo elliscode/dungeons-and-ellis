@@ -110,3 +110,9 @@ test/             node:test suites
 ```
 
 Every state change goes through `GameService.dispatch()`. It validates the command, applies it to the in-memory game, writes the new state, Game Feed rows, and undo snapshot in one SQLite transaction, then sends each connected client its own filtered view. A failed command rolls back to the previous state.
+
+## License
+
+Source-available under the [PolyForm Noncommercial License 1.0.0](PolyForm-Noncommercial-1.0.0.md): free for personal and other noncommercial use. This project doesn't accept outside contributions.
+
+Required Notice: Copyright (c) 2026 Daniel Townsend (https://www.elliscode.com)
