@@ -126,7 +126,7 @@
             "onSuccess": [{ "type": "apply_status", "target": "checked_enemy", "status": "frightened" }]
           }
         ],
-        "description": "Rook slams his gavel and bellows for order. Each foe within 2 that doesn't resist is frightened (can't move closer to him) through the next DM phase. Once per phase."
+        "description": "Rook slams his gavel and bellows for order. Each foe within 2 that doesn't resist is frightened (−2 to hit, can't move closer to him) through the next DM phase. Once per phase."
       },
       {
         "id": "contempt-of-court",

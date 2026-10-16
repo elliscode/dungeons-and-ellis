@@ -34,7 +34,7 @@ export function buildNpcSchema(character) {
   };
   defs.ability = {
     ...defs.ability,
-    description: `${defs.ability.description} A friendly NPC's abilities can be used in any phase and cost no actions (usesPerPhase isn't enforced either), so the DM is the only limit. While hostile, the NPC follows enemy rules: DM PHASE only, and each ability costs actions from its per-phase allowance.`,
+    description: `${defs.ability.description} A friendly NPC acts in the PLAYER PHASE with the heroes: each ability costs actions from its per-phase allowance and usesPerPhase applies. While hostile, the NPC follows enemy rules: DM PHASE only, with the same costs.`,
   };
 
   return {
@@ -44,7 +44,7 @@ export function buildNpcSchema(character) {
     description: [
       'A non-player character for the DM\'s NPC bank in One & Done, a grid-based tabletop game: townsfolk, guards, quest givers, companions, rivals. Spawned NPCs are independent copies, so editing a definition never changes NPCs already in a game.',
       'All mechanics come from structured fields; `description` is a note for the DM and never drives mechanics.',
-      'NPCs are FRIENDLY by default: they side with the party, players see their HP, and they can act in any phase without an action limit. The DM can mark any NPC hostile (or friendly again) mid-game, and `hostile: true` makes it start hostile.',
+      'NPCs are FRIENDLY by default: they side with the party, players see their HP, and they act in the PLAYER PHASE alongside the heroes, with `actions` actions per phase (default 1). The DM can mark any NPC hostile (or friendly again) mid-game, and `hostile: true` makes it start hostile.',
       'Which side an NPC is on decides what ability targets mean. Friendly: "ally" = heroes and other friendly NPCs, "enemy" = monsters and hostile NPCs. Hostile: the reverse. Design abilities for the side the NPC normally starts on.',
       'Attacks roll `attack` (always 1d20+N) against the target\'s Defense; on a hit, roll `damage`. Attacks and damaging abilities only work in combat. Hostile NPCs take the heroes\' role bonuses (DPS heroes multiply their damage, default 4×), so size a hostile NPC\'s maxHp like a monster\'s.',
       'Distances are grid squares (1 = adjacent).',
@@ -71,7 +71,7 @@ export function buildNpcSchema(character) {
       },
       actions: {
         type: 'integer', minimum: 0, maximum: 10,
-        description: 'Actions per DM phase, used only while the NPC is hostile (default 1). Friendly NPCs have no action limit. Leave out unless the NPC is a hostile boss.',
+        description: 'Actions per phase (default 1): per PLAYER PHASE while friendly, per DM PHASE while hostile. Leave out unless the NPC is a boss or a strong companion.',
       },
       size: {
         type: 'object', additionalProperties: false, required: ['w', 'h'],
@@ -95,7 +95,7 @@ export function buildNpcSchema(character) {
         description: 'Optional special abilities (same effect engine as heroes). For a friendly NPC, "ally" targets are heroes and friendly NPCs and "enemy" targets are monsters. Use a "narrative" effect for roleplay or utility abilities with no mechanics.',
       },
       inventory: {
-        type: 'array', maxItems: 10, items: { $ref: '#/$defs/id', description: 'Item id, kebab-case, e.g. "room-key".' },
+        type: 'array', maxItems: 10, items: { $ref: '#/$defs/id', description: 'Item id, kebab-case, e.g. "room-key". Ids that appear in data/items.json (e.g. "healing-potion") get that item\'s ability.' },
         description: 'Optional items the NPC carries, sells or can hand over. Only the DM sees an NPC\'s inventory.',
       },
       description: { type: 'string', minLength: 1, maxLength: 300, description: 'Optional note for the DM (personality, what they know, what they want). Not shown to players and not used by the game.' },

@@ -1,5 +1,5 @@
 import { io } from '/socket.io/socket.io.esm.min.js';
-import { $, fill, h, toast, sendCmd, popupMenu, closeMenu, combatBar, ROLE_LABELS, ROLE_ICONS, PLAYER_COLORS } from './common.js';
+import { $, fill, h, toast, sendCmd, popupMenu, closeMenu, confirmModal, combatBar, ROLE_LABELS, ROLE_ICONS, PLAYER_COLORS } from './common.js';
 import { Board } from './board.js';
 import { GameFeed } from './panel.js';
 import { startAbility, abilitySummary, distance, sideOf } from './abilities.js';
@@ -33,6 +33,7 @@ socket.on('state', (s) => { state = s; render(); });
 socket.on('history', (hist) => panel.setHistory(hist));
 socket.on('feed', (rows) => panel.add(rows));
 socket.on('fx', (list) => { for (const f of list) board.showFx(f.entityId, f.text, f.color, f.kind); });
+socket.on('ping', (p) => board.showPing(p));
 socket.on('seatInvalid', () => {
   store.del(SEAT_KEY);
   seat = null;
@@ -53,6 +54,8 @@ const send = (cmd) => sendCmd(socket, cmd);
 // ---------- board ----------
 
 const board = new Board($('#board'), {
+  // Press and hold to ping. Errors (the players' 10-per-minute limit) show as a toast.
+  onPing: (p) => socket.timeout(8000).emit('ping', p, (err, r) => { if (err) toast('Server did not respond', 'error'); else if (!r.ok) toast(r.error, 'error'); }),
   canDrag: (t) => t.id === myEntity()?.id && !mode,
   onTokenDrop: (t, x, y) => send({ type: 'move', entityId: t.id, x, y }),
   onTokenClick: (t, e, stack) => onTokenClick(t, e, stack),
@@ -81,6 +84,14 @@ function availability() {
   const dmPhase = c.active && c.phase !== 'player';
   const moveLeft = c.active ? Math.max(0, allowance.movement - t.moved) : Infinity;
   return { me, c, t, allowance, actionLeft, actionsLeft, dmPhase, moveLeft, canAct: me.status === 'active' && !dmPhase && actionLeft };
+}
+
+// The item catalog entry for an inventory entry: by defId, else by name (mirrors findItem() on
+// the server).
+function itemDef(it) {
+  const name = String(it.name ?? '').trim().toLowerCase();
+  const items = content.items ?? [];
+  return (it.defId && items.find((d) => d.id === it.defId)) || items.find((d) => d.name.trim().toLowerCase() === name) || null;
 }
 
 function cellsWithin(origin, size, range) {
@@ -134,7 +145,21 @@ function setMode(m) {
   renderBoard();
 }
 function cancelMode() { setMode(null); }
-addEventListener('keydown', (e) => { if (e.key === 'Escape') cancelMode(); });
+addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') cancelMode();
+  if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.target.closest('input, textarea') && canUndoMove()) { e.preventDefault(); undoMove(); }
+});
+
+// Undo move: take back this phase's last move (and its squares) until you act. Server-checked.
+function canUndoMove() {
+  const me = myEntity();
+  return !!(me && me.status === 'active' && state.combat?.active && state.combat.phase === 'player' && state.turn?.moves?.length);
+}
+function undoMove() {
+  const me = myEntity();
+  if (me) send({ type: 'move.undo', entityId: me.id });
+}
+$('#undo-move').addEventListener('click', undoMove);
 
 function onCellClick(cell) {
   const me = myEntity();
@@ -190,10 +215,22 @@ function onSegment(seg, t, e) {
     return;
   }
   if (seg === 'inventory') {
-    const items = a.me.inventory.map((it) => ({
-      label: it.name, sub: a.c.active ? 'Use (costs your action)' : 'Use', disabled: !!why,
-      onClick: () => send({ type: 'item.use', entityId: a.me.id, itemId: it.id }),
-    }));
+    const items = a.me.inventory.map((it) => {
+      const def = itemDef(it);
+      const cost = a.c.active ? 'costs your action' : '';
+      // Items with an ability (Healing Potion) ask for a target first; cancelling keeps the item.
+      if (def?.ability) {
+        const ab = { ...def.ability, id: it.id, name: it.name };
+        return {
+          label: it.name, sub: [def.description, abilitySummary(ab), cost].filter(Boolean).join(' — '), disabled: !!why,
+          onClick: () => startAbility({ caster: a.me, ab, entities: () => state.entities, setMode, send: (cmd) => send({ ...cmd, type: 'item.use', itemId: it.id }), toast: null }),
+        };
+      }
+      return {
+        label: it.name, sub: [def?.description, cost ? `Use (${cost})` : 'Use'].filter(Boolean).join(' — '), disabled: !!why,
+        onClick: () => send({ type: 'item.use', entityId: a.me.id, itemId: it.id }),
+      };
+    });
     popupMenu(at.x + 60, at.y + 20, why ? `Inventory — ${why}` : 'Inventory', items.length ? items : [{ label: 'Empty', disabled: true }]);
     return;
   }
@@ -305,7 +342,7 @@ function waitingScreen() {
   const hero = heroById.get(state.me.characterId);
   showFlow(
     h('div.waiting', {}, h('span.spinner', {}, '⏳'), 'Waiting for DM to set active scene'),
-    h('p.muted', {}, `You are playing ${hero?.name ?? state.me.characterId}. Hang tight!`),
+    h('p.muted', {}, `You are playing ${state.me.heroName ?? hero?.name ?? state.me.characterId}. Hang tight!`),
     h('p', {}, meChip()));
 }
 
@@ -345,7 +382,7 @@ function showRoster(el) {
     return h(`div.roster-row${away ? '.away' : ''}`, {},
       h('span.dot', { style: { background: p.color } }),
       h('span', {}, p.name, p.id === me.id ? h('span.muted', {}, ' (you)') : null),
-      h('span.muted', {}, heroById.get(p.characterId)?.name ?? 'choosing a hero', away ? ` · ${p.presence}` : ''));
+      h('span.muted', {}, p.heroName ?? heroById.get(p.characterId)?.name ?? 'choosing a hero', away ? ` · ${p.presence}` : ''));
   }));
   roster.open = true;
   roster.el.classList.remove('hidden');
@@ -378,11 +415,34 @@ function settingsMenu(e) {
       }
     },
   }, nameInput, h('button.small.primary', { type: 'submit' }, 'Rename'));
+  // The hero you play (only once you have one). Releasing the hero resets its name.
+  const heroInput = h('input', { value: me.heroName ?? '', maxLength: 40 });
+  const heroForm = me.entityId ? h('form', {
+    onsubmit: async (ev) => {
+      ev.preventDefault();
+      if (await send({ type: 'player.renameCharacter', name: heroInput.value })) closeMenu();
+    },
+  }, heroInput, h('button.small.primary', { type: 'submit' }, 'Rename')) : null;
+  // Leaving the hero (only when the DM allows it in this game): confirm, then back to the picker.
+  const leave = me.entityId && state.options?.playersCanLeave ? h('button.small.danger', {
+    onclick: async () => {
+      const hero = me.heroName ?? 'your hero';
+      const ok = await confirmModal({
+        title: `Leave ${hero}?`,
+        body: `Your hero leaves the game and you'll pick a hero again. Its HP, items and effects are lost; picking it again starts fresh. Your name and color stay.${state.combat?.active ? ' Your token leaves the fight right away.' : ''}`,
+        confirm: 'Leave hero', danger: true,
+      });
+      if (!ok) return;
+      cancelMode();
+      send({ type: 'player.leaveCharacter' });
+    },
+  }, 'Leave hero…') : null;
   const swatches = h('div.swatches', {}, ...PLAYER_COLORS.map((c) => h(`button.swatch${c === me.color ? '.current' : ''}`, {
     style: { background: c }, disabled: used.has(c), title: used.has(c) ? `Taken by ${used.get(c)}` : 'Pick this color',
     onclick: () => send({ type: 'player.setColor', color: c }).then(() => closeMenu()),
   })));
-  popupMenu(e.clientX - 150, e.clientY + 16, 'You', [{ heading: 'Name' }, { node: form }, { heading: 'Color' }, { node: swatches }]);
+  popupMenu(e.clientX - 150, e.clientY + 16, 'You', [{ heading: 'Name' }, { node: form },
+    ...(heroForm ? [{ heading: 'Character' }, { node: heroForm }] : []), ...(leave ? [{ node: leave }] : []), { heading: 'Color' }, { node: swatches }]);
 }
 
 function gameScreen() {
@@ -402,6 +462,7 @@ function gameScreen() {
     info.textContent = me.status !== 'active' ? me.status.toUpperCase()
       : `Actions: ${a.actionsLeft}/${a.allowance.actions} · Move: ${a.moveLeft}/${a.allowance.movement}`;
   } else info.textContent = me?.status && me.status !== 'active' ? me.status.toUpperCase() : '';
+  $('#undo-move').classList.toggle('hidden', !canUndoMove());
   // Cancel a pending mode if it no longer makes sense (e.g. phase changed).
   if (mode && (!me || me.status !== 'active' || (state.combat.active && state.combat.phase !== 'player'))) mode = null;
   renderBoard();

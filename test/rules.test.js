@@ -74,13 +74,19 @@ test('DM overrides: +1 action, manual damage and HP tools ignore the budget', ()
   ok(s.run(DM, { type: 'entity.kill', entityId: s.gob }));
 });
 
-test('friendly NPCs are not limited; hostile NPCs are', () => {
+test('friendly NPCs get one action per PLAYER PHASE; hostile NPCs follow enemy rules', () => {
   const s = arena();
   const guard = ok(s.run(DM, { type: 'entity.spawn', kind: 'npc', defId: 'town-guard', x: 2, y: 7 })).entityId;
   ok(s.run(DM, { type: 'combat.start' }));
   s.rng.push(1, 1);
   ok(s.run(DM, { type: 'attack', entityId: guard, attackId: 'spear', targetId: s.gob }), 'friendly NPC in player phase');
-  ok(s.run(DM, { type: 'attack', entityId: guard, attackId: 'spear', targetId: s.gob }));
+  assert.match(s.run(DM, { type: 'attack', entityId: guard, attackId: 'spear', targetId: s.gob }).error, /no actions left this phase \(use \+1 action to override\)/);
+  ok(s.run(DM, { type: 'entity.grantAction', entityId: guard }));
+  ok(s.run(DM, { type: 'attack', entityId: guard, attackId: 'spear', targetId: s.gob }), '+1 action allows another');
+  ok(s.run(DM, { type: 'combat.advance' }));
+  assert.match(s.run(DM, { type: 'attack', entityId: guard, attackId: 'spear', targetId: s.gob }).error, /Friendly NPCs act during the PLAYER PHASE/);
+  ok(s.run(DM, { type: 'combat.advance' }));
+  ok(s.run(DM, { type: 'attack', entityId: guard, attackId: 'spear', targetId: s.gob }), 'a fresh action next player phase');
   ok(s.run(DM, { type: 'entity.setHostile', entityId: guard, hostile: true }));
   assert.match(s.run(DM, { type: 'attack', entityId: guard, attackId: 'spear', targetId: s.dps }).error, /DM PHASE/);
 });

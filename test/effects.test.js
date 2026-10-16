@@ -334,7 +334,7 @@ test('NPC and monster abilities use the same engine and enemy rules', () => {
   const w = world([['mage', 'x-fire-mage', 0, 0]]);
   const walky = w.spawn('walky-the-wize', 2, 0, 'npc');
   w.fight();
-  ok(w.run(DM, { type: 'ability', entityId: walky, abilityId: 'wize-words' }), 'friendly NPC acts any phase');
+  ok(w.run(DM, { type: 'ability', entityId: walky, abilityId: 'wize-words' }), 'friendly NPC acts in the player phase');
   ok(w.run(DM, { type: 'entity.setHostile', entityId: walky, hostile: true }));
   assert.match(w.run(DM, { type: 'ability', entityId: walky, abilityId: 'wize-words' }).error, /DM PHASE/);
   w.next();

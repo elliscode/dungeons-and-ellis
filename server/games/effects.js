@@ -10,7 +10,7 @@ import * as H from './helpers.js';
 // a handler; mechanics never come from descriptions. See docs/ABILITIES.md.
 
 export const STATUSES = {
-  frightened: { label: 'Frightened', icon: '😨' }, // can't move closer to its source
+  frightened: { label: 'Frightened', icon: '😨' }, // -2 to hit; can't move closer to its source
   snared: { label: 'Snared', icon: '🕸️' }, // movement 0
   shaken: { label: 'Shaken', icon: '💢' }, // -2 to hit
   // -2 to hit for the rest of the current phase plus 5 full rounds (10 phases). The status owns its
@@ -68,7 +68,13 @@ function validateEffect(eff, at, errors, depth = 0) {
   if (!isValidDuration(eff.duration)) err('duration must be current_turn, until_next_player_phase, next_dm_phase, combat, until_used or { "phases": N }');
   if (eff.trigger !== undefined && !TRIGGERS.includes(eff.trigger)) err(`trigger must be one of ${TRIGGERS.join(', ')}`);
   for (const k of spec.required ?? []) if (eff[k] === undefined || eff[k] === null || eff[k] === '') err(`${k} is required`);
-  for (const k of spec.dice ?? []) if (eff[k] !== undefined && eff[k] !== null && !isValidDice(eff[k])) err(`${k} "${eff[k]}" is not valid dice`);
+  for (const k of spec.dice ?? []) {
+    if (eff[k] === undefined || eff[k] === null) continue;
+    // Heals may be a flat amount instead of dice (Healing Potion: 25).
+    if (k === 'heal' && typeof eff[k] === 'number') {
+      if (!Number.isInteger(eff[k]) || eff[k] < 1 || eff[k] > 1000) err('heal must be dice (e.g. 2d8+3) or a whole number from 1 to 1000');
+    } else if (!isValidDice(eff[k])) err(`${k} "${eff[k]}" is not valid dice`);
+  }
   if (eff.type === 'grant_roll_bonus' && eff.bonus !== undefined && !isValidDice(String(eff.bonus)) && !Number.isInteger(eff.bonus)) err('bonus must be dice (e.g. 1d6) or a whole number');
   for (const [k, r] of Object.entries(spec.nums ?? {})) {
     if (eff[k] === undefined) continue;
@@ -210,7 +216,8 @@ function chainOf(ctx, act, eff, valid) {
   return links;
 }
 
-const sourceOf = (act) => ({ entityId: act.caster.id, name: act.caster.name });
+// abilityId lets a recast find (and refresh) the copy this caster's ability already left.
+const sourceOf = (act) => ({ entityId: act.caster.id, name: act.caster.name, abilityId: act.ability.id ?? null });
 
 // One weapon or ability strike: attack roll, damage roll, shared damage pipeline.
 export function strike(ctx, { attacker, target, attack, color }) {
@@ -261,15 +268,28 @@ const attackOf = (eff, name) => ({
 });
 
 // Applies a live effect (buff, debuff, protection, mark, status) to each target.
+// The same caster's same ability never stacks on a target: a recast replaces the old copy (fresh
+// duration and params). Different casters or different abilities stack. The key includes type and
+// status, so one ability applying two things (frightened + shaken) keeps both.
 function applyLive(ctx, act, eff, targets, { icon, trigger, duration, params = {}, status = null, label } = {}) {
+  const name = eff.label ?? label ?? act.ability.name;
+  const st = eff.status ?? status;
+  const gained = [], refreshed = [];
   for (const t of targets) {
     if (!t || t.kind === 'object') continue;
+    const same = act.ability.id ? (t.effects ?? []).filter((fx) => fx.source?.entityId === act.caster.id
+      && fx.source?.abilityId === act.ability.id && fx.type === eff.type && (fx.status ?? null) === (st ?? null)) : [];
+    for (const fx of same) removeEffect(t, fx.id);
     addEffect(ctx.state, t, {
-      type: eff.type, label: eff.label ?? label ?? act.ability.name, icon: eff.icon ?? icon, status: eff.status ?? status,
+      type: eff.type, label: name, icon: eff.icon ?? icon, status: st,
       source: sourceOf(act), params, trigger: eff.trigger ?? trigger, duration: eff.duration ?? duration,
     });
+    (same.length ? refreshed : gained).push(t);
   }
-  if (targets.length) line(act, `${targets.map((t) => t.name).join(', ')} ${targets.length > 1 ? 'gain' : 'gains'} ${eff.label ?? label ?? act.ability.name}`);
+  const parts = [];
+  if (gained.length) parts.push(`${gained.map((t) => t.name).join(', ')} ${gained.length > 1 ? 'gain' : 'gains'} ${name}`);
+  if (refreshed.length) parts.push(`${refreshed.map((t) => `${t.name}'s`).join(', ')} ${name} ${refreshed.length > 1 ? 'are' : 'is'} refreshed`);
+  if (parts.length) line(act, parts.join('; '));
 }
 
 // ---------- handlers ----------
@@ -367,8 +387,12 @@ const HANDLERS = {
     applyLive(ctx, act, eff, targetsFor(ctx, act, eff), { icon: eff.amount > 0 || eff.multiplier > 1 ? '🔻' : '🛡️', duration: 'next_dm_phase', params: { amount: eff.amount, multiplier: eff.multiplier } });
   },
 
+  // A penalty (Curse of Weakness) lasts through the next DM phase by default, for the enemy's next
+  // attack. A boost ("your next hit deals +4") lasts until that hit lands, however many phases
+  // later; otherwise a buff cast on your turn would expire before your next one.
   modify_damage_dealt(ctx, act, eff) {
-    applyLive(ctx, act, eff, targetsFor(ctx, act, eff), { icon: eff.amount < 0 || eff.multiplier < 1 ? '🥀' : '💪', trigger: 'next_hit', duration: 'next_dm_phase', params: { amount: eff.amount, multiplier: eff.multiplier } });
+    const penalty = eff.amount < 0 || eff.multiplier < 1;
+    applyLive(ctx, act, eff, targetsFor(ctx, act, eff), { icon: penalty ? '🥀' : '💪', trigger: 'next_hit', duration: penalty ? 'next_dm_phase' : 'until_used', params: { amount: eff.amount, multiplier: eff.multiplier } });
   },
 
   modify_movement(ctx, act, eff) {
@@ -476,7 +500,7 @@ const HANDLERS = {
     for (const s of subjects) {
       const r = H.rollOrFail(eff.roll, ctx);
       ctx.state.pendingChecks.push({
-        id: newId('chk'), casterId: act.caster.id, casterName: act.caster.name, abilityName: act.ability.name,
+        id: newId('chk'), casterId: act.caster.id, casterName: act.caster.name, abilityName: act.ability.name, abilityId: act.ability.id ?? null,
         subjectId: s.id, subjectName: s.name, roll: r.text, total: r.total,
         onSuccess: eff.onSuccess ?? [], onFailure: eff.onFailure ?? [], createdAt: ctx.now,
       });
@@ -489,8 +513,9 @@ for (const t of EFFECT_TYPES) if (!HANDLERS[t]) throw new Error(`effect type ${t
 export const HANDLED_TYPES = Object.keys(HANDLERS);
 
 function healOne(ctx, act, eff, t) {
-  const r = H.rollOrFail(eff.heal, ctx);
-  const h = healTarget(ctx, { source: act.caster, target: t, amount: r.total, color: ctx.actorColor });
+  const r = typeof eff.heal === 'number' ? { total: eff.heal, text: String(eff.heal) } : H.rollOrFail(eff.heal, ctx);
+  // Item heals (potions) are flat: the Heal role bonus belongs to the healer's own spells.
+  const h = healTarget(ctx, { source: act.caster, target: t, amount: r.total, color: ctx.actorColor, roleBonus: !act.item });
   if (h.skipped) { line(act, `${h.skipped}`); return; }
   const notes = h.notes.length ? ` (${h.notes.join(', ')})` : '';
   const ht = H.hpTexts(t);
@@ -530,21 +555,28 @@ const usesThisPhase = (t, id) => (t?.abilitiesUsed ?? []).filter((x) => x === id
 
 export function activateAbility(ctx) {
   const e = H.controlled(ctx, ctx.cmd.entityId);
-  const scene = H.onActiveScene(ctx, e);
   H.requireStatus(e, 'use abilities');
   H.requireActionWindow(ctx, e);
   const raw = (e.abilities ?? []).find((a) => a.id === ctx.cmd.abilityId);
   if (!raw) fail('Unknown ability');
+  return runAbility(ctx, e, raw);
+}
+
+// Validates the picks in ctx.cmd (targetId, cell, picks), spends the action and resolves `raw`
+// for `e`. `item` is set when the ability comes from an inventory item: items are consumed by
+// the caller instead of counting toward usesPerPhase, and their heals skip the Heal role bonus.
+export function runAbility(ctx, e, raw, { item = null } = {}) {
+  const scene = H.onActiveScene(ctx, e);
   const ab = normalizeAbility(raw);
   if (!ctx.state.combat.active && dealsDamage(ab)) fail(`${ab.name} deals damage and is only available in combat`);
   const budget = H.budgeted(ctx, e);
   const t = budget ? turnFor(ctx.state, e.id) : null;
-  if (t && ab.usesPerPhase && usesThisPhase(t, ab.id) >= ab.usesPerPhase) {
+  if (t && !item && ab.usesPerPhase && usesThisPhase(t, ab.id) >= ab.usesPerPhase) {
     fail(`${ab.name} can only be used ${ab.usesPerPhase === 1 ? 'once' : `${ab.usesPerPhase} times`} per phase`);
   }
   H.checkAction(ctx, e, ab.actionCost);
 
-  const act = { caster: e, ability: ab, scene, primary: null, cell: null, picks: ctx.cmd.picks ?? [], checked: null, hitEnemies: [], lastHit: null, lines: [], data: { abilityId: ab.id, strikes: [] } };
+  const act = { caster: e, ability: ab, item: !!item, scene, primary: null, cell: null, picks: ctx.cmd.picks ?? [], checked: null, hitEnemies: [], lastHit: null, lines: [], data: { abilityId: ab.id, strikes: [] } };
   // Validates the picked target; range is measured from `from` (a square the caster is about
   // to move to) or from where the caster stands.
   const pickTarget = (tg, from = null) => {
@@ -583,8 +615,17 @@ export function activateAbility(ctx) {
   }
 
   H.spendAction(ctx, e, ab.actionCost);
-  if (t) t.abilitiesUsed.push(ab.id);
-  runEffects(ctx, act, ab.effects);
+  if (t && !item) t.abilitiesUsed.push(ab.id);
+  // A "next hit" damage modifier (Blood Frenzy) applies to every hit this ability makes and is
+  // used up once the ability finishes (dealDamage collects them in ctx.spendAfterAbility).
+  const outer = ctx.spendAfterAbility;
+  ctx.spendAfterAbility = [];
+  try {
+    runEffects(ctx, act, ab.effects);
+  } finally {
+    for (const { entity, id } of ctx.spendAfterAbility) removeEffect(entity, id);
+    ctx.spendAfterAbility = outer;
+  }
 
   const on = act.primary && act.primary !== e ? ` on ${act.primary.name}` : '';
   const head = `${e.name} uses ${ab.name}${on}`;
@@ -617,7 +658,7 @@ export function resolveCheck(ctx, checkId, success) {
     ctx.log('ability', verdict);
     return;
   }
-  const act = { caster, ability: { name: chk.abilityName, id: null }, scene: ctx.state.scenes[ctx.state.activeSceneId], primary: subject, checked: subject, cell: null, picks: [], hitEnemies: [subject], lastHit: true, lines: [], data: { strikes: [] } };
+  const act = { caster, ability: { name: chk.abilityName, id: chk.abilityId ?? null }, scene: ctx.state.scenes[ctx.state.activeSceneId], primary: subject, checked: subject, cell: null, picks: [], hitEnemies: [subject], lastHit: true, lines: [], data: { strikes: [] } };
   runEffects(ctx, act, outcome);
   const pub = act.lines.map((l) => l.pub).filter(Boolean).join(' · ');
   ctx.log('ability', pub ? `${verdict} — ${pub}` : verdict);

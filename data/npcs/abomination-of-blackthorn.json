@@ -437,7 +437,7 @@
             { "type": "apply_status", "target": "checked_enemy", "status": "frightened" },
             { "type": "apply_status", "target": "checked_enemy", "status": "shaken" }
           ] }],
-        "description": "A quiet word and a cold stare at a foe within 4. If it doesn't resist, it is frightened (can't move closer to him) and shaken (−2 to hit) through the next DM phase. Once per phase." },
+        "description": "A quiet word and a cold stare at a foe within 4. If it doesn't resist, it is frightened (−2 to hit, can't move closer to him) and shaken (another −2 to hit) through the next DM phase. Once per phase." },
       { "id": "immovable", "name": "Immovable", "actionCost": 1, "range": 0, "usesPerPhase": 1,
         "effects": [{ "type": "modify_damage_received", "target": "self", "amount": -3, "duration": "next_dm_phase", "label": "Immovable" }],
         "description": "Sets his considerable weight and shrugs off blows: every hit he takes is reduced by 3 through the next DM phase. Once per phase." },

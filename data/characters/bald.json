@@ -1,0 +1,1400 @@
+[
+  {
+    "id": "brassguard",
+    "name": "Dorian Brassguard",
+    "role": "tank",
+    "image": "/static/tokens/token_383.webp",
+    "maxHp": 46,
+    "movement": 4,
+    "defense": 18,
+    "attacks": [
+      { "id": "brassguard-longsword", "name": "Gilded Longsword", "attack": "1d20+6", "damage": "1d10+4", "range": 1 },
+      { "id": "brassguard-throwing-axe", "name": "Throwing Axe", "attack": "1d20+4", "damage": "1d6+3", "range": 5 }
+    ],
+    "abilities": [
+      {
+        "id": "brassguard-shield-wall",
+        "name": "Shield Wall",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [{ "type": "defense_bonus", "target": "self", "amount": 2, "radius": 1, "duration": "next_dm_phase" }],
+        "description": "Raise your shield as a rallying point: you and every ally within 1 square gain +2 Defense through the next DM phase."
+      },
+      {
+        "id": "brassguard-challenge",
+        "name": "Knightly Challenge",
+        "actionCost": 1,
+        "range": 3,
+        "effects": [{ "type": "taunt", "target": "enemy", "duration": "next_dm_phase" }],
+        "description": "Call out an enemy within 3 squares, forcing its attacks to target you while you remain a valid target through the next DM phase."
+      },
+      {
+        "id": "brassguard-stand-fast",
+        "name": "Stand Fast",
+        "actionCost": 1,
+        "range": 2,
+        "effects": [{ "type": "grant_protection", "target": "ally_or_self", "fraction": 0.5, "range": 2, "duration": "next_dm_phase" }],
+        "description": "Steady yourself or an ally within 2 squares, halving the next hit they take."
+      }
+    ],
+    "inventory": ["gilded-pauldron", "healing-potion", "oathbound-signet"]
+  },
+  {
+    "id": "emberbeard",
+    "name": "Grimbold Emberbeard",
+    "role": "tank",
+    "image": "/static/tokens/token_384.webp",
+    "maxHp": 48,
+    "movement": 4,
+    "defense": 17,
+    "attacks": [
+      { "id": "emberbeard-warhammer", "name": "Forge Warhammer", "attack": "1d20+5", "damage": "1d12+4", "range": 1 },
+      { "id": "emberbeard-crossbow", "name": "Heavy Crossbow", "attack": "1d20+4", "damage": "1d6+3", "range": 6 }
+    ],
+    "abilities": [
+      {
+        "id": "emberbeard-anvil-stance",
+        "name": "Anvil Stance",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [{ "type": "modify_damage_received", "target": "self", "amount": -3, "duration": "next_dm_phase" }],
+        "description": "Plant your boots like an anvil: every hit you take is reduced by 3 through the next DM phase."
+      },
+      {
+        "id": "emberbeard-hammer-slam",
+        "name": "Hammer Slam",
+        "actionCost": 1,
+        "range": 1,
+        "effects": [{ "type": "attack", "target": "enemy", "attack": "1d20+5", "damage": "2d6+3", "range": 1, "damageType": "bludgeoning" }, { "type": "apply_status", "status": "shaken", "duration": "next_dm_phase", "target": "hit_enemies", "when": "attack_hits" }],
+        "description": "Slam an adjacent enemy with your warhammer for 2d6+3. On a hit, it is shaken (−2 to hit) through the next DM phase."
+      }
+    ],
+    "inventory": ["forge-warhammer", "healing-potion", "braided-beard-rings"]
+  },
+  {
+    "id": "ironbead",
+    "name": "Urzog Ironbead",
+    "role": "tank",
+    "image": "/static/tokens/token_389.webp",
+    "maxHp": 47,
+    "movement": 5,
+    "defense": 17,
+    "attacks": [
+      { "id": "ironbead-greataxe", "name": "Greataxe", "attack": "1d20+5", "damage": "1d12+4", "range": 1 },
+      { "id": "ironbead-javelin", "name": "Javelin", "attack": "1d20+4", "damage": "1d6+3", "range": 5 }
+    ],
+    "abilities": [
+      {
+        "id": "ironbead-war-chant",
+        "name": "War Chant",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [{ "type": "roll_to_apply", "target": "enemies_in_area", "radius": 2, "roll": "1d20+5", "onSuccess": [{ "type": "taunt", "target": "checked_enemy", "duration": "next_dm_phase" }] }],
+        "description": "Chant a guttural challenge at every enemy within 2 squares; those that fail to resist must attack you through the next DM phase."
+      },
+      {
+        "id": "ironbead-unbroken",
+        "name": "Unbroken",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [{ "type": "heal", "target": "self", "heal": "1d10+3" }],
+        "description": "Grit your tusks and shrug off your wounds, restoring 1d10+3 HP to yourself."
+      }
+    ],
+    "inventory": ["prayer-beads", "healing-potion", "tusk-charm"]
+  },
+  {
+    "id": "blackforge",
+    "name": "Thane Durgan Blackforge",
+    "role": "tank",
+    "image": "/static/tokens/token_393.webp",
+    "maxHp": 45,
+    "movement": 4,
+    "defense": 18,
+    "attacks": [
+      { "id": "blackforge-maul", "name": "Blackforge Maul", "attack": "1d20+5", "damage": "1d10+4", "range": 1 },
+      { "id": "blackforge-throwing-hammer", "name": "Throwing Hammer", "attack": "1d20+4", "damage": "1d6+3", "range": 4 }
+    ],
+    "abilities": [
+      {
+        "id": "blackforge-intercept",
+        "name": "Forge-Bound Guard",
+        "actionCost": 1,
+        "range": 2,
+        "effects": [{ "type": "redirect_next_hit", "target": "ally", "range": 2, "duration": "next_dm_phase" }],
+        "description": "Bind yourself to an ally within 2 squares: the next hit aimed at them lands on you instead."
+      },
+      {
+        "id": "blackforge-iron-resolve",
+        "name": "Iron Resolve",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [{ "type": "absorb_next_hit", "target": "self", "duration": "next_dm_phase" }],
+        "description": "Set your armor and jaw: the next hit you take before the end of the next DM phase deals no damage."
+      },
+      {
+        "id": "blackforge-thanes-command",
+        "name": "Thane's Command",
+        "actionCost": 1,
+        "range": 3,
+        "effects": [{ "type": "taunt", "target": "enemy", "duration": "next_dm_phase" }],
+        "description": "Bellow a thane's command at an enemy within 3 squares, forcing its attacks onto you through the next DM phase."
+      }
+    ],
+    "inventory": ["blackforge-maul", "healing-potion", "clan-ledger"]
+  },
+  {
+    "id": "cindercrest",
+    "name": "Vharzul Cindercrest",
+    "role": "tank",
+    "image": "/static/tokens/token_397.webp",
+    "maxHp": 44,
+    "movement": 5,
+    "defense": 18,
+    "attacks": [
+      { "id": "cindercrest-glaive", "name": "Scaled Glaive", "attack": "1d20+5", "damage": "1d10+4", "range": 1 },
+      { "id": "cindercrest-ember-spit", "name": "Ember Spit", "attack": "1d20+4", "damage": "1d6+3", "range": 5 }
+    ],
+    "abilities": [
+      {
+        "id": "cindercrest-flame-breath",
+        "name": "Flame Breath",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [{ "type": "area_attack", "target": "enemies_in_area", "center": "self", "radius": 1, "attack": "1d20+4", "damage": "2d6+2", "damageType": "fire" }],
+        "description": "Exhale a ring of flame: every enemy within 1 square takes 2d6+2 fire damage on a hit."
+      },
+      {
+        "id": "cindercrest-scale-ward",
+        "name": "Scale Ward",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [{ "type": "grant_protection", "target": "self", "fraction": 0.5, "magicalOnly": true, "duration": "next_dm_phase" }, { "type": "defense_bonus", "target": "self", "amount": 1, "duration": "next_dm_phase" }],
+        "description": "Flare your scales: gain +1 Defense, and the next magical hit you take is halved, through the next DM phase."
+      }
+    ],
+    "inventory": ["dragonscale-shield", "healing-potion", "smoldering-ember"]
+  },
+  {
+    "id": "ashmark",
+    "name": "Korrin Ashmark",
+    "role": "tank",
+    "image": "/static/tokens/token_399.webp",
+    "maxHp": 45,
+    "movement": 5,
+    "defense": 17,
+    "attacks": [
+      { "id": "ashmark-flail", "name": "Spiked Flail", "attack": "1d20+6", "damage": "1d8+4", "range": 1 },
+      { "id": "ashmark-sling", "name": "Sling", "attack": "1d20+4", "damage": "1d6+3", "range": 6 }
+    ],
+    "abilities": [
+      {
+        "id": "ashmark-glare",
+        "name": "Glare of Warning",
+        "actionCost": 1,
+        "range": 3,
+        "effects": [{ "type": "roll_to_apply", "target": "enemy", "roll": "1d20+5", "range": 3, "onSuccess": [{ "type": "apply_status", "target": "checked_enemy", "status": "shaken", "duration": "next_dm_phase" }] }],
+        "description": "Fix an enemy within 3 squares with a tattooed glare; if it fails to resist, it is shaken (−2 to hit) through the next DM phase."
+      },
+      {
+        "id": "ashmark-bulwark-oath",
+        "name": "Bulwark Oath",
+        "actionCost": 1,
+        "range": 2,
+        "effects": [{ "type": "defense_bonus", "target": "ally_or_self", "amount": 2, "range": 2, "duration": "next_dm_phase" }],
+        "description": "Swear to guard yourself or an ally within 2 squares, granting +2 Defense through the next DM phase."
+      },
+      {
+        "id": "ashmark-hold-the-line",
+        "name": "Hold the Line",
+        "actionCost": 1,
+        "range": 3,
+        "effects": [{ "type": "taunt", "target": "enemy", "duration": "next_dm_phase" }],
+        "description": "Dare an enemy within 3 squares to come at you, forcing its attacks onto you through the next DM phase."
+      }
+    ],
+    "inventory": ["studded-leathers", "healing-potion", "ash-ink-pot"]
+  },
+  {
+    "id": "copperbraid",
+    "name": "Magni Copperbraid",
+    "role": "tank",
+    "image": "/static/tokens/token_403.webp",
+    "maxHp": 46,
+    "movement": 4,
+    "defense": 17,
+    "attacks": [
+      { "id": "copperbraid-battleaxe", "name": "Battleaxe", "attack": "1d20+5", "damage": "1d10+4", "range": 1 },
+      { "id": "copperbraid-handaxe", "name": "Thrown Handaxe", "attack": "1d20+4", "damage": "1d6+3", "range": 4 }
+    ],
+    "abilities": [
+      {
+        "id": "copperbraid-toppling-blow",
+        "name": "Toppling Blow",
+        "actionCost": 1,
+        "range": 1,
+        "effects": [{ "type": "attack", "target": "enemy", "attack": "1d20+5", "damage": "1d10+4", "range": 1 }, { "type": "reduce_actions", "amount": 1, "duration": "next_dm_phase", "target": "hit_enemies", "when": "attack_hits" }],
+        "description": "Chop at an adjacent enemy's legs for 1d10+4. On a hit, it has one fewer action in the next DM phase."
+      },
+      {
+        "id": "copperbraid-bracing-roar",
+        "name": "Bracing Roar",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [{ "type": "defense_bonus", "target": "self", "amount": 2, "radius": 2, "duration": "next_dm_phase" }],
+        "description": "Roar for the clan: you and every ally within 2 squares gain +2 Defense through the next DM phase."
+      }
+    ],
+    "inventory": ["copper-beard-clasps", "healing-potion", "whetstone"]
+  },
+  {
+    "id": "greystone",
+    "name": "Hollin Greystone",
+    "role": "tank",
+    "image": "/static/tokens/token_411.webp",
+    "maxHp": 44,
+    "movement": 4,
+    "defense": 19,
+    "attacks": [
+      { "id": "greystone-mace", "name": "Veteran's Mace", "attack": "1d20+5", "damage": "1d8+4", "range": 1 },
+      { "id": "greystone-crossbow", "name": "Light Crossbow", "attack": "1d20+4", "damage": "1d6+3", "range": 6 }
+    ],
+    "abilities": [
+      {
+        "id": "greystone-veterans-cover",
+        "name": "Veteran's Cover",
+        "actionCost": 1,
+        "range": 2,
+        "effects": [{ "type": "discourage_attacks", "target": "ally", "penalty": 3, "range": 2, "duration": "next_dm_phase" }],
+        "description": "Step into the line of fire for an ally within 2 squares: attacks against them take −3 to hit through the next DM phase."
+      },
+      {
+        "id": "greystone-old-grudge",
+        "name": "Old Grudge",
+        "actionCost": 1,
+        "range": 3,
+        "effects": [{ "type": "taunt", "target": "enemy", "duration": "next_dm_phase" }],
+        "description": "Single out an enemy within 3 squares, forcing its attacks onto you through the next DM phase."
+      },
+      {
+        "id": "greystone-shield-brace",
+        "name": "Shield Brace",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [{ "type": "defense_bonus", "target": "self", "amount": 3, "duration": "next_dm_phase" }],
+        "description": "Brace behind your battered shield, gaining +3 Defense through the next DM phase."
+      }
+    ],
+    "inventory": ["battered-tower-shield", "healing-potion", "pipe-and-tabac"]
+  },
+  {
+    "id": "laughingtusk",
+    "name": "Grukka Laughingtusk",
+    "role": "tank",
+    "image": "/static/tokens/token_415.webp",
+    "maxHp": 48,
+    "movement": 5,
+    "defense": 16,
+    "attacks": [
+      { "id": "laughingtusk-club", "name": "Knotted Club", "attack": "1d20+5", "damage": "1d12+4", "range": 1 },
+      { "id": "laughingtusk-rock", "name": "Thrown Rock", "attack": "1d20+4", "damage": "1d6+3", "range": 5 }
+    ],
+    "abilities": [
+      {
+        "id": "laughingtusk-belly-laugh",
+        "name": "Belly Laugh",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [{ "type": "roll_to_apply", "target": "enemies_in_area", "radius": 2, "roll": "1d20+4", "onSuccess": [{ "type": "taunt", "target": "checked_enemy", "duration": "next_dm_phase" }] }],
+        "description": "Let out a booming laugh at every enemy within 2 squares; those that fail to resist must attack you through the next DM phase."
+      },
+      {
+        "id": "laughingtusk-thick-hide",
+        "name": "Thick Hide",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [{ "type": "modify_damage_received", "target": "self", "amount": -2, "duration": "next_dm_phase" }],
+        "description": "Puff up under your furs: every hit you take is reduced by 2 through the next DM phase."
+      },
+      {
+        "id": "laughingtusk-hearty-swig",
+        "name": "Hearty Swig",
+        "actionCost": 1,
+        "range": 0,
+        "usesPerPhase": 1,
+        "effects": [{ "type": "heal", "target": "self", "heal": "1d8+2" }],
+        "description": "Take a long swig from your flask and restore 1d8+2 HP to yourself."
+      }
+    ],
+    "inventory": ["bottomless-flask", "healing-potion", "lucky-boar-tooth"]
+  },
+  {
+    "id": "tankardson",
+    "name": "Oskar Tankardson",
+    "role": "tank",
+    "image": "/static/tokens/token_421.webp",
+    "maxHp": 46,
+    "movement": 4,
+    "defense": 17,
+    "attacks": [
+      { "id": "tankardson-warhammer", "name": "Merry Warhammer", "attack": "1d20+5", "damage": "1d10+4", "range": 1 },
+      { "id": "tankardson-tankard", "name": "Hurled Tankard", "attack": "1d20+4", "damage": "1d6+3", "range": 4 }
+    ],
+    "abilities": [
+      {
+        "id": "tankardson-toast",
+        "name": "Toast to Courage",
+        "actionCost": 1,
+        "range": 3,
+        "effects": [{ "type": "grant_roll_bonus", "target": "ally_or_self", "bonus": 2, "range": 3, "duration": "until_used" }],
+        "description": "Raise a toast to yourself or an ally within 3 squares, granting +2 on their next attack roll."
+      },
+      {
+        "id": "tankardson-rallying-bellow",
+        "name": "Rallying Bellow",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [{ "type": "defense_bonus", "target": "self", "amount": 2, "radius": 2, "duration": "next_dm_phase" }],
+        "description": "Bellow a drinking song: you and every ally within 2 squares gain +2 Defense through the next DM phase."
+      },
+      {
+        "id": "tankardson-come-and-get-it",
+        "name": "Come and Get It",
+        "actionCost": 1,
+        "range": 3,
+        "effects": [{ "type": "taunt", "target": "enemy", "duration": "next_dm_phase" }],
+        "description": "Wave your tankard at an enemy within 3 squares, forcing its attacks onto you through the next DM phase."
+      }
+    ],
+    "inventory": ["dented-tankard", "healing-potion", "beard-beads"]
+  },
+  {
+    "id": "goldveil",
+    "name": "Zahra Goldveil",
+    "role": "dps",
+    "image": "/static/tokens/token_385.webp",
+    "maxHp": 32,
+    "movement": 7,
+    "defense": 15,
+    "attacks": [
+      { "id": "goldveil-sickles", "name": "Twin Sickles", "attack": "1d20+6", "damage": "1d8+4", "range": 1 },
+      { "id": "goldveil-throwing-knives", "name": "Throwing Knives", "attack": "1d20+5", "damage": "1d6+4", "range": 6 }
+    ],
+    "abilities": [
+      {
+        "id": "goldveil-silken-flurry",
+        "name": "Silken Flurry",
+        "actionCost": 1,
+        "range": 1,
+        "effects": [{ "type": "multi_attack", "target": "enemy", "count": 2, "attack": "1d20+5", "damage": "1d6+3", "range": 1 }],
+        "description": "Whirl your sickles in two separate strikes against an adjacent enemy, each dealing 1d6+3 on a hit."
+      },
+      {
+        "id": "goldveil-veil-step",
+        "name": "Veil Step",
+        "actionCost": 0,
+        "range": 4,
+        "usesPerPhase": 1,
+        "effects": [{ "type": "teleport", "target": "cell", "distance": 4 }],
+        "description": "Vanish behind your silks and reappear up to 4 squares away; once per phase."
+      }
+    ],
+    "inventory": ["golden-hoops", "healing-potion", "silk-veil"]
+  },
+  {
+    "id": "korvath",
+    "name": "Korvath the Scarred",
+    "role": "dps",
+    "image": "/static/tokens/token_386.webp",
+    "maxHp": 35,
+    "movement": 6,
+    "defense": 14,
+    "attacks": [
+      { "id": "korvath-greataxe", "name": "Bloodied Greataxe", "attack": "1d20+5", "damage": "2d6+2", "range": 1 },
+      { "id": "korvath-throwing-axe", "name": "Throwing Axe", "attack": "1d20+4", "damage": "1d8+3", "range": 5 }
+    ],
+    "abilities": [
+      {
+        "id": "korvath-blood-frenzy",
+        "name": "Blood Frenzy",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [{ "type": "modify_damage_dealt", "target": "self", "amount": 4, "duration": "until_used" }],
+        "description": "Work yourself into a frenzy: your next hit deals +4 damage."
+      },
+      {
+        "id": "korvath-cleave",
+        "name": "Cleave",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [{ "type": "area_attack", "target": "enemies_in_area", "center": "self", "radius": 1, "attack": "1d20+5", "damage": "1d10+3", "damageType": "slashing" }],
+        "description": "Swing your greataxe in a wide arc, attacking every enemy within 1 square for 1d10+3."
+      }
+    ],
+    "inventory": ["red-war-paint", "healing-potion", "chain-wraps"]
+  },
+  {
+    "id": "nightglass",
+    "name": "Ilvessa Nightglass",
+    "role": "dps",
+    "image": "/static/tokens/token_388.webp",
+    "maxHp": 30,
+    "movement": 6,
+    "defense": 14,
+    "attacks": [
+      { "id": "nightglass-dagger", "name": "Shadow Dagger", "attack": "1d20+5", "damage": "1d8+3", "range": 1 },
+      { "id": "nightglass-umbral-bolt", "name": "Umbral Bolt", "attack": "1d20+6", "damage": "1d10+3", "range": 8 }
+    ],
+    "abilities": [
+      {
+        "id": "nightglass-shadow-snare",
+        "name": "Shadow Snare",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [{ "type": "roll_to_apply", "target": "enemy", "roll": "1d20+5", "range": 6, "onSuccess": [{ "type": "apply_status", "target": "checked_enemy", "status": "snared", "duration": "next_dm_phase" }] }],
+        "description": "Pin an enemy's shadow within 6 squares; if it fails to resist, it is snared (can't move) through the next DM phase."
+      },
+      {
+        "id": "nightglass-shadowlance",
+        "name": "Shadowlance",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [{ "type": "attack", "target": "enemy", "attack": "1d20+6", "damage": "2d6+3", "range": 6, "damageType": "necrotic" }],
+        "description": "Hurl a lance of living shadow at an enemy within 6 squares for 2d6+3 necrotic damage."
+      }
+    ],
+    "inventory": ["obsidian-earrings", "healing-potion", "spider-silk-cord"]
+  },
+  {
+    "id": "runecarver",
+    "name": "Tamsin Runecarver",
+    "role": "dps",
+    "image": "/static/tokens/token_391.webp",
+    "maxHp": 32,
+    "movement": 6,
+    "defense": 14,
+    "attacks": [
+      { "id": "runecarver-rune-blades", "name": "Rune Blades", "attack": "1d20+5", "damage": "1d8+4", "range": 1 },
+      { "id": "runecarver-rune-shard", "name": "Rune Shard", "attack": "1d20+5", "damage": "1d8+3", "range": 6 }
+    ],
+    "abilities": [
+      {
+        "id": "runecarver-searing-sigil",
+        "name": "Searing Sigil",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [{ "type": "mark_target", "target": "enemy", "bonus": "1d8", "range": 6 }],
+        "description": "Brand an enemy within 6 squares with a glowing sigil: your next hit on it deals an extra 1d8."
+      },
+      {
+        "id": "runecarver-glyph-burst",
+        "name": "Glyph Burst",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [{ "type": "area_attack", "target": "enemies_in_area", "center": "target", "radius": 1, "range": 6, "attack": "1d20+5", "damage": "1d8+2", "damageType": "arcane" }],
+        "description": "Detonate a glyph on an enemy within 6 squares, attacking it and every enemy within 1 square of it for 1d8+2 arcane damage."
+      }
+    ],
+    "inventory": ["carving-knife", "healing-potion", "fur-mantle"]
+  },
+  {
+    "id": "mosswhisper",
+    "name": "Faelan Mosswhisper",
+    "role": "dps",
+    "image": "/static/tokens/token_392.webp",
+    "maxHp": 31,
+    "movement": 7,
+    "defense": 15,
+    "attacks": [
+      { "id": "mosswhisper-longbow", "name": "Elven Longbow", "attack": "1d20+6", "damage": "1d8+4", "range": 10 },
+      { "id": "mosswhisper-knife", "name": "Hunting Knife", "attack": "1d20+5", "damage": "1d6+4", "range": 1 }
+    ],
+    "abilities": [
+      {
+        "id": "mosswhisper-volley",
+        "name": "Twin Volley",
+        "actionCost": 1,
+        "range": 8,
+        "effects": [{ "type": "multi_attack", "target": "enemy", "count": 2, "attack": "1d20+5", "damage": "1d8+2", "range": 8 }],
+        "description": "Loose two arrows at an enemy within 8 squares, each with its own attack roll and 1d8+2 damage."
+      },
+      {
+        "id": "mosswhisper-pinning-shot",
+        "name": "Pinning Shot",
+        "actionCost": 1,
+        "range": 8,
+        "effects": [{ "type": "attack", "target": "enemy", "attack": "1d20+6", "damage": "1d8+3", "range": 8, "damageType": "piercing" }, { "type": "apply_status", "status": "snared", "duration": "next_dm_phase", "target": "hit_enemies", "when": "attack_hits" }],
+        "description": "Fire at an enemy within 8 squares for 1d8+3. On a hit, it is pinned in place (snared) through the next DM phase."
+      }
+    ],
+    "inventory": ["green-hood", "healing-potion", "moss-fletched-arrows"]
+  },
+  {
+    "id": "redstripe",
+    "name": "Kesh Redstripe",
+    "role": "dps",
+    "image": "/static/tokens/token_394.webp",
+    "maxHp": 33,
+    "movement": 7,
+    "defense": 14,
+    "attacks": [
+      { "id": "redstripe-spear", "name": "Bone Spear", "attack": "1d20+5", "damage": "1d10+3", "range": 1 },
+      { "id": "redstripe-thrown-spear", "name": "Thrown Spear", "attack": "1d20+5", "damage": "1d8+3", "range": 6 }
+    ],
+    "abilities": [
+      {
+        "id": "redstripe-predators-leap",
+        "name": "Predator's Leap",
+        "actionCost": 1,
+        "range": 4,
+        "effects": [{ "type": "dash", "target": "cell", "distance": 4 }, { "type": "attack", "target": "enemy", "attack": "1d20+6", "damage": "2d6+3", "range": 1, "damageType": "piercing" }],
+        "description": "Leap up to 4 squares, then spear an adjacent enemy for 2d6+3. The leap is free movement, but not while snared or toward what frightens you."
+      },
+      {
+        "id": "redstripe-blood-trail",
+        "name": "Blood Trail",
+        "actionCost": 1,
+        "range": 8,
+        "effects": [{ "type": "mark_target", "target": "enemy", "bonus": "1d6", "range": 8 }],
+        "description": "Mark your prey within 8 squares: your next hit on it deals an extra 1d6."
+      }
+    ],
+    "inventory": ["red-war-paint", "healing-potion", "wolf-fur-cloak"]
+  },
+  {
+    "id": "bluevein",
+    "name": "Azhar Bluevein",
+    "role": "dps",
+    "image": "/static/tokens/token_395.webp",
+    "maxHp": 30,
+    "movement": 6,
+    "defense": 13,
+    "attacks": [
+      { "id": "bluevein-staff", "name": "Brass Staff", "attack": "1d20+4", "damage": "1d6+3", "range": 1 },
+      { "id": "bluevein-lightning", "name": "Lightning Bolt", "attack": "1d20+6", "damage": "1d10+3", "range": 8 }
+    ],
+    "abilities": [
+      {
+        "id": "bluevein-chain-lightning",
+        "name": "Chain Lightning",
+        "actionCost": 1,
+        "range": 8,
+        "effects": [{ "type": "chain_attack", "target": "enemy", "jumps": 2, "jumpRange": 3, "attack": "1d20+5", "damage": "1d8+2", "range": 8, "damageType": "lightning" }],
+        "description": "Strike an enemy within 8 squares with lightning that can leap to up to 2 more enemies, each within 3 squares of the last, for 1d8+2 each."
+      },
+      {
+        "id": "bluevein-thunderclap",
+        "name": "Thunderclap",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [{ "type": "area_attack", "target": "enemies_in_area", "center": "self", "radius": 1, "attack": "1d20+5", "damage": "1d8+2", "damageType": "thunder" }],
+        "description": "Clap your hands with a peal of thunder, attacking every enemy within 1 square for 1d8+2 thunder damage."
+      }
+    ],
+    "inventory": ["brass-lamp", "healing-potion", "storm-glass"]
+  },
+  {
+    "id": "morrow",
+    "name": "Silas Morrow",
+    "role": "dps",
+    "image": "/static/tokens/token_398.webp",
+    "maxHp": 31,
+    "movement": 6,
+    "defense": 14,
+    "attacks": [
+      { "id": "morrow-hexblade", "name": "Hexblade", "attack": "1d20+5", "damage": "1d8+4", "range": 1 },
+      { "id": "morrow-eldritch-bolt", "name": "Eldritch Bolt", "attack": "1d20+6", "damage": "1d10+3", "range": 8 }
+    ],
+    "abilities": [
+      {
+        "id": "morrow-wither-curse",
+        "name": "Wither Curse",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [{ "type": "roll_to_apply", "target": "enemy", "roll": "1d20+6", "range": 6, "onSuccess": [{ "type": "modify_damage_dealt", "target": "checked_enemy", "multiplier": 0.5, "duration": "next_dm_phase" }] }],
+        "description": "Curse an enemy within 6 squares; if it fails to resist, its next hit deals half damage (through the next DM phase)."
+      },
+      {
+        "id": "morrow-siphon-life",
+        "name": "Siphon Life",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [{ "type": "attack", "target": "enemy", "attack": "1d20+6", "damage": "2d6+2", "range": 6, "damageType": "necrotic" }, { "type": "heal", "target": "self", "heal": "1d6+2", "when": "attack_hits" }],
+        "description": "Drain an enemy within 6 squares for 2d6+2 necrotic damage. On a hit, you regain 1d6+2 HP."
+      }
+    ],
+    "inventory": ["high-collared-coat", "healing-potion", "black-candle"]
+  },
+  {
+    "id": "duskmantle",
+    "name": "Veyl Duskmantle",
+    "role": "dps",
+    "image": "/static/tokens/token_402.webp",
+    "maxHp": 30,
+    "movement": 6,
+    "defense": 14,
+    "attacks": [
+      { "id": "duskmantle-rapier", "name": "Violet Rapier", "attack": "1d20+5", "damage": "1d8+4", "range": 1 },
+      { "id": "duskmantle-arcane-missile", "name": "Arcane Missile", "attack": "1d20+6", "damage": "1d8+4", "range": 8 }
+    ],
+    "abilities": [
+      {
+        "id": "duskmantle-arcane-barrage",
+        "name": "Arcane Barrage",
+        "actionCost": 1,
+        "range": 8,
+        "effects": [{ "type": "multi_attack", "target": "enemy", "count": 3, "attack": "1d20+5", "damage": "1d4+2", "range": 8, "damageType": "force" }],
+        "description": "Fire three bolts of force at an enemy within 8 squares, each with its own attack roll and 1d4+2 damage."
+      },
+      {
+        "id": "duskmantle-blink",
+        "name": "Blink",
+        "actionCost": 0,
+        "range": 5,
+        "usesPerPhase": 1,
+        "effects": [{ "type": "teleport", "target": "cell", "distance": 5 }],
+        "description": "Blink up to 5 squares away; once per phase."
+      }
+    ],
+    "inventory": ["violet-mantle", "healing-potion", "spellbook"]
+  },
+  {
+    "id": "gnashtooth",
+    "name": "Gorm Gnashtooth",
+    "role": "dps",
+    "image": "/static/tokens/token_405.webp",
+    "maxHp": 36,
+    "movement": 6,
+    "defense": 13,
+    "attacks": [
+      { "id": "gnashtooth-hatchets", "name": "Twin Hatchets", "attack": "1d20+5", "damage": "1d8+4", "range": 1 },
+      { "id": "gnashtooth-thrown-hatchet", "name": "Thrown Hatchet", "attack": "1d20+4", "damage": "1d8+3", "range": 4 }
+    ],
+    "abilities": [
+      {
+        "id": "gnashtooth-reckless-fury",
+        "name": "Reckless Fury",
+        "actionCost": 1,
+        "range": 1,
+        "effects": [{ "type": "multi_attack", "target": "enemy", "count": 2, "attack": "1d20+5", "damage": "1d10+3", "range": 1 }, { "type": "defense_bonus", "target": "self", "amount": -2, "duration": "until_next_player_phase" }],
+        "description": "Hack at an adjacent enemy twice (1d10+3 each), leaving yourself open: −2 Defense until the next player phase."
+      },
+      {
+        "id": "gnashtooth-berserk",
+        "name": "Berserk",
+        "actionCost": 0,
+        "range": 0,
+        "usesPerPhase": 1,
+        "effects": [{ "type": "grant_actions", "target": "self", "amount": 1 }],
+        "description": "Fly into a rage and gain one extra action this phase; once per phase."
+      }
+    ],
+    "inventory": ["spiked-furs", "healing-potion", "trophy-teeth"]
+  },
+  {
+    "id": "ravenquill",
+    "name": "Morwenna Ravenquill",
+    "role": "dps",
+    "image": "/static/tokens/token_407.webp",
+    "maxHp": 30,
+    "movement": 6,
+    "defense": 14,
+    "attacks": [
+      { "id": "ravenquill-ritual-dagger", "name": "Ritual Dagger", "attack": "1d20+5", "damage": "1d6+4", "range": 1 },
+      { "id": "ravenquill-hex-bolt", "name": "Hex Bolt", "attack": "1d20+6", "damage": "1d10+3", "range": 7 }
+    ],
+    "abilities": [
+      {
+        "id": "ravenquill-ravens-dread",
+        "name": "Raven's Dread",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [{ "type": "roll_to_apply", "target": "enemy", "roll": "1d20+5", "range": 6, "onSuccess": [{ "type": "apply_status", "target": "checked_enemy", "status": "frightened", "duration": "next_dm_phase" }] }],
+        "description": "Send a shrieking raven at an enemy within 6 squares; if it fails to resist, it is frightened of you (−2 to hit, can't move closer to you) through the next DM phase."
+      },
+      {
+        "id": "ravenquill-feather-storm",
+        "name": "Feather Storm",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [{ "type": "area_attack", "target": "enemies_in_area", "center": "target", "radius": 1, "range": 6, "attack": "1d20+5", "damage": "1d8+2", "damageType": "necrotic" }],
+        "description": "Engulf an enemy within 6 squares in black feathers, attacking it and every enemy within 1 square of it for 1d8+2 necrotic."
+      }
+    ],
+    "inventory": ["raven-feather-collar", "healing-potion", "sapphire-earrings"]
+  },
+  {
+    "id": "stormglyph",
+    "name": "Thrain Stormglyph",
+    "role": "dps",
+    "image": "/static/tokens/token_409.webp",
+    "maxHp": 33,
+    "movement": 6,
+    "defense": 14,
+    "attacks": [
+      { "id": "stormglyph-fist", "name": "Runed Fist", "attack": "1d20+5", "damage": "1d8+4", "range": 1 },
+      { "id": "stormglyph-storm-glyph", "name": "Storm Glyph", "attack": "1d20+5", "damage": "1d10+3", "range": 7 }
+    ],
+    "abilities": [
+      {
+        "id": "stormglyph-thunder-step",
+        "name": "Thunder Step",
+        "actionCost": 1,
+        "range": 4,
+        "effects": [{ "type": "teleport", "target": "cell", "distance": 4 }, { "type": "area_attack", "target": "enemies_in_area", "center": "self", "radius": 1, "attack": "1d20+5", "damage": "1d6+3", "damageType": "thunder" }],
+        "description": "Vanish in a thunderclap and reappear up to 4 squares away, attacking every enemy within 1 square of where you land for 1d6+3."
+      },
+      {
+        "id": "stormglyph-static-surge",
+        "name": "Static Surge",
+        "actionCost": 1,
+        "range": 7,
+        "effects": [{ "type": "chain_attack", "target": "enemy", "jumps": 1, "jumpRange": 3, "attack": "1d20+5", "damage": "2d6+1", "range": 7, "damageType": "lightning" }],
+        "description": "Loose a surge of lightning at an enemy within 7 squares that can leap to one more enemy within 3 squares, 2d6+1 each."
+      }
+    ],
+    "inventory": ["copper-earrings", "healing-potion", "storm-tattoo-ink"]
+  },
+  {
+    "id": "cutlass",
+    "name": "Rhea Cutlass",
+    "role": "dps",
+    "image": "/static/tokens/token_410.webp",
+    "maxHp": 31,
+    "movement": 7,
+    "defense": 15,
+    "attacks": [
+      { "id": "cutlass-shortsword", "name": "Shortsword", "attack": "1d20+6", "damage": "1d8+4", "range": 1 },
+      { "id": "cutlass-hand-crossbow", "name": "Hand Crossbow", "attack": "1d20+5", "damage": "1d8+3", "range": 6 }
+    ],
+    "abilities": [
+      {
+        "id": "cutlass-quick-hands",
+        "name": "Quick Hands",
+        "actionCost": 0,
+        "range": 0,
+        "usesPerPhase": 1,
+        "effects": [{ "type": "grant_actions", "target": "self", "amount": 1 }],
+        "description": "Move faster than the eye can follow and gain one extra action this phase; once per phase."
+      },
+      {
+        "id": "cutlass-backstab",
+        "name": "Backstab",
+        "actionCost": 1,
+        "range": 1,
+        "effects": [{ "type": "attack", "target": "enemy", "attack": "1d20+6", "damage": "2d6+3", "range": 1, "defenseReduction": 2, "damageType": "piercing" }],
+        "description": "Slip a blade past an adjacent enemy's guard for 2d6+3, treating its Defense as 2 lower."
+      }
+    ],
+    "inventory": ["lockpicks", "healing-potion", "silver-hoops"]
+  },
+  {
+    "id": "hexhorn",
+    "name": "Zephyrine Hexhorn",
+    "role": "dps",
+    "image": "/static/tokens/token_412.webp",
+    "maxHp": 31,
+    "movement": 6,
+    "defense": 14,
+    "attacks": [
+      { "id": "hexhorn-infernal-blade", "name": "Infernal Blade", "attack": "1d20+5", "damage": "1d8+4", "range": 1 },
+      { "id": "hexhorn-hellfire-bolt", "name": "Hellfire Bolt", "attack": "1d20+6", "damage": "1d10+3", "range": 8 }
+    ],
+    "abilities": [
+      {
+        "id": "hexhorn-infernal-brand",
+        "name": "Infernal Brand",
+        "actionCost": 1,
+        "range": 8,
+        "effects": [{ "type": "mark_target", "target": "enemy", "bonus": "1d8", "range": 8 }],
+        "description": "Brand an enemy within 8 squares with an infernal mark: your next hit on it deals an extra 1d8."
+      },
+      {
+        "id": "hexhorn-hellfire-burst",
+        "name": "Hellfire Burst",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [{ "type": "area_attack", "target": "enemies_in_area", "center": "target", "radius": 1, "range": 6, "attack": "1d20+5", "damage": "1d8+2", "damageType": "fire" }],
+        "description": "Call down hellfire on an enemy within 6 squares, attacking it and every enemy within 1 square of it for 1d8+2 fire."
+      }
+    ],
+    "inventory": ["horn-rings", "healing-potion", "infernal-contract"]
+  },
+  {
+    "id": "thornwatch",
+    "name": "Kofi Thornwatch",
+    "role": "dps",
+    "image": "/static/tokens/token_413.webp",
+    "maxHp": 33,
+    "movement": 7,
+    "defense": 15,
+    "attacks": [
+      { "id": "thornwatch-recurve", "name": "Recurve Bow", "attack": "1d20+6", "damage": "1d8+4", "range": 10 },
+      { "id": "thornwatch-machete", "name": "Machete", "attack": "1d20+5", "damage": "1d8+3", "range": 1 }
+    ],
+    "abilities": [
+      {
+        "id": "thornwatch-steady-aim",
+        "name": "Steady Aim",
+        "actionCost": 0,
+        "range": 0,
+        "usesPerPhase": 1,
+        "effects": [{ "type": "grant_roll_bonus", "target": "self", "bonus": 2, "duration": "until_used" }],
+        "description": "Draw a slow breath: +2 on your next attack roll; once per phase."
+      },
+      {
+        "id": "thornwatch-crippling-arrow",
+        "name": "Crippling Arrow",
+        "actionCost": 1,
+        "range": 10,
+        "effects": [{ "type": "attack", "target": "enemy", "attack": "1d20+6", "damage": "1d8+4", "range": 10, "damageType": "piercing" }, { "type": "modify_movement", "amount": -2, "duration": "next_dm_phase", "target": "hit_enemies", "when": "attack_hits" }],
+        "description": "Shoot an enemy within 10 squares in the leg for 1d8+4. On a hit, it is slowed (−2 movement) through the next DM phase."
+      }
+    ],
+    "inventory": ["scout-cloak", "healing-potion", "trail-rations"]
+  },
+  {
+    "id": "coldscar",
+    "name": "Vesna Coldscar",
+    "role": "dps",
+    "image": "/static/tokens/token_414.webp",
+    "maxHp": 32,
+    "movement": 7,
+    "defense": 15,
+    "attacks": [
+      { "id": "coldscar-rapier", "name": "Duelist's Rapier", "attack": "1d20+6", "damage": "1d8+4", "range": 1 },
+      { "id": "coldscar-throwing-dagger", "name": "Throwing Dagger", "attack": "1d20+5", "damage": "1d6+4", "range": 5 }
+    ],
+    "abilities": [
+      {
+        "id": "coldscar-flurry",
+        "name": "Duelist's Flurry",
+        "actionCost": 1,
+        "range": 1,
+        "effects": [{ "type": "multi_attack", "target": "enemy", "count": 2, "attack": "1d20+5", "damage": "1d6+3", "range": 1 }],
+        "description": "Lunge twice at an adjacent enemy, each thrust its own attack for 1d6+3."
+      },
+      {
+        "id": "coldscar-feint",
+        "name": "Cold Feint",
+        "actionCost": 1,
+        "range": 1,
+        "effects": [{ "type": "roll_to_apply", "target": "enemy", "roll": "1d20+6", "range": 1, "onSuccess": [{ "type": "apply_status", "target": "checked_enemy", "status": "shaken", "duration": "next_dm_phase" }] }],
+        "description": "Feint at an adjacent enemy; if it fails to resist, it is shaken (−2 to hit) through the next DM phase."
+      }
+    ],
+    "inventory": ["duelists-gloves", "healing-potion", "scar-salve"]
+  },
+  {
+    "id": "skyreaver",
+    "name": "Hrothgar Skyreaver",
+    "role": "dps",
+    "image": "/static/tokens/token_417.webp",
+    "maxHp": 36,
+    "movement": 6,
+    "defense": 13,
+    "attacks": [
+      { "id": "skyreaver-greatsword", "name": "Greatsword", "attack": "1d20+5", "damage": "2d6+2", "range": 1 },
+      { "id": "skyreaver-spear", "name": "Throwing Spear", "attack": "1d20+4", "damage": "1d8+3", "range": 5 }
+    ],
+    "abilities": [
+      {
+        "id": "skyreaver-whirlwind",
+        "name": "Whirlwind",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [{ "type": "area_attack", "target": "enemies_in_area", "center": "self", "radius": 1, "attack": "1d20+5", "damage": "1d8+3", "damageType": "slashing" }],
+        "description": "Spin your greatsword in a full circle, attacking every enemy within 1 square for 1d8+3."
+      },
+      {
+        "id": "skyreaver-battle-cry",
+        "name": "Battle Cry",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [{ "type": "roll_to_apply", "target": "enemies_in_area", "radius": 2, "roll": "1d20+4", "onSuccess": [{ "type": "apply_status", "target": "checked_enemy", "status": "shaken", "duration": "next_dm_phase" }] }],
+        "description": "Unleash a sky-splitting battle cry; enemies within 2 squares that fail to resist are shaken (−2 to hit) through the next DM phase."
+      }
+    ],
+    "inventory": ["blue-woad", "healing-potion", "longship-token"]
+  },
+  {
+    "id": "grinning-jinn",
+    "name": "Jinnaro the Grinning",
+    "role": "dps",
+    "image": "/static/tokens/token_418.webp",
+    "maxHp": 30,
+    "movement": 6,
+    "defense": 14,
+    "attacks": [
+      { "id": "grinning-jinn-scimitar", "name": "Scimitar", "attack": "1d20+5", "damage": "1d8+3", "range": 1 },
+      { "id": "grinning-jinn-wishspark", "name": "Wish-Spark", "attack": "1d20+6", "damage": "1d10+3", "range": 8 }
+    ],
+    "abilities": [
+      {
+        "id": "grinning-jinn-sand-blast",
+        "name": "Sand Blast",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [{ "type": "area_attack", "target": "enemies_in_area", "center": "target", "radius": 1, "range": 6, "attack": "1d20+5", "damage": "1d6+3", "damageType": "force" }],
+        "description": "Blast an enemy within 6 squares with a whirl of sand, attacking it and every enemy within 1 square of it for 1d6+3."
+      },
+      {
+        "id": "grinning-jinn-mischief",
+        "name": "Mischief",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [{ "type": "roll_to_apply", "target": "enemy", "roll": "1d20+5", "range": 6, "onSuccess": [{ "type": "reduce_actions", "target": "checked_enemy", "amount": 1, "duration": "next_dm_phase" }] }],
+        "description": "Grant an enemy within 6 squares a cursed little wish; if it fails to resist, it has one fewer action in the next DM phase."
+      }
+    ],
+    "inventory": ["golden-lamp", "healing-potion", "wish-ledger"]
+  },
+  {
+    "id": "ironhoop",
+    "name": "Imani Ironhoop",
+    "role": "dps",
+    "image": "/static/tokens/token_419.webp",
+    "maxHp": 34,
+    "movement": 7,
+    "defense": 14,
+    "attacks": [
+      { "id": "ironhoop-axes", "name": "Twin Axes", "attack": "1d20+5", "damage": "1d8+4", "range": 1 },
+      { "id": "ironhoop-throwing-axe", "name": "Throwing Axe", "attack": "1d20+5", "damage": "1d8+3", "range": 5 }
+    ],
+    "abilities": [
+      {
+        "id": "ironhoop-hamstring",
+        "name": "Hamstring",
+        "actionCost": 1,
+        "range": 1,
+        "effects": [{ "type": "attack", "target": "enemy", "attack": "1d20+5", "damage": "1d8+3", "range": 1, "damageType": "slashing" }, { "type": "modify_movement", "amount": -2, "duration": "next_dm_phase", "target": "hit_enemies", "when": "attack_hits" }],
+        "description": "Slash at an adjacent enemy's legs for 1d8+3. On a hit, it is slowed (−2 movement) through the next DM phase."
+      },
+      {
+        "id": "ironhoop-bloodmark",
+        "name": "Bloodmark",
+        "actionCost": 1,
+        "range": 5,
+        "effects": [{ "type": "attack", "target": "enemy", "attack": "1d20+5", "damage": "1d8+3", "range": 5 }, { "type": "mark_target", "bonus": "1d6", "target": "hit_enemies", "when": "attack_hits" }],
+        "description": "Hurl an axe at an enemy within 5 squares for 1d8+3. On a hit, your next hit on it deals an extra 1d6."
+      }
+    ],
+    "inventory": ["iron-hoops", "healing-potion", "hunting-furs"]
+  },
+  {
+    "id": "vane",
+    "name": "Caius Vane",
+    "role": "dps",
+    "image": "/static/tokens/token_420.webp",
+    "maxHp": 30,
+    "movement": 7,
+    "defense": 15,
+    "attacks": [
+      { "id": "vane-stiletto", "name": "Stiletto", "attack": "1d20+6", "damage": "1d8+4", "range": 1 },
+      { "id": "vane-poison-dart", "name": "Poison Dart", "attack": "1d20+5", "damage": "1d6+3", "range": 6 }
+    ],
+    "abilities": [
+      {
+        "id": "vane-envenom",
+        "name": "Envenomed Strike",
+        "actionCost": 1,
+        "range": 1,
+        "effects": [{ "type": "attack", "target": "enemy", "attack": "1d20+6", "damage": "1d10+3", "range": 1, "damageType": "poison" }, { "type": "apply_status", "status": "poisoned", "target": "hit_enemies", "when": "attack_hits" }],
+        "description": "Stab an adjacent enemy with a poisoned blade for 1d10+3 poison damage. On a hit, it is poisoned (−2 to hit) for 5 rounds."
+      },
+      {
+        "id": "vane-vanish",
+        "name": "Vanish",
+        "actionCost": 1,
+        "range": 5,
+        "effects": [{ "type": "teleport", "target": "cell", "distance": 5 }, { "type": "discourage_attacks", "target": "self", "penalty": 3, "duration": "next_dm_phase" }],
+        "description": "Slip into the shadows and reappear up to 5 squares away; attacks against you take −3 to hit through the next DM phase."
+      }
+    ],
+    "inventory": ["black-hood", "healing-potion", "vial-of-nightshade"]
+  },
+  {
+    "id": "hearthrow",
+    "name": "Friar Wendel Hearthrow",
+    "role": "heal",
+    "image": "/static/tokens/token_387.webp",
+    "maxHp": 34,
+    "movement": 5,
+    "defense": 15,
+    "attacks": [
+      { "id": "hearthrow-cudgel", "name": "Cudgel", "attack": "1d20+4", "damage": "1d6+3", "range": 1 },
+      { "id": "hearthrow-sling", "name": "Blessed Sling", "attack": "1d20+4", "damage": "1d6+2", "range": 6 }
+    ],
+    "abilities": [
+      {
+        "id": "hearthrow-mending-word",
+        "name": "Mending Word",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [{ "type": "heal", "target": "ally_or_self", "heal": "1d8+3", "range": 6 }],
+        "description": "Speak a kindly blessing that heals yourself or an ally within 6 squares for 1d8+3."
+      },
+      {
+        "id": "hearthrow-hearty-stew",
+        "name": "Hearty Stew",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [{ "type": "heal", "target": "allies_in_area", "radius": 2, "heal": "1d6+2" }],
+        "description": "Ladle out your famous stew: you and every ally within 2 squares heal 1d6+2."
+      },
+      {
+        "id": "hearthrow-good-cheer",
+        "name": "Good Cheer",
+        "actionCost": 1,
+        "range": 4,
+        "effects": [{ "type": "grant_roll_bonus", "target": "ally_or_self", "bonus": 2, "range": 4, "duration": "until_used" }],
+        "description": "Cheer on yourself or an ally within 4 squares, granting +2 on their next attack roll."
+      }
+    ],
+    "inventory": ["stew-pot", "healing-potion", "friars-rosary"]
+  },
+  {
+    "id": "saffronleaf",
+    "name": "Master Jin Saffronleaf",
+    "role": "heal",
+    "image": "/static/tokens/token_390.webp",
+    "maxHp": 32,
+    "movement": 7,
+    "defense": 16,
+    "attacks": [
+      { "id": "saffronleaf-palm", "name": "Open Palm", "attack": "1d20+5", "damage": "1d6+3", "range": 1 },
+      { "id": "saffronleaf-bead-throw", "name": "Prayer Bead", "attack": "1d20+4", "damage": "1d6+2", "range": 5 }
+    ],
+    "abilities": [
+      {
+        "id": "saffronleaf-chi-restoration",
+        "name": "Chi Restoration",
+        "actionCost": 1,
+        "range": 1,
+        "effects": [{ "type": "heal", "target": "ally_or_self", "heal": "2d8+3", "range": 1 }],
+        "description": "Press your palms to yourself or an adjacent ally, restoring 2d8+3 HP."
+      },
+      {
+        "id": "saffronleaf-lotus-ward",
+        "name": "Lotus Ward",
+        "actionCost": 1,
+        "range": 3,
+        "effects": [{ "type": "grant_protection", "target": "ally_or_self", "fraction": 0.5, "range": 3, "duration": "next_dm_phase" }],
+        "description": "Wrap yourself or an ally within 3 squares in calm chi, halving the next hit they take."
+      },
+      {
+        "id": "saffronleaf-purifying-breath",
+        "name": "Purifying Breath",
+        "actionCost": 1,
+        "range": 3,
+        "effects": [{ "type": "remove_status", "target": "ally_or_self", "status": "poisoned" }, { "type": "heal", "target": "ally_or_self", "heal": "1d4+2", "range": 3 }],
+        "description": "Breathe clarity into yourself or an ally within 3 squares, curing poison and healing 1d4+2."
+      }
+    ],
+    "inventory": ["prayer-beads", "healing-potion", "saffron-robes"]
+  },
+  {
+    "id": "snowhearth",
+    "name": "Mother Hilde Snowhearth",
+    "role": "heal",
+    "image": "/static/tokens/token_396.webp",
+    "maxHp": 35,
+    "movement": 5,
+    "defense": 15,
+    "attacks": [
+      { "id": "snowhearth-staff", "name": "Walking Staff", "attack": "1d20+4", "damage": "1d6+2", "range": 1 },
+      { "id": "snowhearth-ice-pebble", "name": "Ice Pebble", "attack": "1d20+4", "damage": "1d6+3", "range": 6 }
+    ],
+    "abilities": [
+      {
+        "id": "snowhearth-warm-embrace",
+        "name": "Warm Embrace",
+        "actionCost": 1,
+        "range": 1,
+        "effects": [{ "type": "heal", "target": "ally_or_self", "heal": "2d8+3", "range": 1 }],
+        "description": "Wrap yourself or an adjacent ally in a warm hug, restoring 2d8+3 HP."
+      },
+      {
+        "id": "snowhearth-hearthfire",
+        "name": "Hearthfire",
+        "actionCost": 1,
+        "range": 3,
+        "effects": [{ "type": "healing_aura", "target": "cell", "range": 3, "heal": "1d6+1", "radius": 2, "pulses": 2, "name": "Hearthfire" }],
+        "description": "Kindle a small hearth within 3 squares that heals allies within 2 squares of it for 1d6+1 at the start of the next 2 player phases."
+      },
+      {
+        "id": "snowhearth-lullaby",
+        "name": "Snowfall Lullaby",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [{ "type": "heal", "target": "ally_or_self", "heal": "1d8+3", "range": 6 }],
+        "description": "Hum an old lullaby that heals yourself or an ally within 6 squares for 1d8+3."
+      }
+    ],
+    "inventory": ["fur-shawl", "healing-potion", "honey-cakes"]
+  },
+  {
+    "id": "fernwhistle",
+    "name": "Sylvi Fernwhistle",
+    "role": "heal",
+    "image": "/static/tokens/token_400.webp",
+    "maxHp": 31,
+    "movement": 6,
+    "defense": 14,
+    "attacks": [
+      { "id": "fernwhistle-thorn-lash", "name": "Thorn Lash", "attack": "1d20+5", "damage": "1d6+3", "range": 3 },
+      { "id": "fernwhistle-oak-staff", "name": "Oak Staff", "attack": "1d20+3", "damage": "1d6+2", "range": 1 }
+    ],
+    "abilities": [
+      {
+        "id": "fernwhistle-verdant-pulse",
+        "name": "Verdant Pulse",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [{ "type": "chain_heal", "target": "ally_or_self", "heal": "1d6+2", "jumps": 2, "jumpRange": 3, "range": 6 }],
+        "description": "Send a pulse of green life to yourself or an ally within 6 squares that can spread to 2 more wounded allies, healing 1d6+2 each."
+      },
+      {
+        "id": "fernwhistle-entangle",
+        "name": "Entangle",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [{ "type": "roll_to_apply", "target": "enemy", "roll": "1d20+5", "range": 6, "onSuccess": [{ "type": "apply_status", "target": "checked_enemy", "status": "snared", "duration": "next_dm_phase" }] }],
+        "description": "Call roots up around an enemy within 6 squares; if it fails to resist, it is snared (can't move) through the next DM phase."
+      }
+    ],
+    "inventory": ["leaf-earrings", "healing-potion", "seed-pouch"]
+  },
+  {
+    "id": "goodbelly",
+    "name": "Barnaby Goodbelly",
+    "role": "heal",
+    "image": "/static/tokens/token_401.webp",
+    "maxHp": 33,
+    "movement": 6,
+    "defense": 14,
+    "attacks": [
+      { "id": "goodbelly-lute", "name": "Lute Swing", "attack": "1d20+4", "damage": "1d6+2", "range": 1 },
+      { "id": "goodbelly-jest", "name": "Cutting Jest", "attack": "1d20+5", "damage": "1d6+3", "range": 6 }
+    ],
+    "abilities": [
+      {
+        "id": "goodbelly-rousing-ballad",
+        "name": "Rousing Ballad",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [{ "type": "heal", "target": "allies_in_area", "radius": 2, "heal": "1d6+2" }],
+        "description": "Belt out a rousing ballad: you and every ally within 2 squares heal 1d6+2."
+      },
+      {
+        "id": "goodbelly-inspiring-laugh",
+        "name": "Inspiring Laugh",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [{ "type": "grant_roll_bonus", "target": "ally_or_self", "bonus": "1d6", "range": 6, "duration": "until_used" }],
+        "description": "Laugh so infectiously that yourself or an ally within 6 squares adds 1d6 to their next attack roll."
+      },
+      {
+        "id": "goodbelly-heckle",
+        "name": "Heckle",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [{ "type": "roll_to_apply", "target": "enemy", "roll": "1d20+5", "range": 6, "onSuccess": [{ "type": "apply_status", "target": "checked_enemy", "status": "shaken", "duration": "next_dm_phase" }] }],
+        "description": "Heckle an enemy within 6 squares; if it fails to resist, it is shaken (−2 to hit) through the next DM phase."
+      }
+    ],
+    "inventory": ["well-loved-lute", "healing-potion", "songbook"]
+  },
+  {
+    "id": "sunveil",
+    "name": "Anahid Sunveil",
+    "role": "heal",
+    "image": "/static/tokens/token_404.webp",
+    "maxHp": 32,
+    "movement": 6,
+    "defense": 16,
+    "attacks": [
+      { "id": "sunveil-sun-staff", "name": "Sun Staff", "attack": "1d20+4", "damage": "1d6+3", "range": 1 },
+      { "id": "sunveil-radiant-ray", "name": "Radiant Ray", "attack": "1d20+5", "damage": "1d8+3", "range": 6 }
+    ],
+    "abilities": [
+      {
+        "id": "sunveil-dawns-grace",
+        "name": "Dawn's Grace",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [{ "type": "heal", "target": "ally_or_self", "heal": "1d8+3", "range": 6 }],
+        "description": "Bathe yourself or an ally within 6 squares in dawnlight, healing 1d8+3."
+      },
+      {
+        "id": "sunveil-aegis-of-dawn",
+        "name": "Aegis of Dawn",
+        "actionCost": 1,
+        "range": 4,
+        "effects": [{ "type": "absorb_next_hit", "target": "ally_or_self", "range": 4, "duration": "next_dm_phase" }],
+        "description": "Raise a golden shield around yourself or an ally within 4 squares: the next hit they take before the end of the next DM phase deals no damage."
+      },
+      {
+        "id": "sunveil-sanctuary-light",
+        "name": "Sanctuary Light",
+        "actionCost": 1,
+        "range": 4,
+        "effects": [{ "type": "discourage_attacks", "target": "ally_or_self", "penalty": 4, "range": 4, "duration": "next_dm_phase" }],
+        "description": "Veil yourself or an ally within 4 squares in holy light: attacks against them take −4 to hit through the next DM phase."
+      }
+    ],
+    "inventory": ["golden-circlet", "healing-potion", "sun-disc"]
+  },
+  {
+    "id": "mildmoor",
+    "name": "Father Benedek Mildmoor",
+    "role": "heal",
+    "image": "/static/tokens/token_406.webp",
+    "maxHp": 34,
+    "movement": 5,
+    "defense": 16,
+    "attacks": [
+      { "id": "mildmoor-censer", "name": "Censer Flail", "attack": "1d20+4", "damage": "1d6+3", "range": 1 },
+      { "id": "mildmoor-holy-spark", "name": "Holy Spark", "attack": "1d20+4", "damage": "1d6+3", "range": 6 }
+    ],
+    "abilities": [
+      {
+        "id": "mildmoor-prayer-of-mending",
+        "name": "Prayer of Mending",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [{ "type": "heal", "target": "ally_or_self", "heal": "1d8+3", "range": 6 }],
+        "description": "Murmur a prayer that heals yourself or an ally within 6 squares for 1d8+3."
+      },
+      {
+        "id": "mildmoor-laying-on-hands",
+        "name": "Laying on Hands",
+        "actionCost": 1,
+        "range": 1,
+        "effects": [{ "type": "heal", "target": "ally_or_self", "heal": "2d8+3", "range": 1 }],
+        "description": "Lay your hands on yourself or an adjacent ally, restoring 2d8+3 HP."
+      },
+      {
+        "id": "mildmoor-benediction",
+        "name": "Benediction",
+        "actionCost": 1,
+        "range": 3,
+        "effects": [{ "type": "grant_protection", "target": "ally_or_self", "amount": 6, "range": 3, "duration": "next_dm_phase" }],
+        "description": "Bless yourself or an ally within 3 squares: the next hit they take is reduced by 6."
+      }
+    ],
+    "inventory": ["brass-censer", "healing-potion", "parish-register"]
+  },
+  {
+    "id": "meadmender",
+    "name": "Halvard Meadmender",
+    "role": "heal",
+    "image": "/static/tokens/token_408.webp",
+    "maxHp": 36,
+    "movement": 5,
+    "defense": 15,
+    "attacks": [
+      { "id": "meadmender-tankard", "name": "Iron Tankard", "attack": "1d20+4", "damage": "1d6+3", "range": 1 },
+      { "id": "meadmender-flask", "name": "Thrown Flask", "attack": "1d20+4", "damage": "1d6+2", "range": 5 }
+    ],
+    "abilities": [
+      {
+        "id": "meadmender-healing-draught",
+        "name": "Healing Draught",
+        "actionCost": 1,
+        "range": 1,
+        "effects": [{ "type": "heal", "target": "ally_or_self", "heal": "2d8+3", "range": 1 }],
+        "description": "Pour a strong honeyed draught for yourself or an adjacent ally, restoring 2d8+3 HP."
+      },
+      {
+        "id": "meadmender-toss-a-tonic",
+        "name": "Toss a Tonic",
+        "actionCost": 1,
+        "range": 5,
+        "effects": [{ "type": "heal", "target": "ally_or_self", "heal": "1d8+3", "range": 5 }],
+        "description": "Lob a corked tonic to yourself or an ally within 5 squares, healing 1d8+3."
+      },
+      {
+        "id": "meadmender-warming-spirits",
+        "name": "Warming Spirits",
+        "actionCost": 1,
+        "range": 3,
+        "effects": [{ "type": "remove_status", "target": "ally_or_self", "status": "shaken" }, { "type": "grant_roll_bonus", "target": "ally_or_self", "bonus": 1, "range": 3, "duration": "until_used" }],
+        "description": "Share a nip of mead with yourself or an ally within 3 squares: it stops them being shaken and grants +1 on their next attack roll."
+      }
+    ],
+    "inventory": ["honey-mead", "healing-potion", "fur-cloak"]
+  },
+  {
+    "id": "brightwell",
+    "name": "Sister Marigold Brightwell",
+    "role": "heal",
+    "image": "/static/tokens/token_416.webp",
+    "maxHp": 31,
+    "movement": 6,
+    "defense": 15,
+    "attacks": [
+      { "id": "brightwell-mace", "name": "Little Mace", "attack": "1d20+4", "damage": "1d6+3", "range": 1 },
+      { "id": "brightwell-light-mote", "name": "Light Mote", "attack": "1d20+5", "damage": "1d6+3", "range": 6 }
+    ],
+    "abilities": [
+      {
+        "id": "brightwell-joyful-light",
+        "name": "Joyful Light",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [{ "type": "chain_heal", "target": "ally_or_self", "heal": "1d6+2", "jumps": 2, "jumpRange": 3, "range": 6 }],
+        "description": "Send a bright mote to yourself or an ally within 6 squares that can bounce to 2 more wounded allies, healing 1d6+2 each."
+      },
+      {
+        "id": "brightwell-cleansing-laugh",
+        "name": "Cleansing Laugh",
+        "actionCost": 1,
+        "range": 4,
+        "effects": [{ "type": "remove_status", "target": "ally_or_self", "status": "frightened" }, { "type": "heal", "target": "ally_or_self", "heal": "1d6+2", "range": 4 }],
+        "description": "Laugh away the fear of yourself or an ally within 4 squares: it stops them being frightened and heals 1d6+2."
+      }
+    ],
+    "inventory": ["silver-bell", "healing-potion", "marigold-garland"]
+  },
+  {
+    "id": "willowmere",
+    "name": "Ysolde Willowmere",
+    "role": "heal",
+    "image": "/static/tokens/token_422.webp",
+    "maxHp": 30,
+    "movement": 7,
+    "defense": 14,
+    "attacks": [
+      { "id": "willowmere-vine-whip", "name": "Vine Whip", "attack": "1d20+5", "damage": "1d6+3", "range": 3 },
+      { "id": "willowmere-sickle", "name": "Moon Sickle", "attack": "1d20+4", "damage": "1d6+2", "range": 1 }
+    ],
+    "abilities": [
+      {
+        "id": "willowmere-spring-totem",
+        "name": "Spring Totem",
+        "actionCost": 1,
+        "range": 3,
+        "effects": [{ "type": "healing_aura", "target": "cell", "range": 3, "heal": "1d6+2", "radius": 2, "pulses": 2, "name": "Spring Totem" }],
+        "description": "Plant a budding totem within 3 squares that heals allies within 2 squares of it for 1d6+2 at the start of the next 2 player phases."
+      },
+      {
+        "id": "willowmere-rejuvenate",
+        "name": "Rejuvenate",
+        "actionCost": 1,
+        "range": 6,
+        "effects": [{ "type": "heal", "target": "ally_or_self", "heal": "1d8+3", "range": 6 }],
+        "description": "Coax fresh growth through yourself or an ally within 6 squares, healing 1d8+3."
+      },
+      {
+        "id": "willowmere-barkskin",
+        "name": "Barkskin",
+        "actionCost": 1,
+        "range": 4,
+        "effects": [{ "type": "defense_bonus", "target": "ally_or_self", "amount": 2, "range": 4, "duration": "next_dm_phase" }],
+        "description": "Harden the skin of yourself or an ally within 4 squares like bark, granting +2 Defense through the next DM phase."
+      }
+    ],
+    "inventory": ["willow-wand", "healing-potion", "herb-satchel"]
+  }
+]

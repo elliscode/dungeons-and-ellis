@@ -51,7 +51,7 @@ Older loose fields (`attack`/`damage`, `heal`, `roll`, `free`, `grantsActions`) 
 | `multi_attack` | `count` + attack fields | `count` independent strikes, each with its own attack roll and damage roll. One activation pays `actionCost` once. Strikes stop if the target dies. |
 | `area_attack` | `center` (`self`/`target`), `radius` + attack fields | Each enemy within `radius` of the center gets its own roll. |
 | `chain_attack` | `jumps`, `jumpRange` + attack fields | The primary target plus up to `jumps` targets picked by the player. Each jump is within `jumpRange` of the previous target, with no repeats. |
-| `heal` | `heal` | Rolls, then heals through the shared heal path. Capped at max HP. Dead targets, dummies, and objects can't be healed. |
+| `heal` | `heal` | Rolls, then heals through the shared heal path. `heal` may also be a whole number (1–1000) for a flat heal. Capped at max HP. Dead targets, dummies, and objects can't be healed. |
 | `chain_heal` | `heal`, `jumps`, `jumpRange` | Like a chain attack, but jumps must go to wounded allies. Each heal is rolled separately. |
 | `modify_healing` | `amount` | The caster's next heal on the target gets `+amount` (Beacon of Grace). |
 | `grant_protection` | `fraction` (default 0.5) or `amount` | The holder's next hit is reduced by that fraction or amount. |
@@ -59,13 +59,13 @@ Older loose fields (`attack`/`damage`, `heal`, `roll`, `free`, `grantsActions`) 
 | `redirect_next_hit` | (none) | Placed on an ally: their next hit lands on the caster instead (Intercept). |
 | `defense_bonus` | `amount` (can be negative), optional `radius` | Defense modifier. With `radius`, it also covers allies around the caster. |
 | `modify_damage_received` | `amount` or `multiplier` | Changes the damage the holder takes from hits. |
-| `modify_damage_dealt` | `amount` or `multiplier` | Changes the holder's next hit (Curse of Weakness uses 0.5). |
+| `modify_damage_dealt` | `amount` or `multiplier` | Changes the holder's next hit (Curse of Weakness uses 0.5). Unless `duration` is set, a boost lasts until that hit lands (across phases), and a penalty lasts through the next DM phase. "Next hit" means the next ability or attack that hits: every hit of one ability (each enemy of an area or chain attack, each strike of a multi-attack) gets it, and it's used up when that ability finishes. |
 | `modify_movement` | `amount` | Movement modifier. Negative values show as *Slowed*. |
 | `taunt` | optional `radius` | While the taunter is a valid target, the taunted enemy's attacks must target the taunter. |
 | `reduce_actions` | `amount` | Lowers the target's action allowance. It never goes below 0. |
 | `mark_target` | `bonus` (dice) | The caster's next hit on the target adds `bonus` (Hunter's Mark). |
 | `grant_roll_bonus` | `bonus` (dice or number) | Added to the holder's next attack roll, including roll-to-apply rolls (Inspire, Foresight). |
-| `apply_status` / `remove_status` | `status` | Statuses: `frightened` (can't move closer to its source), `snared` (movement 0), `shaken` (−2 to hit), `poisoned` (−2 to hit for the rest of the current phase plus 5 full rounds; ignores `duration`, and re-poisoning refreshes instead of stacking), `slowed`. |
+| `apply_status` / `remove_status` | `status` | Statuses: `frightened` (−2 to hit, and can't move closer to its source), `snared` (movement 0), `shaken` (−2 to hit), `poisoned` (−2 to hit for the rest of the current phase plus 5 full rounds; ignores `duration`, and re-poisoning refreshes instead of stacking), `slowed`. |
 | `discourage_attacks` | `penalty` (default 5) | Attacks against the holder take −penalty (Sanctuary). |
 | `grant_actions` | `amount` | Extra actions this phase. The ability must set `usesPerPhase`, and it can grant at most `actionCost + 1`. |
 | `teleport` | `distance` | Moves the caster to the picked square. |
@@ -91,14 +91,16 @@ Combat alternates PLAYER PHASE and DM PHASE. The server counts phases (`combat.p
 
 `trigger` values are consumed exactly once, at the moment they fire: `next_hit`, `next_magical_hit`, `next_attack_against_self`, `until_used`, and `until_next_heal_by_caster`. An effect can have both a trigger and a time limit; the default time limit for one-shot protections is `next_dm_phase`.
 
-A timed effect applied outside combat starts its clock when combat begins. Ending combat clears every timed effect. Effects are stored in the game state, so they survive reconnects, restarts, and undo. The DM can remove any effect, or add a status, from the inspector.
+**Stacking:** the same caster's same ability never stacks on a target. Casting it again replaces the existing copy, which restarts its duration, and the feed says it "is refreshed". Different casters, or different abilities from the same caster, do stack (two healers' blessings give +4). This is keyed on the caster, the ability, the effect type and the status, so an ability that applies two things (frightened and shaken) keeps one of each. Poisoned additionally never stacks across casters, and to-hit penalties count each status once.
+
+A timed effect applied outside combat starts its clock when combat begins. Ending combat clears every timed effect. Effects are stored in the game state, so they survive reconnects, restarts, and undo. The DM can remove any effect, or add a status, from the inspector. For frightened, the DM then clicks the creature on the map that it's frightened of.
 
 ## Damage order
 
 Every damage source runs through `dealDamage()` in `server/games/combat.js`: weapon attacks, ability attacks, area, chain, and multi strikes, enemy attacks, and the DM's Damage button. Each step applies at most once per hit:
 
 1. Raw damage is rolled. A critical hit doubles the dice, not the modifier.
-2. Attacker modifiers apply: `modify_damage_dealt`, then a Hunter's Mark bonus.
+2. Attacker modifiers apply: `modify_damage_dealt` (to every hit of the ability that uses it up), then a Hunter's Mark bonus.
 3. Attacker role: a DPS hero's damage is multiplied by the role strength n (rounded down). This happens before any of the target's defenses, once per strike.
 4. Redirection: Intercept makes the protector the victim.
 5. Victim protection: `absorb_next_hit` (the hit deals 0), otherwise `grant_protection` (reduced). Then `modify_damage_received`.
@@ -110,8 +112,7 @@ Healing runs through `healTarget()` in this order:
 1. The heal is rolled.
 2. A Heal-role hero's healing is multiplied by n.
 3. Flat bonuses from the caster are added (Beacon of Grace; consumed).
-4. The result is capped at max HP.
-5. The heal is applied. A downed target gets back up; dead targets can't be healed.
+4. The heal is applied. Negative HP is reset to 0 first, so a downed target always gets back up with the full amount (−20 HP healed for 8 → 8 HP). The result is capped at max HP. Dead targets can't be healed.
 
 Healing totems count as their caster's healing.
 
@@ -135,14 +136,24 @@ These are automatic for player characters, based on `role`, and scaled by one gl
 
 Monsters, NPCs, and the DM's Damage and Heal buttons never get role bonuses. A DPS hero's self-heal (Life Drain, for example) isn't multiplied, because only Heal-role heroes get the healing multiplier.
 
-Attack rolls (`attackRoll()`) include `attackBonus`, one-shot roll bonuses (which are consumed), shaken/poisoned penalties, the Sanctuary penalty, and the target's effective Defense (base, plus `defense_bonus`, minus `defenseReduction`). Serene Focus is consumed by the next attack against its holder.
+Attack rolls (`attackRoll()`) include `attackBonus`, one-shot roll bonuses (which are consumed), frightened/shaken/poisoned penalties (each status counts once, however many copies), the Sanctuary penalty, and the target's effective Defense (base, plus `defense_bonus`, minus `defenseReduction`). Serene Focus is consumed by the next attack against its holder.
 
 ## Action economy and movement
 
 - Abilities that deal damage (any `attack`, `multi_attack`, `area_attack` or `chain_attack` effect, including ones nested in `onSuccess`/`onFailure`) work only in combat, like weapon attacks. The server refuses them outside combat, and the Act menu greys them out with "combat only". Heals, buffs, debuffs like Hunter's Mark, movement, and narrative abilities still work while exploring.
-- Players get their allowance (default 1 action) each PLAYER PHASE. Monsters and hostile NPCs get theirs each DM PHASE and can only act then. Friendly NPCs and the DM's own tools are unlimited.
+- Players get their allowance (default 1 action) each PLAYER PHASE, and so do friendly NPCs (the DM spends it for them, and they can only act then). Monsters and hostile NPCs get theirs each DM PHASE and can only act then. The DM's **+1 action** overrides any budget, and the DM's own tools (Damage, HP, Kill…) and the DM acting through a hero are unlimited. `usesPerPhase` applies to every budgeted creature.
 - The allowance is the definition's `actions`, plus granted actions, minus `reduce_actions`. It never goes below 0.
 - Movement is separate from actions. In combat, players and enemies spend movement after modifiers; a snared creature can't move. The DM can **Shift-drag** to force a move past budgets and frightened restrictions.
+
+## Item abilities
+
+`data/items.json` is the item catalog: `{ id, name, description?, ability? }`, where `ability` uses the same schema as a character ability. An inventory entry matches a catalog item by its id (`"healing-potion"` in a definition's `inventory`) or, failing that, by name, so items the DM adds by name ("Healing Potion") match too.
+
+- Using an item with an ability goes through the normal targeting flow and the shared effect engine. The item is removed only once the ability resolves. If the target is out of range or invalid, or the user has no actions left, the item is kept.
+- It costs the ability's `actionCost` (default 1). Item abilities don't count toward `usesPerPhase`.
+- Item heals skip the Heal role bonus, so a Healing Potion heals a flat 25 whoever uses it.
+- Items without an ability are used up in one click, as before.
+- Healing Potion: `range: 1`, `heal: 25`, targets yourself or an adjacent ally (a downed ally gets up at 25).
 
 ## Training Dummy
 

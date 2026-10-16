@@ -6,7 +6,7 @@ import {
 import { inBounds, ensurePlaced } from './placement.js';
 import { startCombat, advancePhase, endCombat, applyHeal, applyDamage, setHp, revive, kill, dealDamage, deathAt } from './combat.js';
 import { addEffect, clearStatus, removeEffect, effectsOf, movementAllowance } from './status.js';
-import { activateAbility, strike, checkTaunt, resolveCheck, onPhaseTransition, STATUSES } from './effects.js';
+import { activateAbility, runAbility, strike, checkTaunt, resolveCheck, onPhaseTransition, STATUSES } from './effects.js';
 import {
   str, int, outcome, hpTexts, statusSuffix, getEntity, onActiveScene, controlled, requireStatus, requirePlayerWindow,
   requireActionWindow, budgeted, checkAction, spendAction, rollOrFail, distanceBetween, frightenedBy,
@@ -46,6 +46,28 @@ def('player.setName', { who: 'player' }, (ctx) => {
   if (old === name) return;
   ctx.player.name = name;
   ctx.log('player', `${old} is now known as ${name}`);
+});
+
+// A player renames the hero they play (their own token only). Releasing the hero resets it.
+def('player.renameCharacter', { who: 'player' }, (ctx) => {
+  const e = ctx.state.entities[ctx.player.entityId];
+  if (!e) fail('Pick a hero first');
+  const name = str(ctx.cmd.name, 40, 'Character name');
+  const old = e.name;
+  if (old === name) return;
+  e.name = name;
+  ctx.log('character', `${ctx.player.name}'s ${old} is now known as ${name}`);
+});
+
+// A player gives up their hero and goes back to the hero picker, if the DM allows it in this game.
+// Like the DM's Release: the token goes, the seat, name and color stay, and undo is cleared.
+def('player.leaveCharacter', { who: 'player', clearsUndo: true }, (ctx) => {
+  const p = ctx.player;
+  if (!ctx.state.options?.playersCanLeave) fail("The DM hasn't allowed leaving heroes in this game");
+  if (!p.characterId) fail("You don't have a hero");
+  const name = ctx.state.entities[p.entityId]?.name ?? ctx.content.def('character', p.characterId)?.name ?? p.characterId;
+  releaseCharacter(ctx, p);
+  ctx.log('character', `${p.name} left ${name}`);
 });
 
 function setColor(ctx, player, color) {
@@ -91,6 +113,20 @@ function getPlayer(ctx, id) {
   if (!p) fail('Unknown player');
   return p;
 }
+
+// Per-game switches. playersCanLeave: players may leave their hero from their ⚙ menu.
+const GAME_OPTIONS = {
+  playersCanLeave: { on: 'DM allowed players to leave their heroes', off: 'DM stopped players leaving their heroes' },
+};
+def('game.setOption', { who: 'dm' }, (ctx) => {
+  const opt = GAME_OPTIONS[ctx.cmd.option];
+  if (!opt) fail('Unknown game option');
+  if (typeof ctx.cmd.value !== 'boolean') fail('Option value must be on or off');
+  ctx.state.options ??= {};
+  if (ctx.state.options[ctx.cmd.option] === ctx.cmd.value) return;
+  ctx.state.options[ctx.cmd.option] = ctx.cmd.value;
+  ctx.log('game', ctx.cmd.value ? opt.on : opt.off);
+});
 
 def('dm.resetPlayer', { who: 'dm', clearsUndo: true }, (ctx) => {
   const p = getPlayer(ctx, ctx.cmd.playerId);
@@ -345,14 +381,23 @@ def('effect.remove', { who: 'dm', undoable: 'remove effect' }, (ctx) => {
 def('effect.addStatus', { who: 'dm', undoable: 'add status' }, (ctx) => {
   const e = getEntity(ctx, ctx.cmd.entityId);
   const st = STATUSES[ctx.cmd.status];
-  if (!st || ctx.cmd.status === 'frightened') fail('Pick poisoned, snared, shaken or slowed');
+  if (!st) fail('Pick frightened, poisoned, snared, shaken or slowed');
   if (e.kind === 'object') fail('Objects have no statuses');
+  // Frightened needs a source on the map (picked by the DM): it's what the creature can't approach.
+  let src = null;
+  if (ctx.cmd.status === 'frightened') {
+    if (!ctx.cmd.sourceId) fail(`Choose who ${e.name} is frightened of`);
+    src = getEntity(ctx, ctx.cmd.sourceId);
+    if (src.id === e.id) fail("A creature can't be frightened of itself");
+    if (src.kind === 'object') fail("Objects can't frighten anyone");
+  }
   if (st.duration) clearStatus(e, ctx.cmd.status);
   addEffect(ctx.state, e, {
     type: st.movement ? 'modify_movement' : 'apply_status', status: ctx.cmd.status, label: st.label, icon: st.icon,
-    source: { entityId: null, name: 'DM' }, params: st.movement ? { amount: st.movement } : {}, duration: st.duration ?? 'next_dm_phase',
+    source: src ? { entityId: src.id, name: src.name } : { entityId: null, name: 'DM' },
+    params: src ? { sourceId: src.id } : st.movement ? { amount: st.movement } : {}, duration: st.duration ?? 'next_dm_phase',
   });
-  ctx.log('effect', `${e.name} is ${st.label.toLowerCase()}`);
+  ctx.log('effect', src ? `${e.name} is frightened of ${src.name}` : `${e.name} is ${st.label.toLowerCase()}`);
 });
 
 def('check.resolve', { who: 'dm', undoable: 'check' }, (ctx) => resolveCheck(ctx, ctx.cmd.checkId, !!ctx.cmd.success));
@@ -406,14 +451,41 @@ def('move', { who: 'any', undoable: 'move' }, (ctx) => {
         fail(`${ctx.actor.role === 'dm' ? `${e.name} has` : 'Not enough movement:'} ${Math.max(0, allowance - t.moved)} squares left${ctx.actor.role === 'dm' ? ' (Shift-drag to force)' : ''}`);
       }
       t.moved += dist;
+      // Players can take this move back (move.undo) until they act.
+      if (ctx.actor.role === 'player') (t.moves ??= []).push({ sceneId: scene.id, from: { ...from }, to: { x, y }, dist });
     }
     const src = frightenedBy(ctx, e, scene.id, x, y);
     if (src) fail(`${e.name} is frightened of ${src.name} and can't move closer${ctx.actor.role === 'dm' ? ' (Shift-drag to force)' : ''}`);
   }
   if (from && from.x === x && from.y === y) return;
+  // The DM moving a hero locks in that hero's earlier moves (they can't be undone past it).
+  if (ctx.actor.role === 'dm' && ctx.state.turn[e.id]) ctx.state.turn[e.id].moves = [];
   e.positions[scene.id] = { x, y };
   e.z = ++ctx.state.zCounter;
   ctx.log('move', `${e.name} ${force ? 'is moved' : 'moves'}`);
+});
+
+// A player takes back their latest move this phase and gets the squares back. Combat only;
+// acting (spendAction) or the phase ending locks moves in. Refused if something else moved them.
+def('move.undo', { who: 'player', undoable: 'undo move' }, (ctx) => {
+  const e = controlled(ctx, ctx.cmd.entityId);
+  const scene = onActiveScene(ctx, e);
+  requireStatus(e, 'move');
+  if (!ctx.state.combat.active) fail('Undo move only works in combat');
+  requirePlayerWindow(ctx);
+  const t = turnFor(ctx.state, e.id);
+  const last = t.moves?.at(-1);
+  if (!last) fail('Nothing to undo');
+  const pos = e.positions[scene.id];
+  // Safety net (DM moves and actions clear the history already): never jump from somewhere else.
+  if (last.sceneId !== scene.id || !pos || pos.x !== last.to.x || pos.y !== last.to.y) {
+    fail('You were moved since then, so that move can\'t be undone');
+  }
+  t.moves.pop();
+  e.positions[scene.id] = { ...last.from };
+  e.z = ++ctx.state.zCounter;
+  t.moved = Math.max(0, t.moved - last.dist);
+  ctx.log('move', `${e.name} takes back their move`);
 });
 
 def('attack', { who: 'any', undoable: 'attack' }, (ctx) => {
@@ -481,6 +553,9 @@ def('act', { who: 'any', undoable: 'act' }, (ctx) => {
 // All abilities (heroes, NPCs, monsters) run through the shared effect engine.
 def('ability', { who: 'any', undoable: 'ability' }, (ctx) => activateAbility(ctx));
 
+// Items with a catalog ability (data/items.json) run it with the picked target, and are only
+// consumed once it resolves; any failure (range, target, actions) keeps the item. Other items are
+// simply used up.
 def('item.use', { who: 'player', undoable: 'use item' }, (ctx) => {
   const e = controlled(ctx, ctx.cmd.entityId);
   onActiveScene(ctx, e);
@@ -488,6 +563,13 @@ def('item.use', { who: 'player', undoable: 'use item' }, (ctx) => {
   requirePlayerWindow(ctx);
   const idx = e.inventory.findIndex((i) => i.id === ctx.cmd.itemId);
   if (idx < 0) fail('Item not found');
+  const catalog = ctx.content.item(e.inventory[idx]);
+  if (catalog?.ability) {
+    const item = e.inventory[idx];
+    const result = runAbility(ctx, e, { ...catalog.ability, id: catalog.id, name: item.name }, { item });
+    e.inventory.splice(e.inventory.indexOf(item), 1);
+    return result;
+  }
   spendAction(ctx, e);
   const [item] = e.inventory.splice(idx, 1);
   const target = ctx.cmd.targetId ? ctx.state.entities[ctx.cmd.targetId] : null;
@@ -514,7 +596,7 @@ def('downRoll', { who: 'player' }, (ctx) => {
   const head = `${e.name} (DOWN) rolls ${r.total} —`;
   let text;
   if (band.getUp) {
-    const change = applyHeal(e, 1 - e.hp);
+    const change = applyHeal(e, 1);
     ctx.fx({ kind: 'heal', entityId: e.id, text: `+${change.healed}`, color: ctx.actorColor });
     text = `${head} gets back up with 1 HP!`;
   } else if (band.bleed) {

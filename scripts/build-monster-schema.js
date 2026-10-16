@@ -109,7 +109,7 @@ export function buildMonsterSchema(character) {
         description: 'Optional special abilities (same effect engine as heroes). "enemy" targets are heroes and friendly NPCs; "ally" targets are other monsters.',
       },
       inventory: {
-        type: 'array', maxItems: 10, items: { $ref: '#/$defs/id', description: 'Item id, kebab-case, e.g. "rusty-key".' },
+        type: 'array', maxItems: 10, items: { $ref: '#/$defs/id', description: 'Item id, kebab-case, e.g. "rusty-key". Ids that appear in data/items.json (e.g. "healing-potion") get that item\'s ability.' },
         description: 'Optional loot or carried items. Only the DM sees a hostile monster\'s inventory.',
       },
       description: { type: 'string', minLength: 1, maxLength: 300, description: 'Optional note for the DM (tactics, lore). Not shown to players and not used by the game.' },

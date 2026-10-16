@@ -504,12 +504,12 @@
         "effects": [
           {
             "type": "heal",
-            "target": "ally",
-            "heal": "1d4+1",
+            "target": "ally_or_self",
+            "heal": "1d8+3",
             "range": 6
           }
         ],
-        "description": "Restore 1d4+1 HP to an ally within 6 squares."
+        "description": "Restore 1d8+3 HP to yourself or an ally within 6 squares."
       },
       {
         "id": "dawnstride-blessing",
@@ -528,18 +528,12 @@
         "description": "Bless an ally within 3 squares, adding +2 to their next attack roll."
       },
       {
-        "id": "dawnstride-purifying-touch",
-        "name": "Purifying Touch",
+        "id": "dawnstride-dawnbreak",
+        "name": "Dawnbreak",
         "actionCost": 1,
-        "range": 2,
-        "effects": [
-          {
-            "type": "remove_status",
-            "target": "ally",
-            "status": "poisoned"
-          }
-        ],
-        "description": "Remove the poisoned status from an ally within 2 squares."
+        "range": 0,
+        "effects": [{ "type": "heal", "target": "allies_in_area", "radius": 2, "heal": "1d6+2" }, { "type": "defense_bonus", "target": "self", "amount": 1, "radius": 2, "duration": "next_dm_phase" }],
+        "description": "Flare with the first light of dawn: you and every ally within 2 squares heal 1d6+2 and gain +1 Defense through the next DM phase."
       }
     ],
     "inventory": [
@@ -581,7 +575,7 @@
         "effects": [
           {
             "type": "heal",
-            "target": "ally",
+            "target": "ally_or_self",
             "heal": "1d8+3",
             "range": 6
           }
@@ -651,7 +645,7 @@
         "effects": [
           {
             "type": "heal",
-            "target": "ally",
+            "target": "ally_or_self",
             "heal": "1d8+3",
             "range": 6
           }
@@ -666,12 +660,12 @@
         "effects": [
           {
             "type": "remove_status",
-            "target": "ally",
+            "target": "ally_or_self",
             "status": "poisoned"
           },
           {
             "type": "grant_protection",
-            "target": "ally",
+            "target": "ally_or_self",
             "fraction": 0.5,
             "duration": "next_dm_phase"
           }
@@ -718,7 +712,7 @@
         "effects": [
           {
             "type": "heal",
-            "target": "ally",
+            "target": "ally_or_self",
             "heal": "2d4+2",
             "range": 6
           }
@@ -733,13 +727,13 @@
         "effects": [
           {
             "type": "grant_protection",
-            "target": "ally",
+            "target": "ally_or_self",
             "fraction": 0.5,
             "duration": "next_dm_phase"
           },
           {
             "type": "grant_roll_bonus",
-            "target": "ally",
+            "target": "ally_or_self",
             "bonus": 2,
             "range": 4,
             "duration": "until_used"

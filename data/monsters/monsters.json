@@ -903,7 +903,7 @@
             "when": "attack_hits"
           }
         ],
-        "description": "The spirit sends a wave of supernatural cold toward a distant foe, frightening it on a hit."
+        "description": "The spirit sends a wave of supernatural cold toward a distant foe. On a hit, the foe is frightened (−2 to hit, can't move closer to the spirit) through the next DM phase."
       }
     ],
     "description": "A pale, translucent apparition that haunts forgotten chambers and drains warmth from the living."
@@ -1333,7 +1333,7 @@
             ]
           }
         ],
-        "description": "The dragon radiates terrifying menace, frightening nearby foes that fail to resist its presence."
+        "description": "The dragon radiates terrifying menace. Each foe within 3 that fails to resist is frightened (−2 to hit, can't move closer to the dragon) through the next DM phase."
       }
     ],
     "description": "A colossal black dragon with obsidian scales and glowing red eyes. It corrodes its enemies with acid breath and tears through armor with its claws."

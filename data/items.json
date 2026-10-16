@@ -1,0 +1,11 @@
+[
+  {
+    "id": "healing-potion",
+    "name": "Healing Potion",
+    "description": "Drink it or let an adjacent ally drink it: heals 25.",
+    "ability": {
+      "range": 1,
+      "effects": [{ "type": "heal", "target": "ally_or_self", "heal": 25, "range": 1 }]
+    }
+  }
+]

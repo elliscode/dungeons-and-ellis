@@ -36,6 +36,9 @@ Rules:
 - Resistible debuffs on enemies go inside roll_to_apply (roll vs the target's Defense).
 - Follow-up effects that should only happen on a hit use "when": "attack_hits", and target
   "hit_enemies" (or "self" for self-heals/buffs).
+- Healing that targets another creature always uses "target": "ally_or_self" (never "ally"),
+  so the healer can also heal themselves. Use "self" only for self-heals on attack hits
+  ("when": "attack_hits") or self-only abilities like Second Wind.
 - For image, use the token path given in the request. If none is given, use the placeholder
   "/static/tokens/token_NNN.webp" exactly as written.
 

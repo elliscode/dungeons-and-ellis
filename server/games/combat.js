@@ -58,11 +58,14 @@ export function applyDamage(e, amount) {
   return { before, after: e.status };
 }
 
-// Healing adds onto negative HP, so a downed creature only gets up once HP is back above 0.
+// Negative HP is only a buffer before true death: any real heal first resets it to 0, then adds
+// the full amount, so a downed creature always gets up with exactly what it was healed for.
+// `healed` counts from 0, not from the negative number.
 export function applyHeal(e, amount) {
   amount = Math.max(0, Math.floor(amount));
   const before = e.status;
   if (e.status === 'dead') return { before, after: before, healed: 0 };
+  if (amount > 0 && e.hp < 0) e.hp = 0;
   const old = e.hp;
   e.hp = Math.min(e.maxHp, e.hp + amount);
   if (e.status === 'down' && e.hp > 0) e.status = 'active';
@@ -95,7 +98,7 @@ export const MAGICAL_TYPES = new Set(['fire', 'cold', 'frost', 'lightning', 'thu
 export const isMagical = (damageType) => !!damageType && MAGICAL_TYPES.has(String(damageType).toLowerCase());
 
 // To-hit penalties from statuses on the attacker.
-const STATUS_TO_HIT = { shaken: -2, poisoned: -2 };
+const STATUS_TO_HIT = { frightened: -2, shaken: -2, poisoned: -2 };
 
 export function effectiveDefense(target, defenseReduction = 0) {
   const bonus = effectsOf(target, 'defense_bonus').reduce((s, fx) => s + (fx.params.amount ?? 0), 0);
@@ -106,7 +109,7 @@ const signed = (n) => (n >= 0 ? `+${n}` : `${n}`);
 
 // Rolls `expr` against the target's effective Defense with every modifier applied once:
 // flat attackBonus, the attacker's one-shot roll bonuses (Inspire, Foresight; consumed), status
-// penalties (shaken, poisoned), the target's discourage_attacks penalty (Sanctuary), and the
+// penalties (frightened, shaken, poisoned), the target's discourage_attacks penalty (Sanctuary), and the
 // target's "next attack against self" Defense bonus (Serene Focus; consumed).
 // Natural 20 always hits (crit); natural 1 always misses.
 export function attackRoll(ctx, { source, target, expr, attackBonus = 0, defenseReduction = 0 }) {
@@ -141,7 +144,8 @@ const consumable = (fx) => ['next_hit', 'until_next_hit', 'until_used', 'next_ma
 
 // Damage resolution order (each step applies at most once per hit):
 //   1. raw rolled damage (crits already doubled the dice)
-//   2. attacker modifiers: modify_damage_dealt (e.g. Curse of Weakness halves), Hunter's Mark dice
+//   2. attacker modifiers: modify_damage_dealt (e.g. Curse of Weakness halves; applies to every hit
+//      of one ability, then it's used up), Hunter's Mark dice
 //   3. attacker role: DPS player characters deal n× (role strength; before the target's defenses)
 //   4. redirection (Intercept): the protector becomes the victim
 //   5. victim protection: absorb_next_hit (negates) or grant_protection (reduces), then
@@ -156,7 +160,12 @@ export function dealDamage(ctx, { source = null, target, raw, damageType = null,
       if (fx.params.multiplier !== undefined) amount = Math.floor(amount * fx.params.multiplier);
       if (fx.params.amount) amount = Math.max(0, amount + fx.params.amount);
       notes.push(fx.label);
-      if (consumable(fx)) removeEffect(source, fx.id);
+      // Inside an ability, "your next hit" covers every hit of that ability (all enemies of an
+      // area or chain attack, every strike of a multi-attack); runAbility removes it afterwards.
+      if (consumable(fx)) {
+        if (ctx.spendAfterAbility) ctx.spendAfterAbility.push({ entity: source, id: fx.id });
+        else removeEffect(source, fx.id);
+      }
     }
     for (const fx of effectsOf(target, 'mark_target')) {
       if (fx.source?.entityId !== source.id) continue;
@@ -226,14 +235,16 @@ export function dealDamage(ctx, { source = null, target, raw, damageType = null,
 }
 
 // Healing order: rolled amount → ×n if the healer is a Heal-role player character → flat bonuses
-// from the caster (Beacon of Grace; consumed) → clamp to max HP → applyHeal (downed recovery).
-// Dead targets, training dummies and objects can't be healed.
-export function healTarget(ctx, { source = null, target, amount, color = null }) {
+// from the caster (Beacon of Grace; consumed) → applyHeal (negative HP resets to 0, clamp to max HP,
+// downed recovery).
+// Dead targets, training dummies and objects can't be healed. roleBonus: false skips the Heal
+// role multiplier (item heals such as potions are flat).
+export function healTarget(ctx, { source = null, target, amount, color = null, roleBonus = true }) {
   if (target.immortal || target.kind === 'object' || target.maxHp === null) return { healed: 0, skipped: `${target.name} can't be healed` };
   if (target.status === 'dead') return { healed: 0, skipped: `${target.name} is dead` };
   const notes = [];
   let total = Math.max(0, Math.floor(amount));
-  const mult = roleOf(source)?.healingDoneMultiplier;
+  const mult = roleBonus ? roleOf(source)?.healingDoneMultiplier : null;
   if (mult > 1 && total > 0) {
     total = Math.floor(total * mult);
     notes.push(`×${mult} Heal`);

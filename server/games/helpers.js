@@ -103,19 +103,23 @@ export function requirePlayerWindow(ctx) {
   if (c.active && c.phase !== 'player') fail('Wait for the PLAYER PHASE');
 }
 
-// Enemies (monsters and hostile NPCs) act only during the DM PHASE.
+// Enemies (monsters and hostile NPCs) act only during the DM PHASE; friendly NPCs, like the
+// heroes they side with, only during the PLAYER PHASE.
 export function requireActionWindow(ctx, e) {
   requirePlayerWindow(ctx);
   const c = ctx.state.combat;
-  if (ctx.actor.role === 'dm' && c.active && !isFriendly(e) && c.phase !== 'dm') fail('Enemies act during the DM PHASE');
+  if (ctx.actor.role !== 'dm' || !c.active) return;
+  if (!isFriendly(e) && c.phase !== 'dm') fail('Enemies act during the DM PHASE');
+  if (isFriendly(e) && e.kind === 'npc' && c.phase !== 'player') fail('Friendly NPCs act during the PLAYER PHASE');
 }
 
 // Who pays from the per-phase action budget in combat: players always, and the DM when acting
-// through an enemy. Friendly NPCs and the DM's own tools (damage, HP, kill...) are unlimited.
+// through an enemy or a friendly NPC. The DM acting through a hero, and the DM's own tools
+// (damage, HP, kill...), are unlimited.
 export function budgeted(ctx, e) {
   if (!ctx.state.combat.active) return false;
   if (ctx.actor.role === 'player') return true;
-  return ctx.actor.role === 'dm' && !isFriendly(e);
+  return ctx.actor.role === 'dm' && (!isFriendly(e) || e.kind === 'npc');
 }
 
 export function checkAction(ctx, e, cost = 1) {
@@ -127,7 +131,9 @@ export function checkAction(ctx, e, cost = 1) {
 }
 
 // Consumes actions in combat when the actor pays (see budgeted()).
+// Any action (even a free one) also locks in this phase's moves: they can no longer be undone.
 export function spendAction(ctx, e, cost = 1) {
+  if (budgeted(ctx, e)) turnFor(ctx.state, e.id).moves = [];
   if (!budgeted(ctx, e) || cost <= 0) return;
   checkAction(ctx, e, cost);
   turnFor(ctx.state, e.id).actions += cost;

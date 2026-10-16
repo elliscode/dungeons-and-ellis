@@ -99,7 +99,7 @@
             ]
           }
         ],
-        "description": "Roar at a nearby enemy. On a successful check against the DM's difficulty, the enemy is frightened and cannot move closer to you on its next turn."
+        "description": "Roar at a nearby enemy. On a successful check against the DM's difficulty, the enemy is frightened (−2 to hit, and it can't move closer to you) on its next turn."
       }
     ],
     "inventory": ["rope", "healing-potion", "greataxe"]
@@ -195,6 +195,14 @@
           }
         ],
         "description": "Deliver a precise melee strike that treats the target's Defense as 2 lower."
+      },
+      {
+        "id": "shield-guard",
+        "name": "Shield Guard",
+        "actionCost": 1,
+        "range": 2,
+        "effects": [{ "type": "redirect_next_hit", "target": "ally", "range": 2, "duration": "next_dm_phase" }],
+        "description": "Raise your shield over an ally within 2 squares: the next hit aimed at them lands on you instead."
       }
     ],
     "inventory": ["rope", "rations", "healing-potion"]
@@ -229,6 +237,14 @@
         "range": 0,
         "effects": [{ "type": "heal", "target": "self", "heal": "1d10+3" }],
         "description": "Catch your breath and recover your own health."
+      },
+      {
+        "id": "marshals-challenge",
+        "name": "Marshal's Challenge",
+        "actionCost": 1,
+        "range": 3,
+        "effects": [{ "type": "taunt", "target": "enemy", "duration": "next_dm_phase" }],
+        "description": "Call out an enemy within 3 squares, forcing its attacks to target you while you remain a valid target through the next DM phase."
       }
     ],
     "inventory": ["tower-shield", "healing-potion", "field-rations"]
@@ -312,6 +328,14 @@
         "range": 0,
         "effects": [{ "type": "heal", "target": "self", "heal": "1d8+2" }],
         "description": "Call on ancient roots to restore your own health."
+      },
+      {
+        "id": "thornwall-challenge",
+        "name": "Thornwall Challenge",
+        "actionCost": 1,
+        "range": 0,
+        "effects": [{ "type": "roll_to_apply", "target": "enemies_in_area", "radius": 2, "roll": "1d20+5", "onSuccess": [{ "type": "taunt", "target": "checked_enemy", "duration": "next_dm_phase" }] }],
+        "description": "Rattle your thorny bark at every enemy within 2 squares; those that fail to resist must attack you through the next DM phase."
       }
     ],
     "inventory": ["druidic-focus", "healing-potion", "wild-herbs"]

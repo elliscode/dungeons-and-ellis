@@ -2,13 +2,15 @@ import { EventEmitter } from 'node:events';
 import { readdirSync, readFileSync, existsSync, writeFileSync, renameSync, unlinkSync, watch, mkdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { isValidDice } from './dice.js';
-import { validateAbility } from './games/effects.js';
+import { validateAbility, normalizeAbility, targetingOf } from './games/effects.js';
 import { publicRoles } from './games/roles.js';
 
 // Definition categories. characters/monsters/npcs are folders of *.json files (each an array or
-// a single object); acts is the single file acts.json.
-export const CATEGORIES = ['characters', 'monsters', 'npcs', 'acts'];
+// a single object); acts and items are single files (acts.json, items.json). items.json is
+// optional: without it there are simply no item definitions.
+export const CATEGORIES = ['characters', 'monsters', 'npcs', 'acts', 'items'];
 const FOLDER_CATEGORIES = ['characters', 'monsters', 'npcs'];
+const SINGLE_FILES = { acts: 'acts.json', items: 'items.json' };
 const FILE_RE = /^[a-z0-9][a-z0-9_-]*\.json$/;
 const ID_RE = /^[a-z0-9][a-z0-9-]*$/;
 const ROLES = ['tank', 'dps', 'heal'];
@@ -30,7 +32,7 @@ export function validateDefs(category, files, { imageExists } = {}) {
   const seen = new Map();
   for (const { file, defs } of files) {
     if (!Array.isArray(defs)) {
-      errors.push(`${category}/${file}: must be a JSON array${category === 'acts' ? '' : ' or a single object'}`);
+      errors.push(`${category}/${file}: must be a JSON array${SINGLE_FILES[category] ? '' : ' or a single object'}`);
       continue;
     }
     defs.forEach((d, i) => {
@@ -43,6 +45,14 @@ export function validateDefs(category, files, { imageExists } = {}) {
       if (typeof d.name !== 'string' || !d.name.trim()) err('name is required');
       if (category === 'acts') {
         if (d.roll != null && d.roll !== '' && !isValidDice(d.roll)) err(`roll "${d.roll}" is not valid dice`);
+        return;
+      }
+      if (category === 'items') {
+        if (d.description !== undefined && typeof d.description !== 'string') err('description must be text');
+        if (d.ability !== undefined) {
+          if (!d.ability || typeof d.ability !== 'object' || Array.isArray(d.ability)) err('ability must be an object');
+          else for (const m of validateAbility(d.ability, 'ability')) err(m);
+        }
         return;
       }
       if (d.immortal !== undefined && typeof d.immortal !== 'boolean') err('immortal must be true or false');
@@ -87,6 +97,18 @@ export function validateDefs(category, files, { imageExists } = {}) {
   return { errors, warnings };
 }
 
+// Item catalog lookup shared by the server and (mirrored) the client: defId first, then name.
+export function findItem(items, inv) {
+  if (!inv) return null;
+  const name = String(inv.name ?? '').trim().toLowerCase();
+  return (inv.defId && items.find((d) => d.id === inv.defId)) || items.find((d) => d.name.trim().toLowerCase() === name) || null;
+}
+
+// An item definition as clients see it: the ability in canonical form plus its targeting.
+const itemView = (d) => (d.ability
+  ? { ...d, ability: { ...normalizeAbility(d.ability), id: d.id, name: d.name, targeting: targetingOf(d.ability) } }
+  : d);
+
 // Reloadable content store. The object identity never changes, so everything holding a reference
 // (GameService, routes) sees new definitions after reload(). Emits 'change' when content changes.
 export function loadContent(dir, { staticDir = null, watchFiles = false, pollMs = 2000 } = {}) {
@@ -103,14 +125,14 @@ export function loadContent(dir, { staticDir = null, watchFiles = false, pollMs 
   };
   const checkFile = (category, file) => {
     checkCategory(category);
-    if (category === 'acts' ? file !== 'acts.json' : !FILE_RE.test(String(file))) {
+    if (SINGLE_FILES[category] ? file !== SINGLE_FILES[category] : !FILE_RE.test(String(file))) {
       throw new ContentError('File names must look like "my-monsters.json" (lowercase letters, digits, - and _)');
     }
   };
-  const pathOf = (category, file) => (category === 'acts' ? join(dir, 'acts.json') : join(folder(category), file));
+  const pathOf = (category, file) => (SINGLE_FILES[category] ? join(dir, SINGLE_FILES[category]) : join(folder(category), file));
 
   function fileNames(category) {
-    if (category === 'acts') return existsSync(join(dir, 'acts.json')) ? ['acts.json'] : [];
+    if (SINGLE_FILES[category]) return existsSync(join(dir, SINGLE_FILES[category])) ? [SINGLE_FILES[category]] : [];
     const d = folder(category);
     return existsSync(d) ? readdirSync(d).filter((f) => FILE_RE.test(f)).sort() : [];
   }
@@ -131,7 +153,7 @@ export function loadContent(dir, { staticDir = null, watchFiles = false, pollMs 
       }
       try {
         const parsed = JSON.parse(text);
-        files.push({ file, defs: Array.isArray(parsed) || category === 'acts' ? parsed : [parsed] });
+        files.push({ file, defs: Array.isArray(parsed) || SINGLE_FILES[category] ? parsed : [parsed] });
       } catch (e) {
         errors.push(`${category}/${file}: invalid JSON — ${e.message}`);
       }
@@ -156,6 +178,7 @@ export function loadContent(dir, { staticDir = null, watchFiles = false, pollMs 
     const index = (list) => new Map(list.map((d) => [d.id, d]));
     data = {
       characters: r.lists.characters, monsters: r.lists.monsters, npcs: r.lists.npcs, acts: r.lists.acts,
+      items: r.lists.items, itemViews: r.lists.items.map(itemView),
       maps: { character: index(r.lists.characters), monster: index(r.lists.monsters), npc: index(r.lists.npcs) },
     };
     const snap = JSON.stringify(r.lists);
@@ -170,9 +193,13 @@ export function loadContent(dir, { staticDir = null, watchFiles = false, pollMs 
     get npcs() { return data.npcs; },
     get acts() { return data.acts; },
     def(kind, id) { return data.maps[kind]?.get(id) ?? null; },
+    get items() { return data.items; },
     act(id) { return data.acts.find((a) => a.id === id) ?? null; },
-    publicContent() { return { characters: data.characters, acts: data.acts, roles: publicRoles() }; },
-    dmContent() { return { characters: data.characters, monsters: data.monsters, npcs: data.npcs, acts: data.acts }; },
+    // The catalog entry for an inventory entry: by its defId, else by name (live tokens and
+    // DM-added items carry only a name, e.g. "Healing Potion").
+    item(inv) { return findItem(data.items, inv); },
+    publicContent() { return { characters: data.characters, acts: data.acts, items: data.itemViews, roles: publicRoles() }; },
+    dmContent() { return { characters: data.characters, monsters: data.monsters, npcs: data.npcs, acts: data.acts, items: data.itemViews }; },
 
     // Re-reads everything. Invalid content is rejected and the last good content stays loaded.
     reload() {
@@ -202,7 +229,7 @@ export function loadContent(dir, { staticDir = null, watchFiles = false, pollMs 
       if (typeof text !== 'string' || text.length > 2_000_000) throw new ContentError('File content missing or too large');
       const r = build({ category, file, text });
       if (r.errors.length) throw new ContentError('Validation failed — nothing was saved', { errors: r.errors, warnings: r.warnings });
-      mkdirSync(category === 'acts' ? dir : folder(category), { recursive: true });
+      mkdirSync(SINGLE_FILES[category] ? dir : folder(category), { recursive: true });
       const tmp = `${p}.${process.pid}.tmp`;
       writeFileSync(tmp, text.endsWith('\n') ? text : `${text}\n`);
       renameSync(tmp, p);
@@ -253,7 +280,7 @@ export function loadContent(dir, { staticDir = null, watchFiles = false, pollMs 
       }
     };
     for (const c of FOLDER_CATEGORIES) tryWatch(folder(c), (n) => n.endsWith('.json'));
-    tryWatch(dir, (n) => n === 'acts.json');
+    tryWatch(dir, (n) => Object.values(SINGLE_FILES).includes(n));
     // fs.watch can miss events (notably on macOS right after a watch starts), so also compare a
     // cheap signature of the content files every few seconds.
     const signature = () => CATEGORIES.flatMap((c) => fileNames(c).map((f) => {

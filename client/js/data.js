@@ -3,7 +3,8 @@ import { $, h, fill, api, toast } from './common.js';
 const me = await api('GET', '/api/me');
 if (!me.dm) location.href = '/login?next=/data';
 
-const LABELS = { characters: '🛡 Characters (heroes)', monsters: '👹 Monsters', npcs: '🧙 NPCs', acts: '✋ Acts' };
+const LABELS = { characters: '🛡 Characters (heroes)', monsters: '👹 Monsters', npcs: '🧙 NPCs', acts: '✋ Acts', items: '🧪 Items' };
+const SINGLE_FILES = { acts: 'acts.json', items: 'items.json' };
 const EXAMPLES = {
   characters: [{
     id: 'fire-mage', name: 'Fire Mage', role: 'dps', image: '/static/tokens/fire-mage.svg', maxHp: 30, movement: 6, defense: 13,
@@ -25,12 +26,17 @@ const EXAMPLES = {
     inventory: ['walking-stick'],
   }],
   acts: [{ id: 'investigate', name: 'Investigate', roll: '1d20' }, { id: 'pull-lever', name: 'Pull Lever' }],
+  items: [{
+    id: 'healing-potion', name: 'Healing Potion', description: 'Drink it or give it to an adjacent ally: heals 25.',
+    ability: { range: 1, effects: [{ type: 'heal', target: 'ally_or_self', heal: 25, range: 1 }] },
+  }],
 };
 const NOTES = {
   characters: 'role: tank | dps | heal. Ability types: heal (targets an ally and applies HP), roll (narrative), grantsActions, free.',
   monsters: 'size is in grid squares (large images scale to it). Players never see monster HP.',
   npcs: 'hostile: true hides HP from players like a monster; omit or false for allies.',
   acts: 'Generic actions shown in every hero\'s Act menu. roll is optional.',
+  items: 'Item catalog. Inventory entries match by id ("healing-potion") or name. ability is optional: with one, using the item asks for a target and the item is used up once it resolves. Item heals skip the Heal role bonus.',
 };
 
 let list = [];
@@ -80,7 +86,8 @@ function renderSidebar() {
         onclick: () => open(category, f.name),
       }, h('span.name', {}, f.name), h('span.muted', {}, `${f.count}`))),
       files.length ? null : h('p.muted', {}, 'No files'),
-      category === 'acts' ? null : h('div.row', { style: { marginTop: '4px' } },
+      category === 'items' && !files.length ? h('button.small', { onclick: () => createSingle(category) }, `+ Create ${SINGLE_FILES[category]}`) : null,
+      SINGLE_FILES[category] ? null : h('div.row', { style: { marginTop: '4px' } },
         h('button.small', { onclick: () => newFile(category) }, '+ New file'),
         h('button.small', { onclick: () => up.click() }, '⇪ Upload .json'), up));
   }));
@@ -159,6 +166,14 @@ async function remove() {
 function slugFile(name) {
   const base = String(name).trim().toLowerCase().replace(/\.json$/, '').replace(/\s+/g, '-').replace(/[^a-z0-9_-]/g, '');
   return base ? `${base}.json` : null;
+}
+
+async function createSingle(category) {
+  const file = SINGLE_FILES[category];
+  const r = await putText(category, file, '[]\n', true);
+  if (!r.ok) return toast(r.data.error ?? 'Could not create file', 'error');
+  await loadList();
+  open(category, file);
 }
 
 async function newFile(category) {

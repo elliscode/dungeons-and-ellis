@@ -27,6 +27,7 @@ socket.on('state', (s) => { state = s; render(); });
 socket.on('history', (hist) => panel.setHistory(hist));
 socket.on('feed', (rows) => panel.add(rows));
 socket.on('fx', (list) => { for (const f of list) board.showFx(f.entityId, f.text, f.color, f.kind); });
+socket.on('ping', (p) => board.showPing(p));
 // Definitions or art changed (Data/Assets pages): refresh the banks and hero names.
 socket.on('contentChanged', async () => {
   content = await api('GET', '/api/content');
@@ -51,9 +52,12 @@ const selected = () => (selectedId ? state.entities[selectedId] : null);
 const isEnemy = (e) => e.kind === 'monster' || (e.kind === 'npc' && e.hostile);
 // Server-computed allowances (include granted actions, action reductions, slows, snares).
 const allowanceOf = (e) => e.allowance?.actions ?? (e.actionsPerPhase ?? 1);
-// Actions an enemy has left this phase (the server enforces the same budget), or null if none applies.
-function enemyActionsLeft(e) {
-  if (!state.combat.active || !isEnemy(e)) return null;
+// NPCs and monsters have a per-phase action budget the DM spends for them: enemies in the DM
+// PHASE, friendly NPCs in the PLAYER PHASE (the server enforces the same rules).
+const actsIn = (e) => (isEnemy(e) ? 'dm' : 'player');
+// Actions an NPC or monster has left this phase, or null if no budget applies (heroes, objects).
+function npcActionsLeft(e) {
+  if (!state.combat.active || (e.kind !== 'npc' && e.kind !== 'monster')) return null;
   return Math.max(0, allowanceOf(e) - (state.turn[e.id]?.actions ?? 0));
 }
 // Token view of an entity for the board (positions on the active scene).
@@ -66,7 +70,7 @@ function tokenFor(e) {
     z: e.z, hp: e.hp, maxHp: e.maxHp, status: e.status, icon: e.icon,
     immortal: e.immortal, damageTaken: e.damageTaken, hits: e.hits,
     effects: (e.effects ?? []).map((fx) => ({ icon: fx.icon, label: fx.label, source: fx.source?.name })),
-    actionsLeft: state.combat.phase === 'dm' && e.status === 'active' && !e.immortal ? enemyActionsLeft(e) : null,
+    actionsLeft: state.combat.phase === actsIn(e) && e.status === 'active' && !e.immortal ? npcActionsLeft(e) : null,
     color: p ? p.color : e.kind === 'object' ? 'transparent' : e.kind === 'monster' || e.hostile ? '#8a2f2f' : '#d4af37',
   };
 }
@@ -84,6 +88,8 @@ addEventListener('keydown', (e) => {
 // ---------- board ----------
 
 const board = new Board($('#board'), {
+  // Press and hold to ping. Errors (the players' 10-per-minute limit) show as a toast.
+  onPing: (p) => socket.timeout(8000).emit('ping', p, (err, r) => { if (err) toast('Server did not respond', 'error'); else if (!r.ok) toast(r.error, 'error'); }),
   canDrag: () => !mode,
   // Shift-drag force-moves (skips movement budgets and frightened restrictions).
   onTokenDrop: (t, x, y, e) => send({ type: 'move', entityId: t.id, x, y, force: !!e?.shiftKey }),
@@ -156,7 +162,7 @@ function renderBoard() {
   if (mode?.type === 'target') {
     const origin = view(state.entities[mode.origin.id]) ?? mode.origin;
     v.targetIds = new Set(tokens.filter((t) => mode.filter(t) && distance(origin, t) <= mode.range).map((t) => t.id));
-    board.highlight(cellsWithin(scene, origin, mode.range), 'range');
+    board.highlight(Number.isFinite(mode.range) ? cellsWithin(scene, origin, mode.range) : [], 'range');
   } else if (mode?.type === 'cell') {
     board.highlight(cellsWithin(scene, state.entities[mode.origin.id] ?? mode.origin, mode.range), 'move');
   } else board.highlight([]);
@@ -171,6 +177,22 @@ function renderBoard() {
 }
 
 // ---------- top bar ----------
+
+// "Who has gone" counter (computed by the server): party in the PLAYER PHASE, enemies in the DM
+// PHASE. Click to list who still has actions, and click a name to open its inspector.
+function turnsBadge() {
+  const tp = state.turnProgress;
+  if (!tp || !tp.total) return null;
+  const label = tp.side === 'party' ? 'Party' : 'Enemies';
+  const all = tp.done === tp.total;
+  const left = tp.pending.map((p) => `${p.name} (${p.left} left)`).join(', ');
+  return h(`button.turns-badge${all ? '.all-done' : ''}`, {
+    title: all ? 'Everyone has gone' : `Still to go: ${left}`,
+    onclick: (e) => popupMenu(e.clientX, e.clientY + 12, all ? 'Everyone has gone' : 'Still to go', all
+      ? [{ label: 'Ready for the next phase', disabled: true }]
+      : tp.pending.map((p) => ({ label: p.name, sub: `${p.left} action${p.left > 1 ? 's' : ''} left`, onClick: () => select(p.id) }))),
+  }, `${all ? '✓' : '⏳'} ${label} ${tp.done}/${tp.total} done`);
+}
 
 function renderTop() {
   $('#game-name').textContent = state.name;
@@ -195,6 +217,7 @@ function renderTop() {
       ? h('button.gold', { onclick: () => send({ type: 'combat.advance' }) }, c.phase === 'player' ? '▶ DM Phase' : '▶ Player Phase')
       : h('button.primary', { onclick: () => send({ type: 'combat.start' }), disabled: !activeScene() }, '⚔️ Start combat'),
     c.active ? h('button.danger', { onclick: () => send({ type: 'combat.end' }) }, 'End combat') : null,
+    turnsBadge(),
     state.pendingChecks?.length ? h('button.checks-badge', { onclick: (e) => checksMenu(e), title: 'Abilities waiting for your call' }, `⚖ ${state.pendingChecks.length} check${state.pendingChecks.length > 1 ? 's' : ''}`) : null,
   );
   const u = $('#undo');
@@ -270,7 +293,12 @@ function renderScenes() {
 
 function renderPlayers() {
   const root = $('#tab-players');
-  fill(root, 
+  // Per-game switch (game.setOption): players may leave their hero from their ⚙ menu.
+  const canLeave = h('input', { type: 'checkbox', checked: !!state.options?.playersCanLeave });
+  canLeave.addEventListener('change', () => send({ type: 'game.setOption', option: 'playersCanLeave', value: canLeave.checked }));
+  fill(root,
+    h('label.option-row', { title: 'Players can pick a different hero from their ⚙ menu (they confirm first). You can change this any time.' },
+      canLeave, h('span', {}, 'Let players leave their hero')),
     h('div.section-title', {}, `Players (${state.players.length}/10)`),
     ...(state.players.length ? state.players.map((p) => {
       const hero = p.characterId ? heroById.get(p.characterId) : null;
@@ -285,12 +313,12 @@ function renderPlayers() {
             }))),
           }]),
         }),
-        h('span.name', {}, h('b', { style: { color: p.color } }, p.name), h('br'), h('span.muted', {}, hero ? `${hero.name} (${ROLE_LABELS[hero.role]})` : 'choosing a hero…')),
+        h('span.name', {}, h('b', { style: { color: p.color } }, p.name), h('br'), h('span.muted', {}, hero ? `${p.heroName ?? hero.name} (${ROLE_LABELS[hero.role]})` : 'choosing a hero…')),
         p.entityId ? h('button.small', { title: 'Select token', onclick: () => select(p.entityId) }, '◎') : null,
         h('button.small', {
           title: 'Reset Player / Release Character',
           disabled: !p.characterId,
-          onclick: () => confirm(`Release ${hero?.name} from ${p.name}? They will pick a hero again.`) && send({ type: 'dm.resetPlayer', playerId: p.id }),
+          onclick: () => confirm(`Release ${p.heroName ?? hero?.name} from ${p.name}? They will pick a hero again.`) && send({ type: 'dm.resetPlayer', playerId: p.id }),
         }, 'Release'),
         h('button.small.danger', {
           title: 'Remove this seat (the old browser cannot rejoin as this player)',
@@ -319,7 +347,7 @@ function renderBanks() {
     h('div.section-title', {}, 'Monster bank'), ...bank('monster', content.monsters),
     h('div.section-title', {}, 'Live in this scene'),
     ...(live.length ? live.map((e) => h('div.bank-item', { style: { cursor: 'pointer' }, onclick: () => select(e.id) },
-      h('span.name', {}, e.name, ' ', h('span.muted', {}, `${e.immortal ? `Σ ${e.damageTaken}` : e.kind === 'object' ? e.icon ?? '' : `${e.hp}/${e.maxHp}`} ${e.scope === 'game' ? '🧭' : '📍'}${e.status !== 'active' ? ` ${e.status}` : ''}${enemyActionsLeft(e) !== null ? ` ⚡${enemyActionsLeft(e)}` : ''}`)))) : [h('p.muted', {}, 'None')]),
+      h('span.name', {}, e.name, ' ', h('span.muted', {}, `${e.immortal ? `Σ ${e.damageTaken}` : e.kind === 'object' ? e.icon ?? '' : `${e.hp}/${e.maxHp}`} ${e.scope === 'game' ? '🧭' : '📍'}${e.status !== 'active' ? ` ${e.status}` : ''}${npcActionsLeft(e) !== null ? ` ⚡${npcActionsLeft(e)}` : ''}`)))) : [h('p.muted', {}, 'None')]),
   );
 }
 
@@ -386,14 +414,26 @@ function renderInspector() {
   };
   for (const input of [hpInput, maxInput]) input.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') setHealth(); });
   const itemInput = h('input.grow', { placeholder: 'Add item…', maxLength: 60 });
-  const statusPick = h('select', {}, h('option', { value: '' }, 'Add status…'), ...['poisoned', 'snared', 'shaken', 'slowed'].map((st) => h('option', { value: st }, st)));
-  statusPick.addEventListener('change', () => { if (statusPick.value) send({ type: 'effect.addStatus', entityId: id, status: statusPick.value }); });
+  const statusPick = h('select', {}, h('option', { value: '' }, 'Add status…'), ...['frightened', 'poisoned', 'snared', 'shaken', 'slowed'].map((st) => h('option', { value: st }, st)));
+  statusPick.addEventListener('change', () => {
+    const status = statusPick.value;
+    if (!status) return;
+    if (status !== 'frightened') return send({ type: 'effect.addStatus', entityId: id, status });
+    // Frightened needs a source: pick any creature on the map.
+    statusPick.value = '';
+    setMode({
+      type: 'target', label: `Choose who ${e.name} is frightened of`, range: Infinity, origin: e,
+      filter: (t) => t.id !== id && t.kind !== 'object',
+      onTarget: (t) => send({ type: 'effect.addStatus', entityId: id, status, sourceId: t.id }),
+    });
+  });
   const owner = playerOf(e);
   const c = state.combat;
   const turn = state.turn[id];
-  const enemyBlock = () => (!c.active ? null : e.status !== 'active' ? `${e.name} is ${e.status}`
+  const actionBlock = () => (!c.active ? null : e.status !== 'active' ? `${e.name} is ${e.status}`
     : isEnemy(e) && c.phase !== 'dm' ? 'Enemies act during the DM PHASE'
-      : isEnemy(e) && enemyActionsLeft(e) === 0 ? 'No actions left — use +1 action to override' : null);
+      : e.kind === 'npc' && !isEnemy(e) && c.phase !== 'player' ? 'Friendly NPCs act during the PLAYER PHASE'
+        : npcActionsLeft(e) === 0 ? 'No actions left — use +1 action to override' : null);
   const stats = e.immortal
     ? `🎯 Training dummy · 🛡 DEF ${e.defense} · Σ ${e.damageTaken ?? 0} damage over ${e.hits ?? 0} hits`
     : e.kind === 'object' ? `${e.icon ?? ''} Temporary object` : `❤ ${e.hp}/${e.maxHp} · 🛡 DEF ${e.defense} · 👣 ${e.allowance?.movement ?? e.movement}`;
@@ -407,9 +447,10 @@ function renderInspector() {
       e.kind === 'npc' || e.kind === 'monster' ? h('span.tag', {}, e.hostile ? 'hostile' : 'friendly') : null,
       owner ? h('span.tag', { style: { color: owner.color } }, owner.name) : null),
     h('p', {}, stats,
-      c.active && (turn || isEnemy(e)) && !e.immortal ? h('span.muted', {}, ` · actions ${turn?.actions ?? 0}/${allowanceOf(e)}, moved ${turn?.moved ?? 0}`) : null),
-    c.active && isEnemy(e) && !e.immortal && e.status === 'active' ? h('p.muted', { style: { fontSize: '12px', margin: '0 0 6px' } },
-      c.phase === 'dm' ? `⚡ ${enemyActionsLeft(e)} action(s) left this DM phase. Shift-drag to force-move.` : 'Enemies act during the DM PHASE.') : null,
+      c.active && (turn || npcActionsLeft(e) !== null) && !e.immortal ? h('span.muted', {}, ` · actions ${turn?.actions ?? 0}/${allowanceOf(e)}, moved ${turn?.moved ?? 0}`) : null),
+    c.active && npcActionsLeft(e) !== null && !e.immortal && e.status === 'active' ? h('p.muted', { style: { fontSize: '12px', margin: '0 0 6px' } },
+      c.phase !== actsIn(e) ? (isEnemy(e) ? 'Enemies act during the DM PHASE.' : 'Friendly NPCs act during the PLAYER PHASE.')
+        : `⚡ ${npcActionsLeft(e)} action(s) left this ${isEnemy(e) ? 'DM' : 'PLAYER'} PHASE.${isEnemy(e) ? ' Shift-drag to force-move.' : ''}`) : null,
     e.kind !== 'object' ? h('div.row', {}, amount,
       h('button.small.danger', { onclick: () => send({ type: 'entity.damage', entityId: id, amount: amount.value }) }, '− Damage'),
       mortal ? h('button.small', { onclick: () => send({ type: 'entity.heal', entityId: id, amount: amount.value }) }, '+ Heal') : null,
@@ -436,7 +477,7 @@ function renderInspector() {
     ...e.attacks.map((a) => h('div.inv-item', {},
       h('span', {}, a.name, ' ', h('span.muted', {}, `${a.attack} / ${a.damage} · r${a.range ?? 1}`)),
       e.kind !== 'pc' ? (() => {
-        const why = !c.active ? 'Combat only' : enemyBlock();
+        const why = !c.active ? 'Combat only' : actionBlock();
         return h('button.small', {
           disabled: !!why, title: why ?? 'Pick a target',
           onclick: () => setMode({
@@ -450,8 +491,8 @@ function renderInspector() {
     ...(e.kind !== 'pc' ? e.abilities ?? [] : []).map((ab) => h('div.inv-item', {},
       abilityLabel(ab),
       h('button.small', {
-        disabled: (ab.combatOnly && !c.active) || !!enemyBlock(),
-        title: (ab.combatOnly && !c.active ? 'Combat only' : enemyBlock()) ?? 'Use',
+        disabled: (ab.combatOnly && !c.active) || !!actionBlock(),
+        title: (ab.combatOnly && !c.active ? 'Combat only' : actionBlock()) ?? 'Use',
         onclick: () => startAbility({ caster: view(e), ab, entities: () => sceneEntities().map(view), setMode, send, toast: null }),
       }, 'Use'))),
     e.kind === 'pc' && e.abilities?.length ? h('div.section-title', {}, 'Abilities') : null,
@@ -485,7 +526,7 @@ function render() {
   const ents = Object.values(state.entities);
   renderTop();
   memo('scenes', [state.scenes, state.sceneOrder, state.activeSceneId, templates, ents.map((e) => [e.scope, e.sceneId])], renderScenes);
-  memo('players', state.players, renderPlayers);
+  memo('players', [state.players, state.options], renderPlayers);
   memo('banks', [spawnScope, state.activeSceneId, state.combat, state.turn, ents.filter((e) => e.kind !== 'pc').map((e) => [e.id, e.name, e.hp, e.status, e.scope, e.sceneId, e.damageTaken])], renderBanks);
   renderBoard();
   const sel = selected();

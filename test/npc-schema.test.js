@@ -104,11 +104,14 @@ test('schema-valid NPCs load and follow friendly or hostile rules', () => {
     assert.equal(state().entities[b].hostile, true, 'hostile: true starts hostile');
 
     ok(run(DM, { type: 'combat.start' }));
-    // Friendly: "ally" is the hero, usable in the player phase, no action limit.
+    // Friendly: "ally" is the hero, usable in the player phase, one action per phase.
     ok(run(DM, { type: 'entity.setHp', entityId: hero, hp: 10 }));
     ok(run(DM, { type: 'ability', entityId: h, abilityId: 'mend', targetId: hero }));
+    assert.match(run(DM, { type: 'ability', entityId: h, abilityId: 'mend', targetId: hero }).error, /no actions left/);
+    ok(run(DM, { type: 'entity.grantAction', entityId: h }));
     ok(run(DM, { type: 'ability', entityId: h, abilityId: 'mend', targetId: hero }));
     assert.equal(state().entities[hero].hp, 22);
+    ok(run(DM, { type: 'entity.grantAction', entityId: h }));
     assert.match(run(DM, { type: 'ability', entityId: h, abilityId: 'mend', targetId: b }).error, /not an ally/);
     // Hostile: enemy rules, and the hero is its enemy.
     assert.match(run(DM, { type: 'ability', entityId: b, abilityId: 'roar' }).error, /DM PHASE/);
