@@ -102,7 +102,7 @@ Add a new single-file content category, `items`, alongside `acts.json`:
 ### 3. Downed allies
 
 - An adjacent ally can give a potion to a downed hero.
-- Under the healing rule from `IMPROVEMENTS_2026_10_14_001.md`, negative HP resets to 0 first, so a hero at −16 gets up at 25.
+- Under the healing rule from `2026_10_14_001_HEALING_RESETS_NEGATIVE_HP.md`, negative HP resets to 0 first, so a hero at −16 gets up at 25.
 
 ## Part 4: Docs and schemas
 
