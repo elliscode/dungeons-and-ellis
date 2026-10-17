@@ -21,7 +21,9 @@ for (const [oldKey, newKey] of [[`dne:seat:${token}`, SEAT_KEY], ['dne:name', NA
   store.del(oldKey);
 }
 
-let content = await fetch(`${API_BASE}/api/content/public`).then((r) => r.json());
+// The join token tells a multi-account deployment whose content this game uses (self-hosted ignores it).
+const publicContentUrl = `${API_BASE}/api/content/public?joinToken=${encodeURIComponent(token)}`;
+let content = await fetch(publicContentUrl).then((r) => r.json());
 let heroById = new Map(content.characters.map((c) => [c.id, c]));
 
 let seat = store.get(SEAT_KEY);
@@ -50,7 +52,7 @@ socket.on('seatInvalid', () => {
 socket.on('fatal', (msg) => { fatal = msg; render(); });
 // The DM edited heroes/acts or art: refetch so the hero picker and Act menu stay current.
 socket.on('contentChanged', async () => {
-  content = await fetch(`${API_BASE}/api/content/public`).then((r) => r.json());
+  content = await fetch(publicContentUrl).then((r) => r.json());
   heroById = new Map(content.characters.map((c) => [c.id, c]));
   render();
 });

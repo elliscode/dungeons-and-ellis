@@ -83,12 +83,20 @@ nextDeadline(state) → { at, cmd } | null
 ```
 At time `at`, dispatch `cmd` as `{ role: 'system' }`. Call it again after every successful command and replace any pending wake-up. A stale wake-up is harmless: `combat.timerExpired` checks `phaseEndsAt`.
 
+**Pausing the phase timer (optional for a shell).** A shell whose clock depends on the DM being connected can dispatch these as `{ role: 'system' }`:
+- `combat.timerPause` when the game's last DM connection drops. It stores the time left in `combat.pausedMs`, clears `phaseEndsAt` (so `nextDeadline` returns null) and logs "DM connection lost — timer stopped".
+- `combat.timerResume` when a DM is back. It sets `phaseEndsAt = now + pausedMs`.
+
+Both fail harmlessly when there's nothing to pause or resume. Starting, advancing or ending combat, and `combat.setTimer`, all clear a pause. The self-hosted server keeps its own clock and doesn't send them.
+
 **Also exported:** `projectForDm(state, presenceOf)`, `projectForPlayer(state, playerId, presenceOf)`, `feedForRole(row, role)`, `createGameState`, `upgradeState`, `GameError`, `DM_COLOR`, `newId`, `randomToken`, the role-strength helpers, content validation, `normalizeTemplate`, the dice functions, and the limit constants.
 
 ## Part 3: The client contract
 
 The browser code in `client/` is shared. Two files are per-deployment:
 - **`client/js/config.js`:** `API_BASE` (prefix for `/api/...`) and `SOCKET_URL`. Both are empty when self-hosted.
+  - `/api/...` requests use `credentials: 'include'`, so a deployment can put the API on another origin and still send its cookie.
+  - The player page fetches `/api/content/public?joinToken=<token>`, so a multi-account deployment knows whose content the game uses. Self-hosted ignores the query string.
 - **`client/js/transport.js`:** `connect(namespace, auth)` returns `{ on(event, fn), request(event, payload, { timeoutMs }) → Promise, setAuth(auth) }`.
 
 | Namespace | `auth` | Client → server requests (reply) | Server → client events |

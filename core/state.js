@@ -25,6 +25,10 @@ export function upgradeState(state) {
     state.options = { ...state.options, playersCanLeave: false };
     changed = true;
   }
+  if (state.combat && state.combat.pausedMs === undefined) {
+    state.combat.pausedMs = null;
+    changed = true;
+  }
   const players = Object.values(state.players ?? {});
   for (const p of players) {
     if (PLAYER_COLORS.includes(p.color)) continue;
@@ -54,7 +58,7 @@ export function createGameState({ id, name, joinToken }) {
     activeSceneId: null,
     entities: {},
     zCounter: 0,
-    combat: { active: false, phase: null, round: 0, timerSeconds: 0, phaseEndsAt: null },
+    combat: { active: false, phase: null, round: 0, timerSeconds: 0, phaseEndsAt: null, pausedMs: null },
     turn: {},
     // Per-game switches the DM can flip mid-game (game.setOption).
     options: { playersCanLeave: false },

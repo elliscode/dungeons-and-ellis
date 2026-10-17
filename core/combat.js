@@ -13,6 +13,7 @@ export function startCombat(state, now) {
   state.combat.round = 1;
   state.combat.phaseSeq = 1;
   state.combat.phaseEndsAt = phaseDurationEnd(state, now);
+  state.combat.pausedMs = null;
   state.turn = {};
 }
 
@@ -26,11 +27,12 @@ export function advancePhase(state, now) {
   }
   c.phaseSeq = (c.phaseSeq ?? 1) + 1;
   c.phaseEndsAt = phaseDurationEnd(state, now);
+  c.pausedMs = null;
   state.turn = {};
 }
 
 export function endCombat(state) {
-  Object.assign(state.combat, { active: false, phase: null, round: 0, phaseSeq: 0, phaseEndsAt: null });
+  Object.assign(state.combat, { active: false, phase: null, round: 0, phaseSeq: 0, phaseEndsAt: null, pausedMs: null });
   state.turn = {};
 }
 

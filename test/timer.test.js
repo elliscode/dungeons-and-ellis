@@ -4,6 +4,8 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { setup, makeService, ok, DM } from './helpers.js';
+import { nextDeadline } from '../core/engine.js';
+import { createGameState, upgradeState } from '../core/state.js';
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -72,4 +74,64 @@ test('state survives a restart, and an expired phase advances on load', async ()
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test('timer pause keeps the time left and resume restarts it from there', () => {
+  const s = setup();
+  const SYSTEM = { role: 'system' };
+  ok(s.run(DM, { type: 'combat.setTimer', seconds: 60 }));
+  ok(s.run(DM, { type: 'combat.start' }));
+  s.clock.t += 50_000; // 10 s left in the player phase
+  ok(s.run(SYSTEM, { type: 'combat.timerPause' }));
+  assert.equal(s.state().combat.phaseEndsAt, null);
+  assert.equal(s.state().combat.pausedMs, 10_000);
+  assert.equal(nextDeadline(s.state()), null);
+
+  s.clock.t += 120_000; // the DM is away for two minutes
+  ok(s.run(SYSTEM, { type: 'combat.timerResume' }));
+  assert.equal(s.state().combat.pausedMs, null);
+  assert.equal(s.state().combat.phaseEndsAt, s.clock.t + 10_000);
+  assert.equal(s.state().combat.phase, 'player');
+  s.service.close();
+});
+
+test('timer pause and resume are system-only and need a running or paused timer', () => {
+  const s = setup();
+  const SYSTEM = { role: 'system' };
+  assert.equal(s.run(SYSTEM, { type: 'combat.timerPause' }).ok, false); // no combat
+  ok(s.run(DM, { type: 'combat.start' }));
+  assert.equal(s.run(SYSTEM, { type: 'combat.timerPause' }).ok, false); // no timer set
+  assert.equal(s.run(SYSTEM, { type: 'combat.timerResume' }).ok, false); // not paused
+  ok(s.run(DM, { type: 'combat.setTimer', seconds: 30 }));
+  assert.equal(s.run(DM, { type: 'combat.timerPause' }).error, 'Not allowed');
+  ok(s.run(SYSTEM, { type: 'combat.timerPause' }));
+  assert.equal(s.run(DM, { type: 'combat.timerResume' }).error, 'Not allowed');
+  s.service.close();
+});
+
+test('changing phase, the timer or combat clears a pause', () => {
+  const s = setup();
+  const SYSTEM = { role: 'system' };
+  ok(s.run(DM, { type: 'combat.setTimer', seconds: 30 }));
+  ok(s.run(DM, { type: 'combat.start' }));
+  ok(s.run(SYSTEM, { type: 'combat.timerPause' }));
+  ok(s.run(DM, { type: 'combat.advance' }));
+  assert.equal(s.state().combat.pausedMs, null);
+  assert.ok(s.state().combat.phaseEndsAt > s.clock.t);
+  ok(s.run(SYSTEM, { type: 'combat.timerPause' }));
+  ok(s.run(DM, { type: 'combat.setTimer', seconds: 45 }));
+  assert.equal(s.state().combat.pausedMs, null);
+  assert.equal(s.state().combat.phaseEndsAt, s.clock.t + 45_000);
+  ok(s.run(SYSTEM, { type: 'combat.timerPause' }));
+  ok(s.run(DM, { type: 'combat.end' }));
+  assert.equal(s.state().combat.pausedMs, null);
+  s.service.close();
+});
+
+test('upgradeState adds pausedMs to older games', () => {
+  const old = createGameState({ id: 'g_old', name: 'Old', joinToken: 't' });
+  delete old.combat.pausedMs;
+  assert.equal(upgradeState(old), true);
+  assert.equal(old.combat.pausedMs, null);
+  assert.equal(upgradeState(old), false);
 });

@@ -48,7 +48,7 @@ export async function api(method, url, body) {
     method,
     headers: body ? { 'Content-Type': 'application/json' } : {},
     body: body ? JSON.stringify(body) : undefined,
-    credentials: 'same-origin',
+    credentials: 'include',
   });
   const data = await res.json().catch(() => ({}));
   if (res.status === 401 && !url.includes('/login')) {
@@ -95,7 +95,9 @@ export function combatBar(el) {
     }
     const phase = combat.phase === 'player' ? 'PLAYER PHASE' : 'DM PHASE';
     let timer = '', urgent = false;
-    if (combat.phaseEndsAt) {
+    if (combat.pausedMs != null) {
+      timer = ' · ⏸ DM connection lost, timer stopped';
+    } else if (combat.phaseEndsAt) {
       const left = Math.max(0, Math.ceil((combat.phaseEndsAt - (Date.now() + offset)) / 1000));
       timer = ` · ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
       urgent = left <= 10;
