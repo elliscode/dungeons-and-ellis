@@ -4,16 +4,20 @@ import { setup, scriptedRng, ok, DM, content } from './helpers.js';
 import { mkdtempSync, rmSync, writeFileSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { roleRules, setRoleStrength, getRoleStrength, DEFAULT_ROLE_STRENGTH } from '../server/games/roles.js';
+import { roleRules, DEFAULT_ROLE_STRENGTH } from '../core/roles.js';
 import { loadSettings } from '../server/settings.js';
-import { stripMarkers } from '../server/games/helpers.js';
+import { stripMarkers } from '../core/helpers.js';
 
 // d20 → 15, every other die → 1 unless queued.
 const fallback = (sides) => (sides === 20 ? 15 : 1);
 
+// The role strength the next world() uses (set by withStrength).
+let strength = DEFAULT_ROLE_STRENGTH;
+const settings = { get: () => ({ roleStrength: strength }) };
+
 function world(heroes) {
   const rng = scriptedRng(fallback);
-  const s = setup({ rng });
+  const s = setup({ rng, settings });
   const tpl = s.templates.create({ name: 'Arena', grid: { cols: 14, rows: 10 } });
   const sid = ok(s.run(DM, { type: 'scene.add', templateId: tpl.id })).sceneId;
   ok(s.run(DM, { type: 'scene.activate', sceneId: sid }));
@@ -82,8 +86,7 @@ test('protections and debuffs still apply after the DPS multiplier', () => {
   assert.equal(ok(w.dmAttack('mage', 'fire-bolt', w.h.wall.id)).damage, 4);
   // Curse of Weakness on a DPS hero: halve first (attacker modifier), then ×4.
   const curse = { type: 'modify_damage_dealt', label: 'Curse', trigger: 'next_hit', params: { multiplier: 0.5 } };
-  const lock = w.hero('lock');
-  lock.effects.push({ id: 'fx_test', icon: '🥀', status: null, source: null, expires: { atSeq: null }, ...curse });
+  w.edit((st) => st.entities[w.h.lock.id].effects.push({ id: 'fx_test', icon: '🥀', status: null, source: null, expires: { atSeq: null }, ...curse }));
   const dummy = w.spawn('training-dummy', 7, 0);
   w.rng.push(15, 7); // life drain 1d8+3 = 10 → curse 5 → ×4 = 20
   ok(w.use('lock', 'life-drain', { targetId: dummy }));
@@ -136,9 +139,9 @@ test('other roles and DM-controlled entities get no multiplier', () => {
 });
 
 test('role tiles are driven by the same rules', () => {
-  const roles = content.publicContent().roles;
+  const roles = content.publicContent(DEFAULT_ROLE_STRENGTH).roles;
   assert.deepEqual(Object.keys(roles).sort(), ['dps', 'heal', 'tank']);
-  for (const [id, r] of Object.entries(roleRules())) assert.equal(roles[id].blurb, r.blurb);
+  for (const [id, r] of Object.entries(roleRules(DEFAULT_ROLE_STRENGTH))) assert.equal(roles[id].blurb, r.blurb);
   assert.equal(roles.tank.blurb, 'Takes ¼ damage');
   assert.equal(roles.dps.blurb, 'Deals 4× damage');
   assert.equal(roles.heal.blurb, 'Heals for 4×');
@@ -153,19 +156,19 @@ test('damage abilities are combat-only; heals, buffs and debuffs are not', async
   ok(w.use('wall', 'shield-wall'), 'buffs work while exploring');
   ok(w.use('ranger', 'hunters-mark', { targetId: gob }), 'non-damaging debuffs work while exploring');
   ok(w.use('mage', 'light'), 'narrative abilities work while exploring');
-  const { projectForPlayer } = await import('../server/games/project.js');
+  const { projectForPlayer } = await import('../core/project.js');
   const mine = projectForPlayer(w.state(), w.h.mage.actor.playerId, () => 'online').entities.find((e) => e.id === w.h.mage.id);
   assert.deepEqual(Object.fromEntries(mine.abilities.map((a) => [a.id, a.combatOnly])), { 'inferno-surge': true, light: false });
   ok(w.run(DM, { type: 'combat.start' }));
   ok(w.use('mage', 'inferno-surge', { targetId: gob }), 'allowed once combat starts');
 });
 
-// ---------- configurable role strength (global setting, presets 1–5) ----------
+// ---------- configurable role strength (server setting, presets 1–5) ----------
 
 // Runs fn with a given role strength and always restores the default afterwards.
 function withStrength(n, fn) {
-  setRoleStrength(n);
-  try { return fn(); } finally { setRoleStrength(DEFAULT_ROLE_STRENGTH); }
+  strength = n;
+  try { return fn(); } finally { strength = DEFAULT_ROLE_STRENGTH; }
 }
 
 test('every preset 1–5 changes DPS damage, healing and tank mitigation everywhere', () => {
@@ -211,14 +214,14 @@ test('role tile blurbs follow the setting', () => {
   };
   for (const [n, [tank, dps, heal]] of Object.entries(expected)) {
     withStrength(Number(n), () => {
-      const roles = content.publicContent().roles;
+      const roles = content.publicContent(strength).roles;
       assert.deepEqual([roles.tank.blurb, roles.dps.blurb, roles.heal.blurb], [tank, dps, heal]);
     });
   }
 });
 
 test('settings file: defaults to 4, only accepts 1–5, persists, survives a bad file', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'dne-settings-'));
+  const dir = mkdtempSync(join(tmpdir(), 'one-and-done-settings-'));
   try {
     const s1 = loadSettings(dir);
     assert.equal(s1.get().roleStrength, 4, 'missing file → default 4');
@@ -227,7 +230,7 @@ test('settings file: defaults to 4, only accepts 1–5, persists, survives a bad
     s1.on('change', (c) => { changed = c; });
     s1.setRoleStrength('3');
     assert.deepEqual(changed, { before: 4, after: 3 });
-    assert.equal(getRoleStrength(), 3, 'applied to the live rules');
+    assert.equal(s1.get().roleStrength, 3, 'applied to the live setting');
     assert.deepEqual(JSON.parse(readFileSync(join(dir, 'settings.json'), 'utf8')), { roleStrength: 3 });
     const s2 = loadSettings(dir);
     assert.equal(s2.get().roleStrength, 3, 'reloaded from disk');
@@ -236,7 +239,6 @@ test('settings file: defaults to 4, only accepts 1–5, persists, survives a bad
     writeFileSync(join(dir, 'settings.json'), '{ nope');
     assert.equal(loadSettings(dir).get().roleStrength, 4, 'broken JSON → default');
   } finally {
-    setRoleStrength(DEFAULT_ROLE_STRENGTH);
     rmSync(dir, { recursive: true, force: true });
   }
 });

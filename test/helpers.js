@@ -2,6 +2,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { openDb } from '../server/db.js';
 import { loadContent } from '../server/content.js';
+import { DEFAULT_ROLE_STRENGTH } from '../core/roles.js';
 import { TemplateStore } from '../server/templates.js';
 import { GameService } from '../server/games/service.js';
 
@@ -18,12 +19,18 @@ export function scriptedRng(fallback = (s) => s) {
   return rng;
 }
 
-export function makeService({ dbFile = ':memory:', now, rng } = {}) {
+// A settings store with a fixed role strength (production reads data/settings.json).
+export const fixedSettings = (roleStrength = DEFAULT_ROLE_STRENGTH) => ({ get: () => ({ roleStrength }) });
+
+// ONE_AND_DONE_STATELESS=1 (npm run test:stateless) runs every test without the in-memory game cache.
+const STATELESS = process.env.ONE_AND_DONE_STATELESS === '1';
+
+export function makeService({ dbFile = ':memory:', now, rng, settings = fixedSettings() } = {}) {
   const db = openDb(dbFile);
   const templates = new TemplateStore(db);
   const clock = { t: 1_000_000 };
   rng ??= scriptedRng();
-  const service = new GameService({ db, content, templates, rng, now: now ?? (() => clock.t) });
+  const service = new GameService({ db, content, templates, settings, rng, now: now ?? (() => clock.t), stateless: STATELESS });
   return { db, templates, service, clock, rng };
 }
 
@@ -49,5 +56,13 @@ export function setup(opts) {
   };
   const state = () => service.get(game.id).state;
   const run = (actor, cmd) => service.dispatch(game.id, actor, cmd);
-  return { ...ctx, game, tpl, tpl2, join, state, run };
+  // Changes the game state directly (test setup no command can express) and saves it. Mutating
+  // state() alone only works with the in-memory cache; this also works in stateless mode.
+  const edit = (fn) => {
+    const g = service.get(game.id);
+    const out = fn(g.state);
+    service.persist(g, []);
+    return out;
+  };
+  return { ...ctx, game, tpl, tpl2, join, state, run, edit };
 }

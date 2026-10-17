@@ -4,11 +4,10 @@ import { mkdtempSync, rmSync, cpSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { createServer } from '../server/index.js';
-import { setRoleStrength, DEFAULT_ROLE_STRENGTH } from '../server/games/roles.js';
 import { FIXTURE_DATA } from './helpers.js';
 
 test('role strength setting over HTTP: DM only, presets only, live for tiles and feed', async () => {
-  const dir = mkdtempSync(join(tmpdir(), 'dne-settings-api-'));
+  const dir = mkdtempSync(join(tmpdir(), 'one-and-done-settings-api-'));
   cpSync(FIXTURE_DATA, dir, { recursive: true });
   const server = createServer({ dbFile: ':memory:', password: 'pw', contentDir: dir });
   await new Promise((r) => server.httpServer.listen(0, '127.0.0.1', r));
@@ -39,7 +38,6 @@ test('role strength setting over HTTP: DM only, presets only, live for tiles and
     assert.match(dmFeed.text, /Role strength changed from 4 to 3/);
     assert.ok(!server.service.history(game.id, 'player').feed.some((f) => /Role strength/.test(f.text)), 'players do not see it');
   } finally {
-    setRoleStrength(DEFAULT_ROLE_STRENGTH);
     await server.close();
     rmSync(dir, { recursive: true, force: true });
   }

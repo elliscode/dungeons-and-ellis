@@ -3,15 +3,16 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, mkdtempSync, rmSync, cpSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { EFFECT_TYPES, validateAbility } from '../server/games/effects.js';
-import { validateDefs, loadContent } from '../server/content.js';
+import { EFFECT_TYPES, validateAbility } from '../core/effects.js';
+import { loadContent } from '../server/content.js';
+import { validateDefs } from '../core/content.js';
 import { openDb } from '../server/db.js';
 import { TemplateStore } from '../server/templates.js';
 import { GameService } from '../server/games/service.js';
 import { compileSchema, schemaErrors } from '../scripts/validate-characters.js';
 import { buildMonsterSchema, render, CHARACTER_SCHEMA, MONSTER_SCHEMA } from '../scripts/build-monster-schema.js';
 import { SAMPLES } from './schema-samples.js';
-import { ok, DM, ROOT, FIXTURE_DATA } from './helpers.js';
+import { ok, DM, ROOT, FIXTURE_DATA, fixedSettings } from './helpers.js';
 
 // schemas/monster.schema.json is generated from character.schema.json (shared attacks, abilities
 // and effects) plus monster-only fields. Anything it accepts must pass the server's own rules.
@@ -82,7 +83,7 @@ test('rejects what monsters cannot have', () => {
 });
 
 test('a schema-valid monster loads and its ability runs under enemy rules', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'dne-monster-'));
+  const dir = mkdtempSync(join(tmpdir(), 'one-and-done-monster-'));
   try {
     for (const sub of ['characters', 'monsters', 'npcs']) cpSync(join(FIXTURE_DATA, sub), join(dir, sub), { recursive: true });
     cpSync(join(FIXTURE_DATA, 'acts.json'), join(dir, 'acts.json'));
@@ -92,7 +93,7 @@ test('a schema-valid monster loads and its ability runs under enemy rules', () =
     const content = loadContent(dir);
     const db = openDb(':memory:');
     const templates = new TemplateStore(db);
-    const service = new GameService({ db, content, templates, rng: (sides) => sides });
+    const service = new GameService({ db, content, templates, settings: fixedSettings(), rng: (sides) => sides });
     const game = service.createGame('Troll test');
     const run = (actor, cmd) => service.dispatch(game.id, actor, cmd);
     const sid = ok(run(DM, { type: 'scene.add', templateId: templates.create({ name: 'R', grid: { cols: 8, rows: 8 } }).id })).sceneId;

@@ -1,5 +1,5 @@
-import { io } from '/socket.io/socket.io.esm.min.js';
-import { $, fill, $$, h, api, toast, sendCmd, popupMenu, closeMenu, combatBar, copyText, PLAYER_COLORS, ROLE_LABELS } from './common.js';
+import { connect } from './transport.js';
+import { $, fill, $$, h, api, toast, sendCmd, sendPing, sendChat, popupMenu, closeMenu, combatBar, copyText, PLAYER_COLORS, ROLE_LABELS } from './common.js';
 import { Board } from './board.js';
 import { GameFeed } from './panel.js';
 import { startAbility, abilitySummary, distance } from './abilities.js';
@@ -16,10 +16,10 @@ let mode = null; // {type:'place', kind, def, scope} | {type:'target'|'cell', la
 let spawnScope = 'scene';
 let templates = [];
 
-const socket = io('/dm', { auth: { gameId } });
+const socket = connect('/dm', { gameId });
 const send = (cmd) => sendCmd(socket, cmd);
 const panel = new GameFeed($('#panel'), {
-  onSend: (text) => new Promise((r) => socket.emit('chat', text, (res) => { if (!res?.ok) toast(res?.error ?? 'Failed', 'error'); r(); })),
+  onSend: (text) => sendChat(socket, text),
 });
 const bar = combatBar($('#combat-bar'));
 
@@ -89,7 +89,7 @@ addEventListener('keydown', (e) => {
 
 const board = new Board($('#board'), {
   // Press and hold to ping. Errors (the players' 10-per-minute limit) show as a toast.
-  onPing: (p) => socket.timeout(8000).emit('ping', p, (err, r) => { if (err) toast('Server did not respond', 'error'); else if (!r.ok) toast(r.error, 'error'); }),
+  onPing: (p) => sendPing(socket, p),
   canDrag: () => !mode,
   // Shift-drag force-moves (skips movement budgets and frightened restrictions).
   onTokenDrop: (t, x, y, e) => send({ type: 'move', entityId: t.id, x, y, force: !!e?.shiftKey }),

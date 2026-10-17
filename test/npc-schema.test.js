@@ -3,8 +3,9 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, mkdtempSync, rmSync, cpSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { EFFECT_TYPES, validateAbility } from '../server/games/effects.js';
-import { validateDefs, loadContent } from '../server/content.js';
+import { EFFECT_TYPES, validateAbility } from '../core/effects.js';
+import { loadContent } from '../server/content.js';
+import { validateDefs } from '../core/content.js';
 import { openDb } from '../server/db.js';
 import { TemplateStore } from '../server/templates.js';
 import { GameService } from '../server/games/service.js';
@@ -12,7 +13,7 @@ import { compileSchema, schemaErrors } from '../scripts/validate-characters.js';
 import { render, CHARACTER_SCHEMA } from '../scripts/build-monster-schema.js';
 import { buildNpcSchema, NPC_SCHEMA } from '../scripts/build-npc-schema.js';
 import { SAMPLES } from './schema-samples.js';
-import { ok, DM, ROOT, FIXTURE_DATA } from './helpers.js';
+import { ok, DM, ROOT, FIXTURE_DATA, fixedSettings } from './helpers.js';
 
 // schemas/npc.schema.json is generated from character.schema.json (shared attacks, abilities and
 // effects) plus NPC-only fields. Anything it accepts must pass the server's own rules.
@@ -76,7 +77,7 @@ test('rejects what NPCs cannot have', () => {
 });
 
 test('schema-valid NPCs load and follow friendly or hostile rules', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'dne-npc-'));
+  const dir = mkdtempSync(join(tmpdir(), 'one-and-done-npc-'));
   try {
     for (const sub of ['characters', 'monsters', 'npcs']) cpSync(join(FIXTURE_DATA, sub), join(dir, sub), { recursive: true });
     cpSync(join(FIXTURE_DATA, 'acts.json'), join(dir, 'acts.json'));
@@ -88,7 +89,7 @@ test('schema-valid NPCs load and follow friendly or hostile rules', () => {
     const content = loadContent(dir);
     const db = openDb(':memory:');
     const templates = new TemplateStore(db);
-    const service = new GameService({ db, content, templates, rng: (sides) => sides });
+    const service = new GameService({ db, content, templates, settings: fixedSettings(), rng: (sides) => sides });
     const game = service.createGame('NPC test');
     const run = (actor, cmd) => service.dispatch(game.id, actor, cmd);
     const state = () => service.get(game.id).state;

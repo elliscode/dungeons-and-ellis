@@ -5,7 +5,7 @@
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { normalizeAbility, validateAbility } from '../server/games/effects.js';
+import { normalizeAbility, validateAbility } from '../core/effects.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dir = join(process.argv[2] ?? join(ROOT, 'data'), 'characters');

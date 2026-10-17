@@ -1,6 +1,6 @@
 # Abilities and the effect engine
 
-Every ability for every hero, NPC, and monster resolves on the server through one engine (`server/games/effects.js`). Ability text in `description` is only shown in the UI; it never drives mechanics.
+Every ability for every hero, NPC, and monster resolves on the server through one engine (`core/effects.js`). Ability text in `description` is only shown in the UI; it never drives mechanics.
 
 To generate new heroes with an LLM, see [CHARACTER_GENERATION.md](CHARACTER_GENERATION.md) and `schemas/character.schema.json`. For monsters, see [MONSTER_GENERATION.md](MONSTER_GENERATION.md) and `schemas/monster.schema.json`. For NPCs, see [NPC_GENERATION.md](NPC_GENERATION.md) and `schemas/npc.schema.json`.
 
@@ -97,7 +97,7 @@ A timed effect applied outside combat starts its clock when combat begins. Endin
 
 ## Damage order
 
-Every damage source runs through `dealDamage()` in `server/games/combat.js`: weapon attacks, ability attacks, area, chain, and multi strikes, enemy attacks, and the DM's Damage button. Each step applies at most once per hit:
+Every damage source runs through `dealDamage()` in `core/combat.js`: weapon attacks, ability attacks, area, chain, and multi strikes, enemy attacks, and the DM's Damage button. Each step applies at most once per hit:
 
 1. Raw damage is rolled. A critical hit doubles the dice, not the modifier.
 2. Attacker modifiers apply: `modify_damage_dealt` (to every hit of the ability that uses it up), then a Hunter's Mark bonus.
@@ -118,7 +118,7 @@ Healing totems count as their caster's healing.
 
 ### Role bonuses
 
-These are automatic for player characters, based on `role`, and scaled by one global setting, the **role strength** n. It's one of the presets 1–5 (default 4), chosen on the DM home page and stored in `data/settings.json`. The rules are defined once in `server/games/roles.js`, and the role-selection tiles read them from there.
+These are automatic for player characters, based on `role`, and scaled by one global setting, the **role strength** n. It's one of the presets 1–5 (default 4), chosen on the DM home page and stored in `data/settings.json`. The rules are defined once in `core/roles.js`, and the role-selection tiles read them from there.
 
 | Role | Bonus |
 | --- | --- |

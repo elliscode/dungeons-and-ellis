@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { setup, ok, DM, content } from './helpers.js';
-import { validateDefs } from '../server/content.js';
-import { stripMarkers } from '../server/games/helpers.js';
+import { validateDefs } from '../core/content.js';
+import { stripMarkers } from '../core/helpers.js';
 
 // Rogue (dps, 32 HP) at (0,0) and Cleric (heal, 34 HP) at (1,0): adjacent. Both carry a Healing Potion.
 function party() {

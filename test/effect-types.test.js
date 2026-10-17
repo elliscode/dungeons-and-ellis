@@ -1,10 +1,10 @@
 import { describe, test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { setup, scriptedRng, ok, DM } from './helpers.js';
-import { EFFECT_TYPES, targetingOf } from '../server/games/effects.js';
-import { dealDamage } from '../server/games/combat.js';
-import { movementAllowance } from '../server/games/status.js';
-import { stripMarkers } from '../server/games/helpers.js';
+import { EFFECT_TYPES, targetingOf } from '../core/effects.js';
+import { dealDamage } from '../core/combat.js';
+import { movementAllowance } from '../core/status.js';
+import { stripMarkers } from '../core/helpers.js';
 
 // One suite per ability effect type, each checking the type's mechanic in isolation with
 // hand-made abilities. Casters are friendly NPCs and targets are monsters: neither has a role, so
@@ -29,13 +29,15 @@ function arena() {
   const ent = (id) => s.state().entities[id];
   // Friendly NPCs have a per-phase action budget like heroes; these suites test effects, not the
   // action economy, so the casters get plenty of actions.
-  for (const id of [W, A]) ent(id).actionsPerPhase = 99;
+  s.edit((st) => { for (const id of [W, A]) st.entities[id].actionsPerPhase = 99; });
   return {
     ...s, rng, sid, W, A, O, ent, spawn,
-    // Adds a hand-made ability straight onto the entity in the live game state.
+    // Adds a hand-made ability straight onto the entity in the saved game state.
     give(id, abilityId, effects, extra = {}) {
-      const e = ent(id);
-      e.abilities = [...(e.abilities ?? []).filter((a) => a.id !== abilityId), { id: abilityId, name: abilityId, range: 10, effects, ...extra }];
+      s.edit((st) => {
+        const e = st.entities[id];
+        e.abilities = [...(e.abilities ?? []).filter((a) => a.id !== abilityId), { id: abilityId, name: abilityId, range: 10, effects, ...extra }];
+      });
     },
     use: (id, abilityId, extra = {}) => s.run(DM, { type: 'ability', entityId: id, abilityId, ...extra }),
     rock: (targetId) => s.run(DM, { type: 'attack', entityId: O, attackId: 'rock', targetId }), // ogre: 1d20+6, 2d6+4, range 8
@@ -283,10 +285,12 @@ suite('grant_protection', () => {
     const w = arena();
     w.give(w.W, 'ward', [{ type: 'grant_protection', magicalOnly: true }]);
     ok(w.use(w.W, 'ward'));
-    const ctx = { state: w.state(), rng: w.rng, fx() {} };
-    assert.equal(dealDamage(ctx, { target: w.ent(w.W), raw: 10 }).dealt, 10, 'physical');
-    assert.equal(dealDamage(ctx, { target: w.ent(w.W), raw: 10, damageType: 'fire' }).dealt, 5, 'magical');
-    assert.equal(dealDamage(ctx, { target: w.ent(w.W), raw: 10, damageType: 'fire' }).dealt, 10, 'used up');
+    const state = w.state(); // one copy: dealDamage mutates it directly
+    const ctx = { state, rng: w.rng, settings: { roleStrength: 4 }, fx() {} };
+    const target = state.entities[w.W];
+    assert.equal(dealDamage(ctx, { target, raw: 10 }).dealt, 10, 'physical');
+    assert.equal(dealDamage(ctx, { target, raw: 10, damageType: 'fire' }).dealt, 5, 'magical');
+    assert.equal(dealDamage(ctx, { target, raw: 10, damageType: 'fire' }).dealt, 10, 'used up');
   });
 });
 

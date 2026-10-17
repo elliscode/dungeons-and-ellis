@@ -55,7 +55,7 @@ test('the change survives in the projection the DM receives, and players never s
   const s = arena();
   ok(s.run(DM, { type: 'entity.setMaxHp', entityId: s.gob, maxHp: 20 }));
   ok(s.run(DM, { type: 'entity.setHp', entityId: s.gob, hp: 20 }));
-  const { projectForDm } = await import('../server/games/project.js');
+  const { projectForDm } = await import('../core/project.js');
   const dm = projectForDm(s.state(), () => 'online').entities[s.gob];
   assert.deepEqual([dm.hp, dm.maxHp], [20, 20]);
   const pub = s.service.history(s.game.id, 'player').feed.map((f) => f.text).join('\n');

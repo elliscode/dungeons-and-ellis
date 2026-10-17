@@ -1,6 +1,6 @@
 # Generating characters with an LLM
 
-[`schemas/character.schema.json`](../schemas/character.schema.json) is a JSON Schema (draft 2020-12) for one playable hero. It's strict: every effect type, field, enum, and numeric range in it is also accepted by the effect engine (`server/games/effects.js`). If a character passes the schema, the server will load it.
+[`schemas/character.schema.json`](../schemas/character.schema.json) is a JSON Schema (draft 2020-12) for one playable hero. It's strict: every effect type, field, enum, and numeric range in it is also accepted by the effect engine (`core/effects.js`). If a character passes the schema, the server will load it.
 
 ## Workflow
 
@@ -58,7 +58,7 @@ Character request:
 | Weapon damage | 1d8+4 to 1d12+4 | 1d8+4, 1d10+3, 2d6+2 | 1d6+2 to 1d8+3 |
 | Single-target heal | | | 1d8+3 (range 6), 2d8+3 (adjacent) |
 
-Role bonuses are automatic, so don't add abilities for them or mention them in descriptions (the rules live in `server/games/roles.js`):
+Role bonuses are automatic, so don't add abilities for them or mention them in descriptions (the rules live in `core/roles.js`):
 - Tanks take 1/n of the damage from every hit (minimum 1).
 - DPS deal n× the listed damage.
 - Healers heal for n× the listed amount, capped at max HP.

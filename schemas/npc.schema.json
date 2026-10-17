@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://dungeons-and-ellis/schemas/npc.schema.json",
+  "$id": "https://one-and-done/schemas/npc.schema.json",
   "title": "One & Done NPC",
   "description": "A non-player character for the DM's NPC bank in One & Done, a grid-based tabletop game: townsfolk, guards, quest givers, companions, rivals. Spawned NPCs are independent copies, so editing a definition never changes NPCs already in a game. All mechanics come from structured fields; `description` is a note for the DM and never drives mechanics. NPCs are FRIENDLY by default: they side with the party, players see their HP, and they act in the PLAYER PHASE alongside the heroes, with `actions` actions per phase (default 1). The DM can mark any NPC hostile (or friendly again) mid-game, and `hostile: true` makes it start hostile. Which side an NPC is on decides what ability targets mean. Friendly: \"ally\" = heroes and other friendly NPCs, \"enemy\" = monsters and hostile NPCs. Hostile: the reverse. Design abilities for the side the NPC normally starts on. Attacks roll `attack` (always 1d20+N) against the target's Defense; on a hit, roll `damage`. Attacks and damaging abilities only work in combat. Hostile NPCs take the heroes' role bonuses (DPS heroes multiply their damage, default 4×), so size a hostile NPC's maxHp like a monster's. Distances are grid squares (1 = adjacent).",
   "type": "object",

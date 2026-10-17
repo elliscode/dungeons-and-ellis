@@ -9,17 +9,29 @@ import { createAssetStore, AssetError, MAX_ASSET_BYTES } from './assets.js';
 import { createAuth, DM_COOKIE } from './auth.js';
 import { TemplateStore } from './templates.js';
 import { GameService } from './games/service.js';
-import { GameError } from './games/state.js';
+import { GameError } from '../core/state.js';
 import { attachSockets } from './sockets.js';
 import { previewMeta, renderPlayPage } from './preview.js';
 import { loadSettings, SettingsError } from './settings.js';
-import { ROLE_STRENGTHS, describeStrength } from './games/roles.js';
-import { readFileSync } from 'node:fs';
+import { ROLE_STRENGTHS, describeStrength } from '../core/roles.js';
+import { readFileSync, existsSync, renameSync } from 'node:fs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const DEFAULT_DB = join(ROOT, 'data', 'one-and-done.sqlite');
+// The database's name before the app was renamed to One & Done.
+const LEGACY_DB = join(ROOT, 'data', 'd-and-e.sqlite');
+
+// Moves a pre-rename database (and its WAL files) to the new default name on first start. Only the
+// default location is touched; an explicit DB_FILE is used as given.
+export function adoptLegacyDb(file, { defaultFile = DEFAULT_DB, legacyFile = LEGACY_DB } = {}) {
+  if (file !== defaultFile || existsSync(file) || !existsSync(legacyFile)) return false;
+  for (const ext of ['', '-wal', '-shm']) if (existsSync(legacyFile + ext)) renameSync(legacyFile + ext, file + ext);
+  console.log(`Moved ${legacyFile} to ${file}`);
+  return true;
+}
 
 export function createServer({
-  dbFile = join(ROOT, 'data', 'd-and-e.sqlite'),
+  dbFile = DEFAULT_DB,
   contentDir = join(ROOT, 'data'),
   staticDir = join(ROOT, 'static'),
   clientDir = join(ROOT, 'client'),
@@ -30,13 +42,14 @@ export function createServer({
   watchContent = false,
   publicUrl = null,
 } = {}) {
+  adoptLegacyDb(dbFile);
   const db = openDb(dbFile);
   const settings = loadSettings(contentDir);
   const content = loadContent(contentDir, { staticDir, watchFiles: watchContent });
   const assets = createAssetStore(staticDir);
   const auth = createAuth({ password, secret });
   const templates = new TemplateStore(db);
-  const service = new GameService({ db, content, templates, graceMs });
+  const service = new GameService({ db, content, templates, settings, graceMs });
   service.restoreAll();
 
   const app = express();
@@ -77,7 +90,7 @@ export function createServer({
   app.get('/api/me', (req, res) => res.json({ dm: auth.isDmCookieHeader(req.headers.cookie) }));
 
   // ---- content ----
-  app.get('/api/content/public', (req, res) => res.json(content.publicContent()));
+  app.get('/api/content/public', (req, res) => res.json(content.publicContent(settings.get().roleStrength)));
   app.get('/api/content', requireDm, (req, res) => res.json(content.dmContent()));
 
   // ---- assets (static art) ----

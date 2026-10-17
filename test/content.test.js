@@ -3,14 +3,15 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync, cpSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { loadContent, validateDefs } from '../server/content.js';
+import { loadContent } from '../server/content.js';
+import { validateDefs } from '../core/content.js';
 import { openDb } from '../server/db.js';
 import { TemplateStore } from '../server/templates.js';
 import { GameService } from '../server/games/service.js';
-import { FIXTURE_DATA } from './helpers.js';
+import { FIXTURE_DATA, fixedSettings } from './helpers.js';
 
 function tempContent() {
-  const dir = mkdtempSync(join(tmpdir(), 'dne-content-'));
+  const dir = mkdtempSync(join(tmpdir(), 'one-and-done-content-'));
   for (const sub of ['characters', 'monsters', 'npcs']) cpSync(join(FIXTURE_DATA, sub), join(dir, sub), { recursive: true });
   cpSync(join(FIXTURE_DATA, 'acts.json'), join(dir, 'acts.json'));
   return { dir, cleanup: () => rmSync(dir, { recursive: true, force: true }) };
@@ -50,7 +51,7 @@ test('valid writes reload live for the game service', () => {
     const c = loadContent(dir);
     const db = openDb(':memory:');
     const templates = new TemplateStore(db);
-    const service = new GameService({ db, content: c, templates });
+    const service = new GameService({ db, content: c, templates, settings: fixedSettings() });
     const game = service.createGame('Live');
     let changes = 0;
     c.on('change', () => changes++);
@@ -73,7 +74,7 @@ test('file names cannot escape the content folders', () => {
   const { dir, cleanup } = tempContent();
   try {
     const c = loadContent(dir);
-    for (const bad of ['../x.json', 'foo/../../d-and-e.sqlite', 'x.txt', '.hidden.json', 'A.json']) {
+    for (const bad of ['../x.json', 'foo/../../one-and-done.sqlite', 'x.txt', '.hidden.json', 'A.json']) {
       assert.throws(() => c.writeFile('monsters', bad, '[]'), /File names/, bad);
       assert.throws(() => c.readFile('monsters', bad), /File names/, bad);
     }

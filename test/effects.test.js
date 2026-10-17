@@ -4,12 +4,12 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { setup, makeService, scriptedRng, ok, DM } from './helpers.js';
-import { EFFECT_TYPES, handlerCalls, validateAbility } from '../server/games/effects.js';
-import { dealDamage } from '../server/games/combat.js';
-import { addEffect } from '../server/games/status.js';
-import { actionAllowance } from '../server/games/state.js';
-import { stripMarkers } from '../server/games/helpers.js';
-import { movementAllowance } from '../server/games/status.js';
+import { EFFECT_TYPES, handlerCalls, validateAbility } from '../core/effects.js';
+import { dealDamage } from '../core/combat.js';
+import { addEffect } from '../core/status.js';
+import { actionAllowance } from '../core/state.js';
+import { stripMarkers } from '../core/helpers.js';
+import { movementAllowance } from '../core/status.js';
 
 // Deterministic dice: d20 rolls 15 and every other die rolls 1, unless a test queues values.
 const fallback = (sides) => (sides === 20 ? 15 : 1);
@@ -160,7 +160,7 @@ test('protection: halve the next hit, absorb the next hit, both consumed once', 
 test('magical-only absorb (Spellguard) ignores physical hits', () => {
   const w = world([['breaker', 'x-spellbreaker', 0, 0], ['mage', 'x-fire-mage', 1, 0]]);
   ok(w.use('breaker', 'spellguard', { targetId: w.h.mage.id }));
-  const ctx = { state: w.state(), rng: w.rng, fx() {} };
+  const ctx = { state: w.state(), rng: w.rng, settings: { roleStrength: 4 }, fx() {} };
   const mage = w.hero('mage');
   assert.equal(dealDamage(ctx, { target: mage, raw: 6 }).dealt, 6, 'physical: not absorbed');
   assert.equal(dealDamage(ctx, { target: mage, raw: 6, damageType: 'fire' }).dealt, 0, 'magical: absorbed');
@@ -243,9 +243,9 @@ test('enemy action reduction integrates with allowances, never negative, and res
 test('dash (Predator\'s Lunge): a player picks a square, then an enemy next to it; one action, no movement spent', () => {
   const w = world([['monk', 'x-wind-monk', 0, 0]]);
   const gob = w.spawn('goblin', 5, 0);
-  w.hero('monk').abilities.push({ id: 'lunge', name: 'Lunge', range: 5, effects: [
+  w.edit((st) => st.entities[w.h.monk.id].abilities.push({ id: 'lunge', name: 'Lunge', range: 5, effects: [
     { type: 'dash', target: 'cell', distance: 5 }, { type: 'attack', target: 'enemy', attack: '1d20+6', damage: '2d6+3', range: 1 },
-  ] });
+  ] }));
   w.fight();
   ok(w.use('monk', 'lunge', { cell: { x: 4, y: 0 }, targetId: gob }));
   assert.deepEqual(w.hero('monk').positions[w.sid], { x: 4, y: 0 });
@@ -421,7 +421,7 @@ test('support effects: roll bonus, mark, curse, sanctuary, beacon, poison/antido
 });
 
 test('effects persist through a server restart', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'dne-fx-'));
+  const dir = mkdtempSync(join(tmpdir(), 'one-and-done-fx-'));
   try {
     const dbFile = join(dir, 'db.sqlite');
     const a = makeService({ dbFile });

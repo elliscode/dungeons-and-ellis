@@ -22,7 +22,7 @@ Implement this as an incremental change to the existing application. Only the di
 |---|---|
 | Stream cipher | ChaCha20 from Node's built-in `crypto.createCipheriv('chacha20', key, iv)` (OpenSSL). No new dependency, and no hand-rolled cipher. |
 | Keystream | Encrypt a zero buffer (`Buffer.alloc(256)`) with `cipher.update()`, refilling 256 bytes at a time. |
-| Key derivation | `Buffer.from(crypto.hkdfSync('sha256', ikm, salt, 'dungeons-and-ellis/dice/v1', 32))` |
+| Key derivation | `Buffer.from(crypto.hkdfSync('sha256', ikm, salt, 'one-and-done/dice/v1', 32))` |
 | `ikm` | `randomBytes(32)`: fresh local OS randomness on **every** rekey |
 | `salt` | The Observatory's 32 bytes, or an empty buffer for a local-only key |
 | IV | 16 zero bytes |
@@ -113,7 +113,7 @@ This side depends on the Observatory's `POST /api/v1/random`:
 - **Response used:** `data` (base64url, 32 bytes), plus `environmentalInput.sources[]` (`name`, `observationId`, `observedAt`, optional `imageUrl`) for display. Everything else is ignored.
 - **Errors** (`401`, `429`, `503`, etc.) all count as a failed fetch and lead to a local-only rekey.
 
-**Cross-repo note:** the Observatory's `docs/INTEGRATION.md` should describe this same construction (HKDF-SHA256, ikm = 32 local bytes, salt = the Observatory's 32 bytes, info `dungeons-and-ellis/dice/v1`, 32-byte ChaCha20 key, zero IV, rekey on every poll), replacing its earlier `sha256(observatorySeed || local)` description. That edit belongs to the Observatory repo, not this one.
+**Cross-repo note:** the Observatory's `docs/INTEGRATION.md` should describe this same construction (HKDF-SHA256, ikm = 32 local bytes, salt = the Observatory's 32 bytes, info `one-and-done/dice/v1`, 32-byte ChaCha20 key, zero IV, rekey on every poll), replacing its earlier `sha256(observatorySeed || local)` description. That edit belongs to the Observatory repo, not this one.
 
 ## Part 6: Docs
 

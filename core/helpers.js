@@ -1,4 +1,4 @@
-import { rollDice } from '../dice.js';
+import { rollDice } from './dice.js';
 import { fail, isFriendly, footprintDistance, turnFor, actionAllowance } from './state.js';
 
 // Validation and text helpers shared by commands.js and the ability engine (effects.js).

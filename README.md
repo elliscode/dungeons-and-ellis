@@ -13,6 +13,7 @@ npm install
 cp .env.example .env      # set DM_PASSWORD; set SECURE_COOKIES=false for plain http://localhost
 npm start                 # http://127.0.0.1:3000
 npm test                  # unit + socket integration tests
+npm run test:stateless    # the same tests with no in-memory game cache (serverless check)
 ```
 
 `npm run dev` restarts the server when files change.
@@ -80,36 +81,45 @@ Sharing a game link (`/g/<token>`) shows a preview with the game's title, "Join 
 2. Start the server: `npm start` (stop it with Ctrl-C; state is saved continuously, so stopping and restarting is safe mid-game).
 3. Add the site block from `deploy/Caddyfile` to your Caddy config. It proxies `oneshot.elliscode.com` to `127.0.0.1:3000`; adjust the upstream if `HOST`/`PORT` differ. Caddy handles HTTPS and the WebSocket upgrade.
 
-**Backups:** everything lives in `data/d-and-e.sqlite` (plus the `-wal`/`-shm` files while the server runs). To back up safely while it's running, use `sqlite3 data/d-and-e.sqlite ".backup backup.sqlite"`.
+**Backups:** everything lives in `data/one-and-done.sqlite` (plus the `-wal`/`-shm` files while the server runs). To back up safely while it's running, use `sqlite3 data/one-and-done.sqlite ".backup backup.sqlite"`.
 
 ## Layout
 
 ```
-server/
+core/             the game engine: pure, synchronous, no I/O (shared with other deployments)
+  index.js        public API (package export "one-and-done/core")
+  engine.js       command pipeline: applyCommand, applyUndo, applyChat, checkPing, nextDeadline
+  commands.js     every game command (validation + rules)
+  effects.js      ability effect engine: schema, handlers, targeting, phase lifecycle
+  status.js       live effects on entities (timing, expiry, movement allowance)
+  combat.js       phases, attack rolls, the shared damage/heal pipeline, down/death
+  roles.js        role bonuses (strength comes from the shell's settings)
+  helpers.js      shared validation helpers
+  placement.js    spawn + placement of entities in scenes
+  project.js      per-viewer state (hides enemy HP from players)
+  state.js        state shape, upgrades and helpers
+  content.js      definition validation
+  templates.js    scene template normalization
+  dice.js         dice parser/roller
+server/           the self-hosted shell around core/
   index.js        HTTP routes, pages, startup
   sockets.js      /play and /dm Socket.IO namespaces
   auth.js         DM password + signed cookie
   db.js           SQLite schema
-  dice.js         dice parser/roller
+  settings.js     data/settings.json (role strength)
   preview.js      link-preview (Open Graph) metadata for /g/<token>
   assets.js       art uploads for the Assets page
-  content.js      loads data/ definitions
-  templates.js    scene template store + validation
+  content.js      loads and watches data/ definitions
+  templates.js    scene template store
   games/
-    service.js    game cache, dispatch → persist → broadcast, undo, timers, presence
-    commands.js   every game command (validation + rules)
-    effects.js    ability effect engine: schema, handlers, targeting, phase lifecycle
-    status.js     live effects on entities (timing, expiry, movement allowance)
-    combat.js     phases, attack rolls, the shared damage/heal pipeline, down/death
-    helpers.js    shared validation helpers
-    placement.js  spawn + placement of entities in scenes
-    project.js    per-viewer state (hides enemy HP from players)
-    state.js      state shape and helpers
+    service.js    game cache, core engine → persist → broadcast, undo storage, timers, presence
 client/           vanilla JS pages (home, editor, DM game, player)
+  js/transport.js the live game connection (Socket.IO here; swappable per deployment)
+  js/config.js    API/socket base URLs (empty when self-hosted)
 test/             node:test suites
 ```
 
-Every state change goes through `GameService.dispatch()`. It validates the command, applies it to the in-memory game, writes the new state, Game Feed rows, and undo snapshot in one SQLite transaction, then sends each connected client its own filtered view. A failed command rolls back to the previous state.
+Every state change goes through `GameService.dispatch()`. The core engine (`applyCommand`) validates the command and applies it to a copy of the game state. The service then writes the new state, Game Feed rows, and undo snapshot in one SQLite transaction, and sends each connected client its own filtered view. A failed command changes nothing. `core/` never imports from `server/`, and a test enforces it; see `docs/2026_10_16_001_CORE_SHELL_SPLIT.md` for the contract.
 
 ## License
 

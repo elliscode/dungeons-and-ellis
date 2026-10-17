@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://dungeons-and-ellis/schemas/monster.schema.json",
+  "$id": "https://one-and-done/schemas/monster.schema.json",
   "title": "One & Done monster",
   "description": "A monster for the DM's Monster bank in One & Done, a grid-based tabletop game. Spawned monsters are independent copies, so editing a definition never changes monsters already in a game. All mechanics come from structured fields; `description` is a note for the DM and never drives mechanics. Rules: each round has a PLAYER PHASE and a DM PHASE. Hostile monsters act only in the DM PHASE, with `actions` actions (default 1) plus `movement` squares, which are separate. An action is one weapon attack or one ability. Attacks roll `attack` (always 1d20+N) against the target's Defense; on a hit, roll `damage`. A natural 20 is a crit (damage dice doubled), and a natural 1 always misses. Attacks and damaging abilities only work in combat. Monsters get no role bonuses, but heroes do: DPS heroes multiply their damage against monsters, tanks take reduced damage, and healers heal for more (a game setting from 1× to 5×, default 4×). Size maxHp with that in mind. Distances are grid squares (1 = adjacent).",
   "type": "object",

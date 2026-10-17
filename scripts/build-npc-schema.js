@@ -39,7 +39,7 @@ export function buildNpcSchema(character) {
 
   return {
     $schema: 'https://json-schema.org/draft/2020-12/schema',
-    $id: 'https://dungeons-and-ellis/schemas/npc.schema.json',
+    $id: 'https://one-and-done/schemas/npc.schema.json',
     title: 'One & Done NPC',
     description: [
       'A non-player character for the DM\'s NPC bank in One & Done, a grid-based tabletop game: townsfolk, guards, quest givers, companions, rivals. Spawned NPCs are independent copies, so editing a definition never changes NPCs already in a game.',

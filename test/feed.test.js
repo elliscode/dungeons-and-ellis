@@ -104,7 +104,7 @@ test('one feed row per ability activation, even with several effects', () => {
 });
 
 test('old chat + activity tables migrate into the feed in time order', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'dne-mig-'));
+  const dir = mkdtempSync(join(tmpdir(), 'one-and-done-mig-'));
   try {
     const file = join(dir, 'old.sqlite');
     const old = new DatabaseSync(file);

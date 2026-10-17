@@ -1,6 +1,6 @@
-import { rollDice } from '../dice.js';
+import { rollDice } from './dice.js';
 import { effectsOf, removeEffect } from './status.js';
-import { roleOf } from './roles.js';
+import { roleOf, roleStrengthOf } from './roles.js';
 
 export function phaseDurationEnd(state, now) {
   const s = state.combat.timerSeconds;
@@ -36,9 +36,9 @@ export function endCombat(state) {
 
 // Tank heroes take 1/n of incoming damage (n = role strength), rounded down, at least 1 for any
 // positive hit. Integer division avoids floating-point surprises with ⅓ and ⅕.
-export function reduceIncoming(e, amount) {
+export function reduceIncoming(e, amount, strength) {
   amount = Math.max(0, Math.floor(amount));
-  const n = roleOf(e)?.damageTakenDivisor;
+  const n = roleOf(e, strength)?.damageTakenDivisor;
   if (amount > 0 && n > 1) return Math.max(1, Math.floor(amount / n));
   return amount;
 }
@@ -174,7 +174,7 @@ export function dealDamage(ctx, { source = null, target, raw, damageType = null,
       notes.push(`+${bonus} ${fx.label}`);
       removeEffect(target, fx.id);
     }
-    const mult = roleOf(source)?.damageDealtMultiplier;
+    const mult = roleOf(source, roleStrengthOf(ctx))?.damageDealtMultiplier;
     if (mult > 1 && amount > 0) {
       amount = Math.floor(amount * mult);
       notes.push(`×${mult} DPS`);
@@ -218,7 +218,7 @@ export function dealDamage(ctx, { source = null, target, raw, damageType = null,
     }
   }
   const preTank = amount;
-  amount = reduceIncoming(victim, amount);
+  amount = reduceIncoming(victim, amount, roleStrengthOf(ctx));
   if (amount !== preTank) notes.push('reduced by Tank');
 
   let change;
@@ -244,7 +244,7 @@ export function healTarget(ctx, { source = null, target, amount, color = null, r
   if (target.status === 'dead') return { healed: 0, skipped: `${target.name} is dead` };
   const notes = [];
   let total = Math.max(0, Math.floor(amount));
-  const mult = roleBonus ? roleOf(source)?.healingDoneMultiplier : null;
+  const mult = roleBonus ? roleOf(source, roleStrengthOf(ctx))?.healingDoneMultiplier : null;
   if (mult > 1 && total > 0) {
     total = Math.floor(total * mult);
     notes.push(`×${mult} Heal`);

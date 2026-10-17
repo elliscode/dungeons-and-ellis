@@ -1,3 +1,4 @@
+import { API_BASE } from './config.js';
 import { $, h, fill, api, toast } from './common.js';
 
 const me = await api('GET', '/api/me');
@@ -109,7 +110,7 @@ async function open(category, file) {
 
 async function putText(category, file, text, create = false) {
   const url = create ? `/api/data/${category}?name=${encodeURIComponent(file)}` : `/api/data/${category}/${encodeURIComponent(file)}`;
-  const res = await fetch(url, { method: create ? 'POST' : 'PUT', body: text, headers: { 'Content-Type': 'text/plain' } });
+  const res = await fetch(`${API_BASE}${url}`, { method: create ? 'POST' : 'PUT', body: text, headers: { 'Content-Type': 'text/plain' } });
   const data = await res.json().catch(() => ({}));
   return { ok: res.ok, status: res.status, data };
 }

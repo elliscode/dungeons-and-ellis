@@ -23,7 +23,7 @@ const waitState = (sock, pred) => new Promise((resolve) => {
 });
 
 test('multiplayer flow over sockets, auth boundaries, and restart recovery', async () => {
-  const dir = mkdtempSync(join(tmpdir(), 'dne-sock-'));
+  const dir = mkdtempSync(join(tmpdir(), 'one-and-done-sock-'));
   const dbFile = join(dir, 'db.sqlite');
   const sockets = [];
   const open = (base, ns, opts) => { const s = connect(`${base}${ns}`, { transports: ['websocket'], forceNew: true, ...opts }); sockets.push(s); return s; };

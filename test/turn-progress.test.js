@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { setup, ok, DM } from './helpers.js';
-import { projectForDm } from '../server/games/project.js';
+import { projectForDm } from '../core/project.js';
 
 // Ana (Shadow Rogue) and Bo (Cleric), a friendly Town Guard, a Goblin and a hostile bandit (an NPC).
 function table() {
@@ -73,7 +73,7 @@ test('granted actions, reduced actions and who is left out', () => {
   assert.equal(w.tp().pending.find((p) => p.id === w.ea).left, 1, 'a granted action is still to use');
 
   // Allowance 0 (reduce_actions), a dead NPC, a training dummy: not counted.
-  w.ent(w.guard).effects.push({ id: 'fx_test', type: 'reduce_actions', params: { amount: 1 }, expires: null });
+  w.edit((st) => st.entities[w.guard].effects.push({ id: 'fx_test', type: 'reduce_actions', params: { amount: 1 }, expires: null }));
   const dummy = ok(w.run(DM, { type: 'entity.spawn', kind: 'monster', defId: 'training-dummy', x: 5, y: 5 })).entityId;
   const extra = ok(w.run(DM, { type: 'entity.spawn', kind: 'npc', defId: 'walky-the-wize', x: 6, y: 6 })).entityId;
   ok(w.run(DM, { type: 'entity.kill', entityId: extra }));

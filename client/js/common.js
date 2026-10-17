@@ -1,3 +1,5 @@
+import { API_BASE } from './config.js';
+
 export const $ = (sel, root = document) => root.querySelector(sel);
 export const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
@@ -42,7 +44,7 @@ export function toast(msg, kind = 'info') {
 }
 
 export async function api(method, url, body) {
-  const res = await fetch(url, {
+  const res = await fetch(`${API_BASE}${url}`, {
     method,
     headers: body ? { 'Content-Type': 'application/json' } : {},
     body: body ? JSON.stringify(body) : undefined,
@@ -57,20 +59,28 @@ export async function api(method, url, body) {
   return data;
 }
 
-// Sends a command over a socket; shows a toast on failure. Resolves to the result (or null).
-export function sendCmd(socket, cmd, { quiet = false } = {}) {
-  return new Promise((resolve) => {
-    socket.timeout(8000).emit('cmd', cmd, (err, res) => {
-      if (err) { toast('Server did not respond', 'error'); return resolve(null); }
-      if (!res.ok) { if (!quiet) toast(res.error, 'error'); return resolve(null); }
-      resolve(res.result ?? true);
-    });
-  });
+// Sends a command over the game connection (client/js/transport.js); shows a toast on failure.
+// Resolves to the result (or null).
+export async function sendCmd(conn, cmd, { quiet = false } = {}) {
+  let res;
+  try { res = await conn.request('cmd', cmd); } catch { toast('Server did not respond', 'error'); return null; }
+  if (!res.ok) { if (!quiet) toast(res.error, 'error'); return null; }
+  return res.result ?? true;
+}
+
+// Sends a ping over the game connection; shows a toast on failure.
+export function sendPing(conn, p) {
+  conn.request('ping', p).then((r) => { if (!r.ok) toast(r.error, 'error'); }, () => toast('Server did not respond', 'error'));
+}
+
+// Sends a chat line; resolves once the server answers (or gives up).
+export function sendChat(conn, text) {
+  return conn.request('chat', text).catch(() => null).then((res) => { if (!res?.ok) toast(res?.error ?? 'Failed', 'error'); });
 }
 
 export const ROLE_LABELS = { tank: 'Tank', dps: 'DPS', heal: 'Heal' };
 export const ROLE_ICONS = { tank: '🛡️', dps: '⚔️', heal: '✚' };
-// Same list as the server (server/games/state.js). No red: that's the enemy color.
+// Same list as the server (core/state.js). No red: that's the enemy color.
 export const PLAYER_COLORS = ['#3cb44b', '#4363d8', '#f58231', '#911eb4', '#42d4f4', '#f032e6', '#bfef45', '#fabed4', '#ffe119', '#469990'];
 export const DM_COLOR = '#d4af37';
 

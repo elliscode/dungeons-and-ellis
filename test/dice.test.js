@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseDice, rollDice, isValidDice } from '../server/dice.js';
+import { parseDice, rollDice, isValidDice } from '../core/dice.js';
 
 test('parses standard expressions', () => {
   assert.deepEqual(parseDice('1d20+5'), [{ sign: 1, count: 1, sides: 20 }, { sign: 1, value: 5 }]);

@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { join } from 'node:path';
 import { loadContent } from '../server/content.js';
-import { EFFECT_TYPES, HANDLED_TYPES, normalizeAbility, targetingOf } from '../server/games/effects.js';
+import { EFFECT_TYPES, HANDLED_TYPES, normalizeAbility, targetingOf } from '../core/effects.js';
 import { ROOT } from './helpers.js';
 
 // The live hero roster in data/characters must use the canonical ability schema.

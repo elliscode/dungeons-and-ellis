@@ -9,7 +9,7 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, resolve, basename, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Ajv2020 } from 'ajv/dist/2020.js';
-import { validateDefs } from '../server/content.js';
+import { validateDefs } from '../core/content.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ROSTER = join(ROOT, 'data', 'characters');

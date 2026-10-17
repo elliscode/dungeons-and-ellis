@@ -41,6 +41,7 @@ export class GameError extends Error {}
 export const fail = (msg) => { throw new GameError(msg); };
 
 export const newId = (prefix) => `${prefix}_${randomBytes(4).toString('hex')}`;
+export const randomToken = (bytes = 16, encoding = 'hex') => randomBytes(bytes).toString(encoding);
 
 export function createGameState({ id, name, joinToken }) {
   return {

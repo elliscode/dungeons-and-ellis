@@ -1,3 +1,4 @@
+import { API_BASE } from './config.js';
 import { $, h, fill, api, toast, copyText } from './common.js';
 
 const me = await api('GET', '/api/me');
@@ -48,7 +49,7 @@ async function upload(fileList) {
   const target = folder;
   for (const file of fileList) {
     const line = status.appendChild(h('div', {}, `⏳ ${file.name}…`));
-    const send = (overwrite) => fetch(`/api/assets/${target}?name=${encodeURIComponent(file.name)}${overwrite ? '&overwrite=1' : ''}`, {
+    const send = (overwrite) => fetch(`${API_BASE}/api/assets/${target}?name=${encodeURIComponent(file.name)}${overwrite ? '&overwrite=1' : ''}`, {
       method: 'POST', body: file, headers: { 'Content-Type': file.type || 'application/octet-stream' },
     });
     try {

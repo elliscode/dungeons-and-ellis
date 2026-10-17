@@ -1,4 +1,4 @@
-import { rollDice, isValidDice } from '../dice.js';
+import { rollDice, isValidDice } from './dice.js';
 import { fail, newId, areEnemies, areAllies, sideOf, footprintDistance, turnFor } from './state.js';
 import { inBounds } from './placement.js';
 import { addEffect, clearStatus, effectsOf, hasStatus, removeEffect, isValidDuration, TRIGGERS, tickEffects, computeExpiry } from './status.js';

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { setup, ok, DM } from './helpers.js';
-import { projectForPlayer } from '../server/games/project.js';
+import { projectForPlayer } from '../core/project.js';
 
 function arena() {
   const s = setup();

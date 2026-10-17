@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { setup, ok, DM } from './helpers.js';
-import { DM_COLOR } from '../server/games/state.js';
+import { DM_COLOR } from '../core/state.js';
 
 function table() {
   const s = setup();

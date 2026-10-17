@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { setup, makeService, scriptedRng, ok, DM } from './helpers.js';
-import { projectForPlayer, projectForDm } from '../server/games/project.js';
+import { projectForPlayer, projectForDm } from '../core/project.js';
 
 const fallback = (sides) => (sides === 20 ? 15 : 1);
 
@@ -109,7 +109,7 @@ test('projections: players see the dummy without HP; DM sees totals', () => {
 });
 
 test('dummy survives a restart as a dummy', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'dne-dummy-'));
+  const dir = mkdtempSync(join(tmpdir(), 'one-and-done-dummy-'));
   try {
     const dbFile = join(dir, 'db.sqlite');
     const a = makeService({ dbFile });

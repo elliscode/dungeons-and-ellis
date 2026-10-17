@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { setup, scriptedRng, ok, DM, ROOT } from './helpers.js';
-import { validateAbility } from '../server/games/effects.js';
-import { stripMarkers } from '../server/games/helpers.js';
+import { validateAbility } from '../core/effects.js';
+import { stripMarkers } from '../core/helpers.js';
 
 // Blood Frenzy is Korvath the Scarred's (data/characters/bald.json): "your next hit deals +4
 // damage". Tests run on the fixture content, so Korvath's real attacks and abilities are read from
@@ -22,9 +22,10 @@ function arena() {
   const actor = s.join('Ana');
   ok(s.run(actor, { type: 'player.selectCharacter', characterId: 'shadow-rogue' })); // a DPS hero
   const id = s.state().players[actor.playerId].entityId;
-  const hero = s.state().entities[id];
-  hero.attacks = structuredClone(korvath.attacks);
-  hero.abilities = structuredClone(korvath.abilities);
+  s.edit((st) => {
+    st.entities[id].attacks = structuredClone(korvath.attacks);
+    st.entities[id].abilities = structuredClone(korvath.abilities);
+  });
   ok(s.run(DM, { type: 'move', entityId: id, x: 0, y: 0, force: true }));
   const dummy = ok(s.run(DM, { type: 'entity.spawn', kind: 'monster', defId: 'training-dummy', x: 1, y: 0 })).entityId;
   const ent = (eid) => s.state().entities[eid];
@@ -127,8 +128,7 @@ test('used before combat, it is still there once combat starts and rounds pass',
 
 test('damage penalties (curses) still wear off after the next DM phase', () => {
   const w = arena();
-  const hero = w.ent(w.id);
-  hero.abilities.push({ id: 'weaken', name: 'Weaken', actionCost: 1, range: 0, effects: [{ type: 'modify_damage_dealt', target: 'self', multiplier: 0.5 }], description: 'Test penalty.' });
+  w.edit((st) => st.entities[w.id].abilities.push({ id: 'weaken', name: 'Weaken', actionCost: 1, range: 0, effects: [{ type: 'modify_damage_dealt', target: 'self', multiplier: 0.5 }], description: 'Test penalty.' }));
   ok(w.run(DM, { type: 'combat.start' }));
   ok(w.run(w.actor, { type: 'ability', entityId: w.id, abilityId: 'weaken' }));
   assert.equal(w.frenzies(), 1);
@@ -176,11 +176,10 @@ test('Blood Frenzy, then Cleave on the next turn: every enemy hit gets the +4', 
 test('every strike of a multi-attack and every link of a chain gets the boost, then it is used up', () => {
   const w = arena();
   const dummy2 = ok(w.run(DM, { type: 'entity.spawn', kind: 'monster', defId: 'training-dummy', x: 2, y: 0 })).entityId;
-  const hero = w.ent(w.id);
-  hero.abilities.push(
+  w.edit((st) => st.entities[w.id].abilities.push(
     { id: 'flurry', name: 'Flurry', actionCost: 1, range: 1, effects: [{ type: 'multi_attack', target: 'enemy', count: 3, attack: '1d20+5', damage: '1d4+1', range: 1 }], description: 'Test.' },
     { id: 'zap', name: 'Zap', actionCost: 1, range: 4, effects: [{ type: 'chain_attack', target: 'enemy', jumps: 1, jumpRange: 3, attack: '1d20+5', damage: '1d4+1', range: 4 }], description: 'Test.' },
-  );
+  ));
   const use = (abilityId, extra = {}) => ok(w.run(w.actor, { type: 'ability', entityId: w.id, abilityId, ...extra }));
   ok(w.run(DM, { type: 'combat.start' }));
   use('flurry', { targetId: w.dummy }); // 3 strikes of 1d4+1 = 4 each

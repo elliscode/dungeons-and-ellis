@@ -1,7 +1,6 @@
-import { isValidDice } from '../dice.js';
-import { randomToken } from '../auth.js';
+import { isValidDice } from './dice.js';
 import {
-  PLAYER_COLORS, fail, newId, entityFromDef, entitiesInScene, isFriendly, makeItem, turnFor, areEnemies,
+  PLAYER_COLORS, fail, newId, randomToken, entityFromDef, entitiesInScene, isFriendly, makeItem, turnFor, areEnemies,
 } from './state.js';
 import { inBounds, ensurePlaced } from './placement.js';
 import { startCombat, advancePhase, endCombat, applyHeal, applyDamage, setHp, revive, kill, dealDamage, deathAt } from './combat.js';

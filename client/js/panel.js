@@ -2,7 +2,7 @@ import { h } from './common.js';
 
 const time = (ts) => new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-// The server wraps real outcome words in \uE000…\uE001 (see outcome() in server/games/helpers.js)
+// The server wraps real outcome words in \uE000…\uE001 (see outcome() in core/helpers.js)
 // and strips those markers from anything players type, so only genuine results become badges.
 const OUTCOMES = { 'CRITICAL HIT': 'crit', CRIT: 'crit', HIT: 'good', SUCCESS: 'good', MISS: 'fail', RESISTED: 'fail', FAILURE: 'fail' };
 const OUTCOME_RE = /\uE000([^\uE000\uE001]+)\uE001/;

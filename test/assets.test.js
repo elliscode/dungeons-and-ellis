@@ -16,7 +16,7 @@ test('sanitizes names', () => {
 });
 
 test('asset upload, replace, list, delete over HTTP', async () => {
-  const dir = mkdtempSync(join(tmpdir(), 'dne-assets-'));
+  const dir = mkdtempSync(join(tmpdir(), 'one-and-done-assets-'));
   const server = createServer({ dbFile: ':memory:', password: 'pw', staticDir: join(dir, 'static'), contentDir: FIXTURE_DATA });
   await new Promise((r) => server.httpServer.listen(0, '127.0.0.1', r));
   const base = `http://127.0.0.1:${server.httpServer.address().port}`;

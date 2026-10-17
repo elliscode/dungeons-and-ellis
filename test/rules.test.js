@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { setup, ok, DM } from './helpers.js';
-import { reduceIncoming } from '../server/games/combat.js';
-import { stripMarkers } from '../server/games/helpers.js';
+import { reduceIncoming } from '../core/combat.js';
+import { stripMarkers } from '../core/helpers.js';
 
 // Ana plays a Paladin (tank), Bo a Ranger (dps). A goblin stands next to both.
 function arena() {
@@ -97,7 +97,7 @@ test('players still get one action and the projection reports the allowance', as
   s.rng.push(1);
   ok(s.run(s.b, { type: 'attack', entityId: s.dps, attackId: 'longbow', targetId: s.gob }));
   assert.match(s.run(s.b, { type: 'attack', entityId: s.dps, attackId: 'longbow', targetId: s.gob }).error, /no actions left/);
-  const { projectForPlayer } = await import('../server/games/project.js');
+  const { projectForPlayer } = await import('../core/project.js');
   const me = projectForPlayer(s.state(), s.b.playerId, () => 'online').entities.find((e) => e.id === s.dps);
   assert.equal(me.actionsPerPhase, 1);
 });
@@ -106,14 +106,14 @@ test('players still get one action and the projection reports the allowance', as
 
 test('tank reduction: 25%, rounded down, minimum 1', () => {
   const tank = { kind: 'pc', role: 'tank' };
-  assert.equal(reduceIncoming(tank, 8), 2);
-  assert.equal(reduceIncoming(tank, 7), 1);
-  assert.equal(reduceIncoming(tank, 3), 1);
-  assert.equal(reduceIncoming(tank, 1), 1);
-  assert.equal(reduceIncoming(tank, 0), 0);
-  assert.equal(reduceIncoming(tank, 41), 10);
-  assert.equal(reduceIncoming({ kind: 'pc', role: 'dps' }, 8), 8);
-  assert.equal(reduceIncoming({ kind: 'monster', role: null }, 8), 8);
+  assert.equal(reduceIncoming(tank, 8, 4), 2);
+  assert.equal(reduceIncoming(tank, 7, 4), 1);
+  assert.equal(reduceIncoming(tank, 3, 4), 1);
+  assert.equal(reduceIncoming(tank, 1, 4), 1);
+  assert.equal(reduceIncoming(tank, 0, 4), 0);
+  assert.equal(reduceIncoming(tank, 41, 4), 10);
+  assert.equal(reduceIncoming({ kind: 'pc', role: 'dps' }, 8, 4), 8);
+  assert.equal(reduceIncoming({ kind: 'monster', role: null }, 8, 4), 8);
 });
 
 test('tank reduction applies to attacks and DM damage, and reports the damage dealt', () => {

@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { setup, ok, DM, ROOT } from './helpers.js';
-import { PLAYER_COLORS } from '../server/games/state.js';
-import { projectForDm, projectForPlayer } from '../server/games/project.js';
+import { PLAYER_COLORS } from '../core/state.js';
+import { projectForDm, projectForPlayer } from '../core/project.js';
 
 test('two players cannot claim the same character', () => {
   const { join, run } = setup();

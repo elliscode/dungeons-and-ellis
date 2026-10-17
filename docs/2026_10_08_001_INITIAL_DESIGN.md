@@ -1,8 +1,8 @@
-# D&E: Dungeons & Ellis — Final Design & Implementation Handoff
+# One & Done — Final Design & Implementation Handoff
 
 ## 1. Project Overview
 
-Build **D&E (Dungeons & Ellis)**, a lightweight, multiplayer, browser-based virtual tabletop designed specifically for running D&D-style one-shots with a human Dungeon Master (DM).
+Build **One & Done**, a lightweight, multiplayer, browser-based virtual tabletop designed specifically for running D&D-style one-shots with a human Dungeon Master (DM).
 
 **Production URL:** `https://oneshot.elliscode.com`
 
@@ -14,7 +14,7 @@ The application should be purpose-built, easy to use, and intentionally limited 
 
 ### Product philosophy
 
-D&E should feel like:
+One & Done should feel like:
 
 > A fast cooperative dungeon-crawler controlled by a human DM.
 
@@ -46,7 +46,7 @@ The server is authoritative for game state, dice rolls, combat phases, character
 
 This is one of the most important architectural decisions.
 
-D&E has two primary DM-facing areas: **Scenes** and **Games**.
+One & Done has two primary DM-facing areas: **Scenes** and **Games**.
 
 A Scene is a reusable template. A Game is an actual playable adventure. A Scene Instance is a live copy of a scene used within a particular game.
 
@@ -851,7 +851,7 @@ In combat, using an item consumes the player's action.
 
 Inventory items do not automatically execute game mechanics.
 
-For example, a player might use a rope to tie up a goblin. D&E records the action, and the DM decides whether the goblin is restrained, escapes, or something else happens.
+For example, a player might use a rope to tie up a goblin. One & Done records the action, and the DM decides whether the goblin is restrained, escapes, or something else happens.
 
 Do not build an inventory effects engine, equipment system, or elaborate item database.
 
@@ -989,7 +989,7 @@ The exact structure is up to the implementer. Keep the code modular without over
 Suggested starting point:
 
 ```text
-d-and-e/
+one-and-done/
 ├── package.json
 ├── README.md
 ├── server/
@@ -1015,7 +1015,7 @@ d-and-e/
 │   ├── tokens/
 │   └── images/
 └── data/
-    └── d-and-e.sqlite
+    └── one-and-done.sqlite
 ```
 
 Avoid duplicating source-of-truth state between the client and server.
@@ -1076,7 +1076,7 @@ Do not implement the following unless specifically requested later:
 - Player accounts or OAuth.
 - Complex physics or collision prevention.
 
-Keep D&E focused on its purpose: running a one-shot with a human DM.
+Keep One & Done focused on its purpose: running a one-shot with a human DM.
 
 ## 28. Recommended MVP Implementation Order
 
@@ -1183,7 +1183,7 @@ Keep these principles in mind throughout implementation:
 3. **The DM controls the world and can override the rules.**
 4. **The server is authoritative for shared state and game mechanics.**
 5. **Players should be able to join, select a hero, and start playing with minimal friction.**
-6. **D&E is not a complete D&D rules engine or a general-purpose VTT.**
+6. **One & Done is not a complete D&D rules engine or a general-purpose VTT.**
 7. **Prefer simple, reliable behavior over extensive configurability.**
 8. **Do not let editing reusable templates unexpectedly mutate live game instances.**
 9. **Do not let reconnects or name changes accidentally create duplicate players or release characters.**
@@ -1210,7 +1210,7 @@ Select token and perform actions
 ### Ideal DM flow
 
 ```text
-Open D&E
+Open One & Done
     ↓
 Choose Scenes or Games
     ↓

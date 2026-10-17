@@ -96,7 +96,7 @@ test('undo never jumps you back from a square the move didn\'t leave you on', ()
   const w = arena();
   w.fight();
   ok(w.move(2, 0));
-  w.e().positions[w.sid] = { x: 9, y: 9 }; // moved by something that bypassed the move command
+  w.edit((st) => { st.entities[w.ea].positions[w.sid] = { x: 9, y: 9 }; }); // moved by something that bypassed the move command
   assert.equal(w.undo().error, "You were moved since then, so that move can't be undone");
   assert.deepEqual(w.pos(), { x: 9, y: 9 });
 });

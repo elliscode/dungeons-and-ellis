@@ -1,20 +1,27 @@
-import { io } from '/socket.io/socket.io.esm.min.js';
-import { $, fill, h, toast, sendCmd, popupMenu, closeMenu, confirmModal, combatBar, ROLE_LABELS, ROLE_ICONS, PLAYER_COLORS } from './common.js';
+import { connect } from './transport.js';
+import { API_BASE } from './config.js';
+import { $, fill, h, toast, sendCmd, sendPing, sendChat, popupMenu, closeMenu, confirmModal, combatBar, ROLE_LABELS, ROLE_ICONS, PLAYER_COLORS } from './common.js';
 import { Board } from './board.js';
 import { GameFeed } from './panel.js';
 import { startAbility, abilitySummary, distance, sideOf } from './abilities.js';
 
 const token = decodeURIComponent(location.pathname.split('/').pop());
-const SEAT_KEY = `dne:seat:${token}`;
-const NAME_KEY = 'dne:name';
+const SEAT_KEY = `one-and-done:seat:${token}`;
+const NAME_KEY = 'one-and-done:name';
 
 const store = {
   get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* private mode */ } },
   del(k) { try { localStorage.removeItem(k); } catch { /* ignore */ } },
 };
+// Seats and names saved before the app was renamed used a "dne:" prefix; carry them over once.
+for (const [oldKey, newKey] of [[`dne:seat:${token}`, SEAT_KEY], ['dne:name', NAME_KEY]]) {
+  const old = store.get(oldKey);
+  if (old !== null && store.get(newKey) === null) store.set(newKey, old);
+  store.del(oldKey);
+}
 
-let content = await fetch('/api/content/public').then((r) => r.json());
+let content = await fetch(`${API_BASE}/api/content/public`).then((r) => r.json());
 let heroById = new Map(content.characters.map((c) => [c.id, c]));
 
 let seat = store.get(SEAT_KEY);
@@ -23,9 +30,9 @@ let pickedRole = null;
 let mode = null; // null | {type:'move'} | {type:'target', ...}
 let fatal = null;
 
-const socket = io('/play', { auth: { joinToken: token, playerId: seat?.playerId, seatSecret: seat?.seatSecret } });
+const socket = connect('/play', { joinToken: token, playerId: seat?.playerId, seatSecret: seat?.seatSecret });
 const panel = new GameFeed($('#panel'), {
-  onSend: (text) => new Promise((r) => socket.emit('chat', text, (res) => { if (!res?.ok) toast(res?.error ?? 'Failed', 'error'); r(); })),
+  onSend: (text) => sendChat(socket, text),
 });
 const bar = combatBar($('#combat-bar'));
 
@@ -37,13 +44,13 @@ socket.on('ping', (p) => board.showPing(p));
 socket.on('seatInvalid', () => {
   store.del(SEAT_KEY);
   seat = null;
-  socket.auth = { joinToken: token };
+  socket.setAuth({ joinToken: token });
   toast('Your seat was reset by the DM. Please join again.');
 });
 socket.on('fatal', (msg) => { fatal = msg; render(); });
 // The DM edited heroes/acts or art: refetch so the hero picker and Act menu stay current.
 socket.on('contentChanged', async () => {
-  content = await fetch('/api/content/public').then((r) => r.json());
+  content = await fetch(`${API_BASE}/api/content/public`).then((r) => r.json());
   heroById = new Map(content.characters.map((c) => [c.id, c]));
   render();
 });
@@ -55,7 +62,7 @@ const send = (cmd) => sendCmd(socket, cmd);
 
 const board = new Board($('#board'), {
   // Press and hold to ping. Errors (the players' 10-per-minute limit) show as a toast.
-  onPing: (p) => socket.timeout(8000).emit('ping', p, (err, r) => { if (err) toast('Server did not respond', 'error'); else if (!r.ok) toast(r.error, 'error'); }),
+  onPing: (p) => sendPing(socket, p),
   canDrag: (t) => t.id === myEntity()?.id && !mode,
   onTokenDrop: (t, x, y) => send({ type: 'move', entityId: t.id, x, y }),
   onTokenClick: (t, e, stack) => onTokenClick(t, e, stack),
@@ -284,12 +291,12 @@ function nameScreen() {
   const join = (name) => {
     name = String(name ?? '').trim();
     if (!name) return toast('Enter a name', 'error');
-    socket.emit('join', { name }, (res) => {
+    socket.request('join', { name }).catch(() => null).then((res) => {
       if (!res?.ok) return toast(res?.error ?? 'Could not join', 'error');
       seat = { playerId: res.playerId, seatSecret: res.seatSecret };
       store.set(SEAT_KEY, seat);
       store.set(NAME_KEY, name);
-      socket.auth = { joinToken: token, ...seat };
+      socket.setAuth({ joinToken: token, ...seat });
     });
   };
   showFlow(

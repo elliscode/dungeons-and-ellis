@@ -53,7 +53,7 @@ export function buildMonsterSchema(character) {
 
   return {
     $schema: 'https://json-schema.org/draft/2020-12/schema',
-    $id: 'https://dungeons-and-ellis/schemas/monster.schema.json',
+    $id: 'https://one-and-done/schemas/monster.schema.json',
     title: 'One & Done monster',
     description: [
       'A monster for the DM\'s Monster bank in One & Done, a grid-based tabletop game. Spawned monsters are independent copies, so editing a definition never changes monsters already in a game.',

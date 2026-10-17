@@ -3,7 +3,7 @@
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, resolve, basename, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { validateDefs } from '../server/content.js';
+import { validateDefs } from '../core/content.js';
 import { compileSchema, schemaErrors, extraErrors } from './validate-characters.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');

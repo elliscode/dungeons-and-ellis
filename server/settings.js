@@ -1,7 +1,7 @@
 import { EventEmitter } from 'node:events';
 import { readFileSync, writeFileSync, renameSync, existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { DEFAULT_ROLE_STRENGTH, ROLE_STRENGTHS, isValidRoleStrength, setRoleStrength } from './games/roles.js';
+import { DEFAULT_ROLE_STRENGTH, ROLE_STRENGTHS, isValidRoleStrength } from '../core/roles.js';
 
 // Global game settings, stored in <dataDir>/settings.json and changed from the DM home page.
 // Currently just the role strength (1–5). A missing or invalid file falls back to the defaults.
@@ -20,8 +20,6 @@ export function loadSettings(dataDir) {
       console.warn(`settings.json is not valid JSON (${e.message}); using defaults`);
     }
   }
-  setRoleStrength(roleStrength);
-
   store.get = () => ({ roleStrength });
   store.setRoleStrength = (n) => {
     const value = typeof n === 'string' && n.trim() ? Number(n) : n;
@@ -33,7 +31,6 @@ export function loadSettings(dataDir) {
     renameSync(tmp, file);
     const before = roleStrength;
     roleStrength = value;
-    setRoleStrength(value);
     store.emit('change', { before, after: value });
     return store.get();
   };

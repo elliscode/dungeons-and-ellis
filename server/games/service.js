@@ -1,34 +1,31 @@
 import { EventEmitter } from 'node:events';
 import { randomBytes, randomInt } from 'node:crypto';
 import { transaction } from '../db.js';
-import { handlers } from './commands.js';
-import { GameError, DM_COLOR, newId, createGameState, upgradeState } from './state.js';
-import { ensurePlaced } from './placement.js';
-import { feedForRole } from './project.js';
-import { stripMarkers } from './helpers.js';
+import { DM_COLOR, newId, createGameState, upgradeState } from '../../core/state.js';
+import { feedForRole } from '../../core/project.js';
+import { applyCommand, applyUndo, applyChat, checkPing, nextDeadline, UNDO_LIMIT, HISTORY_LIMIT } from '../../core/engine.js';
 
-const UNDO_LIMIT = 20;
-const HISTORY_LIMIT = 300;
-const CHAT_MAX = 500;
-const PING_LIMIT = 10; // pings per player per minute
-const PING_WINDOW_MS = 60_000;
-const PING_MAX_CELLS = 1000;
-
-const allowed = (who, actor) =>
-  who === actor.role || (who === 'any' && (actor.role === 'dm' || actor.role === 'player'));
-
-// Owns all live games. Every state change goes through dispatch(): validate + mutate, then
-// persist state, Game Feed events and undo snapshot in one transaction, then notify listeners.
+// The self-hosted shell around the core engine (core/engine.js). Owns all live games in memory.
+// Every state change goes through dispatch(): the engine validates and applies the command, then
+// this persists state, Game Feed events and undo snapshot in one SQLite transaction and notifies
+// listeners. Timers, presence and ping limits live here; the rules live in core/.
 export class GameService extends EventEmitter {
-  constructor({ db, content, templates, now = Date.now, rng, graceMs = 60_000 }) {
+  // stateless: never keep games in memory between calls, so every command reloads the game from
+  // SQLite, as a serverless shell must. Used by `npm run test:stateless` to catch features that only
+  // work because of the in-memory cache.
+  constructor({ db, content, templates, settings, now = Date.now, rng, graceMs = 60_000, stateless = false }) {
     super();
+    if (typeof settings?.get !== 'function') throw new Error('GameService needs a settings store ({ get() → { roleStrength } })');
+    this.settings = settings;
     this.db = db;
     this.content = content;
     this.templates = templates;
     this.now = now;
     this.rng = rng ?? ((sides) => randomInt(1, sides + 1));
     this.graceMs = graceMs;
-    this.games = new Map();
+    this.stateless = stateless;
+    this.games = new Map(); // in-memory cache of loaded games (always empty when stateless)
+    this.opened = new Set(); // ids of games loaded by this process ("open" games)
     this.timers = new Map();
     this.presence = new Map(); // gameId -> Map(playerId -> { sockets:Set, lastSeen })
     this.graceTimers = new Set();
@@ -71,6 +68,7 @@ export class GameService extends EventEmitter {
     });
     this.clearTimer(id);
     this.games.delete(id);
+    this.opened.delete(id);
     this.presence.delete(id);
     if (changes) this.emit('change', id, { deleted: true });
     return changes > 0;
@@ -84,7 +82,8 @@ export class GameService extends EventEmitter {
     if (!row) return null;
     game = { id, state: JSON.parse(row.state) };
     if (upgradeState(game.state)) this.persist(game, []);
-    this.games.set(id, game);
+    if (!this.stateless) this.games.set(id, game);
+    this.opened.add(id);
     this.syncTimer(game);
     return game;
   }
@@ -112,55 +111,21 @@ export class GameService extends EventEmitter {
   dispatch(gameId, actor, cmd) {
     const game = this.get(gameId);
     if (!game) return { ok: false, error: 'Game not found' };
-    if (!cmd || typeof cmd.type !== 'string') return { ok: false, error: 'Bad command' };
-    if (cmd.type === 'undo') return this.undo(game, actor);
-    const h = handlers[cmd.type];
-    if (!h) return { ok: false, error: `Unknown command ${cmd.type}` };
-    if (!allowed(h.who, actor)) return { ok: false, error: 'Not allowed' };
-
-    const snapshot = structuredClone(game.state);
-    const ctx = this.makeCtx(game, actor, cmd);
-    let result;
-    try {
-      if (actor.role === 'player' && !ctx.player) throw new GameError('You are not in this game');
-      result = h.run(ctx);
-      if (game.state.activeSceneId) ensurePlaced(game.state, game.state.activeSceneId);
-    } catch (err) {
-      game.state = snapshot;
-      if (err instanceof GameError) return { ok: false, error: err.message };
-      throw err;
-    }
-
-    const rows = this.persist(game, ctx.events, {
-      undo: h.undoable ? { label: h.undoable, state: snapshot } : null,
-      clearUndo: !!h.clearsUndo,
+    if (cmd?.type === 'undo') return this.undo(game, actor);
+    const r = applyCommand(game.state, actor, cmd, this.deps());
+    if (!r.ok) return { ok: false, error: r.error };
+    game.state = r.state;
+    const rows = this.persist(game, r.feed, {
+      undo: r.undo ? { label: r.undo.label, state: r.undo.snapshot } : null,
+      clearUndo: r.clearUndo,
     });
     this.syncTimer(game);
-    this.emit('change', game.id, { feed: rows, fx: ctx.fxs });
-    return { ok: true, result };
+    this.emit('change', game.id, { feed: rows, fx: r.fx });
+    return { ok: true, result: r.result };
   }
 
-  makeCtx(game, actor, cmd) {
-    const state = game.state;
-    const player = actor.role === 'player' ? state.players[actor.playerId] : null;
-    const isDm = actor.role === 'dm';
-    const ctx = {
-      state, actor, cmd, player,
-      content: this.content, templates: this.templates, rng: this.rng, now: this.now(),
-      actorName: isDm ? 'DM' : player?.name ?? 'System',
-      actorColor: isDm ? DM_COLOR : player?.color ?? null,
-      events: [], fxs: [],
-      log(type, text, opts = {}) {
-        const color = opts.color ?? ctx.actorColor;
-        const dmText = opts.dmText ?? null;
-        const data = opts.data ?? null;
-        ctx.events.push(opts.dmOnly
-          ? { type, text: '', dmText: dmText ?? text, color, visibility: 'dm', data }
-          : { type, text, dmText, color, visibility: 'all', data });
-      },
-      fx(f) { ctx.fxs.push(f); },
-    };
-    return ctx;
+  deps() {
+    return { content: this.content, templates: this.templates, settings: this.settings.get(), rng: this.rng, now: this.now() };
   }
 
   persist(game, events, { undo = null, clearUndo = false } = {}) {
@@ -192,11 +157,11 @@ export class GameService extends EventEmitter {
     return { id: Number(r.lastInsertRowid), ...row };
   }
 
-  // A DM-only Game Feed note in every game that is currently loaded (e.g. a settings change).
+  // A DM-only Game Feed note in every game this process has opened (e.g. a settings change).
   noteToLoadedGames(text) {
-    for (const game of this.games.values()) {
-      const row = this.insertFeed(game.id, { kind: 'event', type: 'settings', text: '', dmText: text, visibility: 'dm', color: DM_COLOR });
-      this.emit('change', game.id, { feed: [row] });
+    for (const id of this.opened) {
+      const row = this.insertFeed(id, { kind: 'event', type: 'settings', text: '', dmText: text, visibility: 'dm', color: DM_COLOR });
+      this.emit('change', id, { feed: [row] });
     }
   }
 
@@ -205,23 +170,18 @@ export class GameService extends EventEmitter {
     return r ? r.label : null;
   }
 
-  // Restores token/HP/turn state from before the last undoable action. Player seats, scenes and
-  // combat phase are left alone; commands that change those clear the undo stack.
+  // Undo the last undoable action (rules in core/engine.js applyUndo).
   undo(game, actor) {
-    if (actor.role !== 'dm') return { ok: false, error: 'Not allowed' };
-    const row = this.db.prepare('SELECT id, label, state FROM undo_snapshots WHERE game_id = ? ORDER BY id DESC LIMIT 1').get(game.id);
-    if (!row) return { ok: false, error: 'Nothing to undo' };
-    const snap = JSON.parse(row.state);
-    const s = game.state;
-    s.entities = snap.entities;
-    s.turn = snap.turn;
-    s.pendingChecks = snap.pendingChecks ?? [];
-    s.zCounter = Math.max(s.zCounter, snap.zCounter);
-    if (s.activeSceneId) ensurePlaced(s, s.activeSceneId);
+    const row = actor.role === 'dm'
+      ? this.db.prepare('SELECT id, label, state FROM undo_snapshots WHERE game_id = ? ORDER BY id DESC LIMIT 1').get(game.id)
+      : null;
+    const r = applyUndo(game.state, actor, row && { label: row.label, snapshot: JSON.parse(row.state) }, this.now());
+    if (!r.ok) return r;
+    game.state = r.state;
     this.db.prepare('DELETE FROM undo_snapshots WHERE id = ?').run(row.id);
-    const rows = this.persist(game, [{ type: 'undo', text: `DM undid the last ${row.label}`, dmText: null, color: DM_COLOR }]);
+    const rows = this.persist(game, r.feed);
     this.emit('change', game.id, { feed: rows, fx: [] });
-    return { ok: true, result: { undone: row.label } };
+    return { ok: true, result: r.result };
   }
 
   // ---------- combat timer ----------
@@ -234,14 +194,12 @@ export class GameService extends EventEmitter {
 
   syncTimer(game) {
     this.clearTimer(game.id);
-    const c = game.state.combat;
-    if (!c.active || !c.phaseEndsAt) return;
-    const endsAt = c.phaseEndsAt;
-    const delay = Math.max(0, endsAt - this.now());
+    const d = nextDeadline(game.state);
+    if (!d) return;
     this.timers.set(game.id, setTimeout(() => {
       this.timers.delete(game.id);
-      this.dispatch(game.id, { role: 'system' }, { type: 'combat.timerExpired', phaseEndsAt: endsAt });
-    }, delay));
+      this.dispatch(game.id, { role: 'system' }, d.cmd);
+    }, Math.max(0, d.at - this.now())));
   }
 
   // ---------- chat & history ----------
@@ -249,57 +207,23 @@ export class GameService extends EventEmitter {
   chat(gameId, actor, text) {
     const game = this.get(gameId);
     if (!game) return { ok: false, error: 'Game not found' };
-    const msg = stripMarkers(String(text ?? '')).trim().slice(0, CHAT_MAX);
-    if (!msg) return { ok: false, error: 'Empty message' };
-    const roll = msg.match(/^\/r(?:oll)?\s+(.+)$/i);
-    if (roll) return this.dispatch(gameId, actor, { type: 'roll', expr: roll[1] });
-    let name, color, playerId = null;
-    if (actor.role === 'dm') {
-      name = 'DM';
-      color = DM_COLOR;
-    } else {
-      const p = game.state.players[actor.playerId];
-      if (!p) return { ok: false, error: 'You are not in this game' };
-      ({ name, color } = p);
-      playerId = p.id;
-    }
-    const row = this.insertFeed(gameId, { kind: 'chat', type: 'chat', text: msg, name, color, playerId });
+    const r = applyChat(game.state, actor, text, this.now());
+    if (r.error) return { ok: false, error: r.error };
+    if (r.roll) return this.dispatch(gameId, actor, r.roll);
+    const row = this.insertFeed(gameId, r.row);
     this.emit('change', gameId, { feed: [row] });
     return { ok: true };
   }
 
-  // A map ping: a throwaway visual for everyone in the game. It never touches game state, the
-  // Game Feed or undo. Players get PING_LIMIT pings per minute; the 10th starts a one-minute mute
-  // from that ping. The DM is never limited. Limits live in memory only.
+  // A map ping (rules in core/engine.js checkPing). Limits live in memory only.
   ping(gameId, actor, pos) {
     const game = this.get(gameId);
     if (!game) return { ok: false, error: 'Game not found' };
-    const scene = game.state.scenes[game.state.activeSceneId];
-    if (!scene) return { ok: false, error: 'No active scene to ping' };
-    const x = Number(pos?.x), y = Number(pos?.y);
-    // Positions are in grid cells and may fall outside the grid (the map image can be larger),
-    // so only absurd values are refused.
-    if (typeof pos?.x !== 'number' || typeof pos?.y !== 'number' || !(Math.abs(x) <= PING_MAX_CELLS) || !(Math.abs(y) <= PING_MAX_CELLS)) return { ok: false, error: 'Bad ping' };
-    let color = DM_COLOR;
-    if (actor.role !== 'dm') {
-      const p = game.state.players[actor.playerId];
-      if (!p) return { ok: false, error: 'You are not in this game' };
-      color = p.color;
-      const now = this.now();
-      const key = `${gameId}:${p.id}`;
-      const lim = this.pingLimits.get(key) ?? { times: [], mutedUntil: 0 };
-      if (now < lim.mutedUntil) {
-        return { ok: false, error: `Ping limit reached (${PING_LIMIT} per minute). Try again in ${Math.ceil((lim.mutedUntil - now) / 1000)}s.` };
-      }
-      lim.times = lim.times.filter((t) => now - t < PING_WINDOW_MS);
-      lim.times.push(now);
-      if (lim.times.length >= PING_LIMIT) {
-        lim.mutedUntil = now + PING_WINDOW_MS;
-        lim.times = [];
-      }
-      this.pingLimits.set(key, lim);
-    }
-    this.emit('ping', gameId, { sceneId: scene.id, x, y, color });
+    const key = actor.role === 'dm' ? null : `${gameId}:${actor.playerId}`;
+    const r = checkPing(game.state, actor, pos, key ? this.pingLimits.get(key) : null, this.now());
+    if (key && r.limiter) this.pingLimits.set(key, r.limiter);
+    if (r.error) return { ok: false, error: r.error };
+    this.emit('ping', gameId, r.ping);
     return { ok: true };
   }
 

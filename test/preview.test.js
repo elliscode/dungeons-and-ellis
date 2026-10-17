@@ -19,7 +19,7 @@ const meta = (html, key) => {
 };
 
 test('imageSize reads PNG, GIF, WebP and JPEG headers', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'dne-img-'));
+  const dir = mkdtempSync(join(tmpdir(), 'one-and-done-img-'));
   try {
     writeFileSync(join(dir, 'a.png'), pngOf(800, 600));
     const gif = Buffer.from('GIF89a\x40\x01\xf0\x00', 'latin1');
@@ -37,7 +37,7 @@ test('imageSize reads PNG, GIF, WebP and JPEG headers', () => {
 });
 
 test('game share links carry per-game Open Graph metadata without JavaScript', async () => {
-  const dir = mkdtempSync(join(tmpdir(), 'dne-og-'));
+  const dir = mkdtempSync(join(tmpdir(), 'one-and-done-og-'));
   const staticDir = join(dir, 'static');
   mkdirSync(join(staticDir, 'backgrounds'), { recursive: true });
   writeFileSync(join(staticDir, 'backgrounds', 'swamp.png'), pngOf(1280, 896));

@@ -1,5 +1,5 @@
 import { safeEqual } from './auth.js';
-import { projectForDm, projectForPlayer, feedForRole } from './games/project.js';
+import { projectForDm, projectForPlayer, feedForRole } from '../core/project.js';
 
 const reply = (ack, result) => { if (typeof ack === 'function') ack(result); };
 

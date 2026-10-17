@@ -14,7 +14,7 @@ test('timer expiry advances phase on the server', async () => {
   const endsAt = s.state().combat.phaseEndsAt;
   assert.ok(endsAt > Date.now());
   // simulate a short phase
-  s.state().combat.phaseEndsAt = Date.now() + 30;
+  s.edit((st) => { st.combat.phaseEndsAt = Date.now() + 30; });
   s.service.syncTimer(s.service.get(s.game.id));
   await wait(80);
   assert.equal(s.state().combat.phase, 'dm');
@@ -35,7 +35,7 @@ test('stale timer events are ignored', () => {
 });
 
 test('state survives a restart, and an expired phase advances on load', async () => {
-  const dir = mkdtempSync(join(tmpdir(), 'dne-'));
+  const dir = mkdtempSync(join(tmpdir(), 'one-and-done-'));
   const dbFile = join(dir, 'test.sqlite');
   try {
     const s1 = makeService({ dbFile, now: Date.now });
@@ -52,9 +52,9 @@ test('state survives a restart, and an expired phase advances on load', async ()
     ok(s1.service.dispatch(game.id, DM, { type: 'combat.start' }));
     s1.service.chat(game.id, actor, 'hello');
     // Pretend the server went down and the phase expired while it was off.
-    const st = s1.service.get(game.id).state;
-    st.combat.phaseEndsAt = Date.now() - 1000;
-    s1.service.persist(s1.service.get(game.id), []);
+    const g = s1.service.get(game.id);
+    g.state.combat.phaseEndsAt = Date.now() - 1000;
+    s1.service.persist(g, []);
     s1.service.close();
     s1.db.close();
 

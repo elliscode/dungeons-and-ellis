@@ -1,6 +1,6 @@
-import { createHmac, createHash, timingSafeEqual, randomBytes } from 'node:crypto';
+import { createHmac, createHash, timingSafeEqual } from 'node:crypto';
 
-export const DM_COOKIE = 'dne_dm';
+export const DM_COOKIE = 'one_and_done_dm';
 const MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 
 export function safeEqual(a, b) {
@@ -21,13 +21,9 @@ export function parseCookies(header = '') {
   return out;
 }
 
-export function randomToken(bytes = 16, encoding = 'hex') {
-  return randomBytes(bytes).toString(encoding);
-}
-
 export function createAuth({ password, secret, now = Date.now }) {
   if (!password) throw new Error('DM_PASSWORD is required');
-  const key = secret || createHash('sha256').update(`d-and-e:${password}`).digest('hex');
+  const key = secret || createHash('sha256').update(`one-and-done:${password}`).digest('hex');
   const sign = (value) => createHmac('sha256', key).update(value).digest('base64url');
 
   return {

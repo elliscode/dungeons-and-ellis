@@ -1,10 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { SPECS, EFFECT_TYPES, STATUSES, TARGETS, WHEN, validateAbility } from '../server/games/effects.js';
-import { DURATIONS, TRIGGERS } from '../server/games/status.js';
-import { isMagical } from '../server/games/combat.js';
-import { validateDefs } from '../server/content.js';
+import { SPECS, EFFECT_TYPES, STATUSES, TARGETS, WHEN, validateAbility } from '../core/effects.js';
+import { DURATIONS, TRIGGERS } from '../core/status.js';
+import { isMagical } from '../core/combat.js';
+import { validateDefs } from '../core/content.js';
 import { compileSchema, schemaErrors, SCHEMA_PATH } from '../scripts/validate-characters.js';
 import { SAMPLES } from './schema-samples.js';
 
