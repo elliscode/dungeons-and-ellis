@@ -15,7 +15,6 @@
     "dev": "node --watch --env-file-if-exists=.env server/index.js",
     "test": "node --test \"test/**/*.test.js\"",
     "test:stateless": "ONE_AND_DONE_STATELESS=1 node --test \"test/**/*.test.js\"",
-    "placeholders": "node scripts/gen-placeholders.js",
     "validate:characters": "node scripts/validate-characters.js",
     "validate:monsters": "node scripts/validate-monsters.js",
     "validate:npcs": "node scripts/validate-npcs.js",

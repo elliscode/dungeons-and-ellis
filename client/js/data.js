@@ -8,7 +8,7 @@ const LABELS = { characters: '🛡 Characters (heroes)', monsters: '👹 Monster
 const SINGLE_FILES = { acts: 'acts.json', items: 'items.json' };
 const EXAMPLES = {
   characters: [{
-    id: 'fire-mage', name: 'Fire Mage', role: 'dps', image: '/static/tokens/fire-mage.svg', maxHp: 30, movement: 6, defense: 13,
+    id: 'fire-mage', name: 'Fire Mage', role: 'dps', image: '/static/tokens/token_156.webp', maxHp: 30, movement: 6, defense: 13,
     attacks: [{ id: 'fire-bolt', name: 'Fire Bolt', attack: '1d20+5', damage: '1d10+3', range: 8 }],
     abilities: [
       { id: 'healing-word', name: 'Healing Word', heal: '1d8+3', range: 6, description: 'Heal an ally (applies HP).' },
@@ -18,11 +18,11 @@ const EXAMPLES = {
     inventory: ['rope', 'healing-potion'],
   }],
   monsters: [{
-    id: 'ogre', name: 'Ogre', image: '/static/images/ogre.svg', size: { w: 2, h: 2 }, maxHp: 59, defense: 11, movement: 5,
+    id: 'ogre', name: 'Ogre', image: '/static/tokens/monster_007.webp', size: { w: 2, h: 2 }, maxHp: 59, defense: 11, movement: 5,
     attacks: [{ id: 'greatclub', name: 'Greatclub', attack: '1d20+6', damage: '2d8+4', range: 1 }],
   }],
   npcs: [{
-    id: 'walky-the-wize', name: 'Walky the Wize', image: '/static/tokens/walky-the-wize.svg', maxHp: 25, defense: 12, movement: 5, hostile: false,
+    id: 'walky-the-wize', name: 'Walky the Wize', image: '/static/tokens/monster_033.webp', maxHp: 25, defense: 12, movement: 5, hostile: false,
     attacks: [{ id: 'staff-zap', name: 'Staff Zap', attack: '1d20+5', damage: '1d8+2', range: 6 }],
     inventory: ['walking-stick'],
   }],

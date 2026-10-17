@@ -75,7 +75,7 @@ $('#new-game').addEventListener('submit', async (e) => {
 
 $('#new-scene').addEventListener('click', async () => {
   const s = await api('POST', '/api/scenes', {
-    name: 'New scene', background: '/static/backgrounds/dungeon.svg', grid: { cols: 20, rows: 14, cellSize: 64 },
+    name: 'New scene', background: null, grid: { cols: 20, rows: 14, cellSize: 64 },
   });
   location.href = `/scenes/${s.id}`;
 });

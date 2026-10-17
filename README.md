@@ -64,7 +64,7 @@ Changes go live immediately. Open DM and player pages refresh their banks, hero 
 
 Definitions can also set `actions` (actions per combat phase, default 1), and `"immortal": true` for training dummies. Attack fields: `attack` (to-hit dice), `damage`, `range` (squares), and optional `damageType`. Abilities use the effect schema described in [docs/ABILITIES.md](docs/ABILITIES.md). Older `heal`/`roll`/`free`/`grantsActions` fields still load. Dice notation: `NdX±M` with d4/d6/d8/d10/d12/d20, and terms can be chained (`1d8+1d6+2`). A natural 20 is a crit (damage dice doubled). A natural 1 always misses.
 
-The included art is generated placeholder art (`npm run placeholders`). Replace the SVG/PNG files, or point definitions at new files. Running the generator never overwrites existing files unless you pass `--force`.
+To change art, replace the files in `static/`, upload new ones on the Assets page, or point definitions at other files.
 
 ## Link previews
 
