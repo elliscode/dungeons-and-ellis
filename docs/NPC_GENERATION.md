@@ -4,7 +4,7 @@
 
 ## Workflow
 
-1. Give the LLM the schema, two or three NPCs from `data/npcs/npcs.json` as examples, and the prompt below.
+1. Give the LLM the schema, two or three NPCs from `data/npcs/npcs.json` as examples, the prompt below, and the NPC's portrait (the token image, generated separately in ChatGPT).
 2. Save its output to a file and validate it:
 
    ```sh
@@ -15,6 +15,10 @@
 3. Add the NPC to the bank. You can append it to `data/npcs/npcs.json`, save it as `data/npcs/<id>.json` (a single object is fine), or upload it on the Data page. The running server picks up new files automatically.
 
 Run `npm run validate:npcs` with no arguments to check the whole bank.
+
+## Portraits across the bank
+
+The prompt keeps each NPC true to their portrait. Spreading the variety across the cast is your call, because the LLM only sees one NPC at a time. Use the full range of portraits for heroes, NPCs and villains alike, rather than giving particular appearances mostly to background characters or hostile NPCs. [CHARACTER_GENERATION.md](CHARACTER_GENERATION.md) uses the same portrait rules.
 
 ## How NPCs differ from monsters
 
@@ -50,7 +54,23 @@ Rules:
 - For image, use the token path given in the request. If none is given, use the placeholder
   "/static/tokens/token_NNN.webp" exactly as written.
 
+Portrait (when one is attached):
+- The attached portrait is this NPC's token art and the source of truth for how they look.
+  Let it shape the name and the DM note, and keep both consistent with what's visible: skin
+  tone, facial features, hair, apparent age, build, clothing and distinguishing marks. The
+  `description` is mainly for personality and secrets, so a short appearance note is enough.
+- Don't change, soften or homogenize the depicted appearance to fit the requested role,
+  name or theme.
+- Appearance never decides personality, morality, trustworthiness, intelligence, competence
+  or whether the NPC is hostile. Take those from the request.
+- Only state what the portrait shows. If it doesn't establish ethnicity, gender identity or
+  pronouns, leave them unstated. Use the NPC's name, not gendered pronouns, unless the
+  request gives pronouns.
+- If the NPC is nonhuman, keep their visible species or creature features rather than
+  reading them as human.
+
 Token: <path such as /static/tokens/token_273.webp, or leave blank>
+Portrait: <attach the token image, or leave blank>
 NPC request:
 <describe the NPC: who they are, where they're found, whether they fight, anything specific>
 ```

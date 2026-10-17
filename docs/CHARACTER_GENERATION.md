@@ -4,7 +4,7 @@
 
 ## Workflow
 
-1. Give the LLM the schema, two or three roster heroes of the same role from `data/characters/` as examples, and the prompt below.
+1. Give the LLM the schema, two or three roster heroes of the same role from `data/characters/` as examples, the prompt below, and the hero's portrait (the token image, generated separately in ChatGPT).
 2. Save its output to a file and validate it:
 
    ```sh
@@ -15,6 +15,10 @@
 3. Add the hero to the roster. You can append it to `data/characters/<role>.json`, save it as `data/characters/<id>.json` (a single object is fine), or upload it on the Data page.
 
 Run `npm run validate:characters` with no arguments to check the whole roster.
+
+## Portraits across the roster
+
+The prompt keeps each hero true to their portrait. Spreading the variety across the cast is your call, because the LLM only sees one character at a time. Use the full range of portraits for heroes, NPCs and villains alike, rather than giving particular appearances mostly to background characters or antagonists. [NPC_GENERATION.md](NPC_GENERATION.md) uses the same portrait rules.
 
 ## Prompt
 
@@ -42,7 +46,23 @@ Rules:
 - For image, use the token path given in the request. If none is given, use the placeholder
   "/static/tokens/token_NNN.webp" exactly as written.
 
+Portrait (when one is attached):
+- The attached portrait is this hero's token art and the source of truth for how they look.
+  Let it shape the name, theme and flavor text, and keep every description consistent with
+  what's visible: skin tone, facial features, hair, apparent age, build, clothing and
+  distinguishing marks.
+- Don't change, soften or homogenize the depicted appearance to fit the requested role,
+  name or theme.
+- Appearance never decides personality, morality, intelligence or competence. Take those
+  from the request.
+- Only state what the portrait shows. If it doesn't establish ethnicity, gender identity or
+  pronouns, leave them unstated. Use the hero's name, not gendered pronouns, unless the
+  request gives pronouns.
+- If the character is nonhuman, keep their visible species or creature features rather than
+  reading them as human.
+
 Token: <path such as /static/tokens/token_271.webp, or leave blank>
+Portrait: <attach the token image, or leave blank>
 Character request:
 <describe the hero: role, theme, playstyle, anything specific>
 ```
